@@ -1,4 +1,6 @@
-
+#include <ldmap/ldmap.hpp>
+#include <ldmap/genetic_map.hpp>
+#include <progress.hpp>
 //[[Rcpp::export]]
 bool sorted_snp_df(const Rcpp::IntegerVector chr,  const Rcpp::IntegerVector pos){
 
