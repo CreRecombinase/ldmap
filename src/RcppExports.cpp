@@ -21,49 +21,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rcppeigen_hello_world
-Eigen::MatrixXd rcppeigen_hello_world();
-RcppExport SEXP _ldmap_rcppeigen_hello_world() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcppeigen_hello_world());
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcppeigen_outerproduct
-Eigen::MatrixXd rcppeigen_outerproduct(const Eigen::VectorXd& x);
-RcppExport SEXP _ldmap_rcppeigen_outerproduct(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcppeigen_outerproduct(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcppeigen_innerproduct
-double rcppeigen_innerproduct(const Eigen::VectorXd& x);
-RcppExport SEXP _ldmap_rcppeigen_innerproduct(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcppeigen_innerproduct(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcppeigen_bothproducts
-Rcpp::List rcppeigen_bothproducts(const Eigen::VectorXd& x);
-RcppExport SEXP _ldmap_rcppeigen_bothproducts(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcppeigen_bothproducts(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 // sorted_snp_df
 bool sorted_snp_df(const Rcpp::IntegerVector chr, const Rcpp::IntegerVector pos);
 RcppExport SEXP _ldmap_sorted_snp_df(SEXP chrSEXP, SEXP posSEXP) {
@@ -90,6 +47,41 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type pos(posSEXP);
     Rcpp::traits::input_parameter< const bool >::type assign_all(assign_allSEXP);
     rcpp_result_gen = Rcpp::wrap(set_ld_region(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, assign_all));
+    return rcpp_result_gen;
+END_RCPP
+}
+// snp2raw
+Rcpp::RawMatrix snp2raw(Rcpp::IntegerMatrix input_matrix);
+RcppExport SEXP _ldmap_snp2raw(SEXP input_matrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type input_matrix(input_matrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(snp2raw(input_matrix));
+    return rcpp_result_gen;
+END_RCPP
+}
+// popcnt_v
+Rcpp::NumericVector popcnt_v(Rcpp::RawMatrix X, double sample_size);
+RcppExport SEXP _ldmap_popcnt_v(SEXP XSEXP, SEXP sample_sizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::RawMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< double >::type sample_size(sample_sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(popcnt_v(X, sample_size));
+    return rcpp_result_gen;
+END_RCPP
+}
+// covbin
+Rcpp::NumericMatrix covbin(Rcpp::RawMatrix X, double sample_size);
+RcppExport SEXP _ldmap_covbin(SEXP XSEXP, SEXP sample_sizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::RawMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< double >::type sample_size(sample_sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(covbin(X, sample_size));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -136,12 +128,11 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
-    {"_ldmap_rcppeigen_hello_world", (DL_FUNC) &_ldmap_rcppeigen_hello_world, 0},
-    {"_ldmap_rcppeigen_outerproduct", (DL_FUNC) &_ldmap_rcppeigen_outerproduct, 1},
-    {"_ldmap_rcppeigen_innerproduct", (DL_FUNC) &_ldmap_rcppeigen_innerproduct, 1},
-    {"_ldmap_rcppeigen_bothproducts", (DL_FUNC) &_ldmap_rcppeigen_bothproducts, 1},
     {"_ldmap_sorted_snp_df", (DL_FUNC) &_ldmap_sorted_snp_df, 2},
     {"_ldmap_set_ld_region", (DL_FUNC) &_ldmap_set_ld_region, 7},
+    {"_ldmap_snp2raw", (DL_FUNC) &_ldmap_snp2raw, 1},
+    {"_ldmap_popcnt_v", (DL_FUNC) &_ldmap_popcnt_v, 2},
+    {"_ldmap_covbin", (DL_FUNC) &_ldmap_covbin, 2},
     {"_ldmap_strand_flip", (DL_FUNC) &_ldmap_strand_flip, 2},
     {"_ldmap_find_alleles", (DL_FUNC) &_ldmap_find_alleles, 6},
     {"_ldmap_flip_alleles", (DL_FUNC) &_ldmap_flip_alleles, 2},

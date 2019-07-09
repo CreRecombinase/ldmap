@@ -1,4 +1,5 @@
 useDynLib(ldmap)
 import(RcppEigen)
 importFrom(Rcpp, evalCpp)
+importFrom(RcppParallel, RcppParallelLibs)
 exportPattern("^[[:alpha:]]+")

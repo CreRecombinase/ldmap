@@ -1,8 +1,11 @@
 #include <Rcpp.h>
+// [[Rcpp::depends(RcppParallel)]]
+#include <RcppParallel.h>
+#include <libpopcnt.h>
 // [[Rcpp::depends(RcppProgress)]]
 #include <progress.hpp>
 #include <progress_bar.hpp>
-
+#include <bitset>
 
 inline char flip(const char t) noexcept{
   switch(t){
@@ -69,6 +72,136 @@ int allele_check(const char* query,const char* alt){
   return 0;
 
 }
+
+
+
+//' Determine whether 2 alleles are compatible
+// '@param query_ref_alt is a ref/alt pair
+// '@param target_ref_alt is another ref/alt pair
+// '@return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
+//' @export
+//[[Rcpp::export]]
+Rcpp::RawMatrix snp2raw(Rcpp::IntegerMatrix input_matrix){
+  const size_t p = input_matrix.cols();
+  const size_t N = input_matrix.rows();
+  const size_t newsize = static_cast<size_t>(std::ceil(static_cast<double>(N)/ 8.0f));
+  const size_t rem = N % 8;
+  const size_t newsize_b = N-rem;
+  // Rcpp::Rcout<<newsize_b<<std::endl;
+  // Rcpp::Rcout<<rem<<std::endl;
+  char t_out;
+  Rcpp::RawMatrix retmat(newsize,p);
+
+  // RcppParallel::RMatrix<char> prm(retmat);
+  // RcppParallel::RMatrix<int>  inpm(input_matrix);
+  if(rem!=0){
+    for(size_t i=0; i<p; i++){
+      for(int j=0; j<newsize_b; j+=8){
+	retmat(j/8,i)=
+	  input_matrix(j+0,i)|
+	  (input_matrix(j+1,i)<<1)|
+	  (input_matrix(j+2,i)<<2)|
+	  (input_matrix(j+3,i)<<3)|
+	  (input_matrix(j+4,i)<<4)|
+	  (input_matrix(j+5,i)<<5)|
+	  (input_matrix(j+6,i)<<6)|
+	  (input_matrix(j+7,i)<<7);
+      }
+
+      Rbyte btmp = 0;
+      for(int k=0; k<rem; k++){
+        btmp|=	(input_matrix(newsize_b+k,i)<<k);
+        // Rcpp::Rcout<<i<<"\t"<<k<<"\t"<<static_cast<int>(btmp)<<std::endl;
+      }
+      retmat(newsize-1,i)=btmp;
+
+    }
+  }else{
+        for(size_t i=0; i<p; i++){
+
+	  for(int j=0; j<newsize_b; j+=8){
+	    Rbyte btmp = 0;
+	    btmp=
+	      input_matrix(j+0,i)|
+	      (input_matrix(j+1,i)<<1)|
+	      (input_matrix(j+2,i)<<2)|
+	      (input_matrix(j+3,i)<<3)|
+	      (input_matrix(j+4,i)<<4)|
+	      (input_matrix(j+5,i)<<5)|
+	      (input_matrix(j+6,i)<<6)|
+	      (input_matrix(j+7,i)<<7);
+	    // Rcpp::Rcout<<i<<"\t"<<j<<"\t"<<static_cast<int>(btmp)<<std::endl;
+	    retmat(j/8,i)=btmp;
+	  }
+
+	}
+  }
+
+  return(retmat);
+}
+
+
+//' @export
+//[[Rcpp::export]]
+Rcpp::NumericVector popcnt_v(Rcpp::RawMatrix X, double sample_size=0){
+  
+  if(sample_size==0){
+    sample_size=X.rows()*8.0;
+  }
+  const size_t p = X.cols();
+  std::vector<uint64_t> popc(p);
+  using bel = Rcpp::RawMatrix::elem_type;
+  const size_t n_el=X.rows();
+  for(int i=0; i<p; i++){
+    bel* Xi=&X(0,i);
+    if(popc[i]==0){
+      popc[i]=popcnt(Xi,n_el);
+    }
+  }
+  
+  return(Rcpp::wrap(popc));
+}
+
+
+//' @export
+//[[Rcpp::export]]
+Rcpp::NumericMatrix covbin(Rcpp::RawMatrix X, double sample_size=0){
+  
+  if(sample_size==0){
+    sample_size=X.rows()*8.0;
+  }
+  const size_t p = X.cols();
+  Rcpp::NumericMatrix S(p,p);
+  std::vector<uint64_t> popc(p);
+  const size_t n_el=X.rows();
+  std::vector<Rcpp::RawMatrix::elem_type> bitwo(n_el);
+  
+  using bel = Rcpp::RawMatrix::elem_type;
+  // Rcpp::Rcout<<sample_size;
+  for(int i=0; i<p; i++){
+    bel* Xi=&X(0,i);
+    if(popc[i]==0){
+      popc[i]=popcnt(Xi,n_el);
+    }
+    for(int j=i; j<p; j++){
+      bel* Xj=&X(0,j);
+      if(popc[j]==0){
+        popc[j]=popcnt(Xj,n_el);
+      }
+
+      auto tret = std::inner_product(Xi,Xi+n_el,Xj,0,std::plus<bel>(),[](const bel a,const bel b) noexcept{
+        return __builtin_popcount(a&b);
+      });
+      // Rcpp::Rcout<<i<<"\t"<<j<<"\t"<<popc[i]<<"\t"<<popc[j]<<"\t"<<tret<<std::endl;
+      auto mret=(sample_size*tret-popc[i]*popc[j])/(sample_size*(sample_size-1));
+      S(i,j)=mret;
+      S(j,i)=mret;
+    }
+  }
+  return(S);
+}
+
+
 
 
 

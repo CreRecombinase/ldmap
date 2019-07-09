@@ -9,22 +9,6 @@ interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE, pro
     .Call('_ldmap_interpolate_genetic_map', PACKAGE = 'ldmap', map, map_pos, target_pos, strict, progress)
 }
 
-rcppeigen_hello_world <- function() {
-    .Call('_ldmap_rcppeigen_hello_world', PACKAGE = 'ldmap')
-}
-
-rcppeigen_outerproduct <- function(x) {
-    .Call('_ldmap_rcppeigen_outerproduct', PACKAGE = 'ldmap', x)
-}
-
-rcppeigen_innerproduct <- function(x) {
-    .Call('_ldmap_rcppeigen_innerproduct', PACKAGE = 'ldmap', x)
-}
-
-rcppeigen_bothproducts <- function(x) {
-    .Call('_ldmap_rcppeigen_bothproducts', PACKAGE = 'ldmap', x)
-}
-
 sorted_snp_df <- function(chr, pos) {
     .Call('_ldmap_sorted_snp_df', PACKAGE = 'ldmap', chr, pos)
 }
@@ -35,6 +19,24 @@ set_ld_region <- function(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, ass
 
 #' Determine whether 2 alleles are compatible
 NULL
+
+#' Determine whether 2 alleles are compatible
+NULL
+
+#' @export
+snp2raw <- function(input_matrix) {
+    .Call('_ldmap_snp2raw', PACKAGE = 'ldmap', input_matrix)
+}
+
+#' @export
+popcnt_v <- function(X, sample_size = 0) {
+    .Call('_ldmap_popcnt_v', PACKAGE = 'ldmap', X, sample_size)
+}
+
+#' @export
+covbin <- function(X, sample_size = 0) {
+    .Call('_ldmap_covbin', PACKAGE = 'ldmap', X, sample_size)
+}
 
 #' @export
 strand_flip <- function(ref_alt, reverse = FALSE) {
