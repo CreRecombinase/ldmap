@@ -40,28 +40,40 @@ bool operator<=(const SNPpos p, const GRange g){
   return(p.c_p<=g.range.first.c_p);
 }
 bool operator>(const SNPpos p, const GRange g){
-  return(p.c_p>g.range.second.c_p);
-}
-bool operator>=(const SNPpos p, const GRange g){
   return(p.c_p>=g.range.second.c_p);
 }
+// bool operator>=(const SNPpos p, const GRange g){
+//   return(p.c_p>=g.range.second.c_p);
+// }
 bool operator==(const SNPpos p, const GRange g){
-  return((p.c_p>=g.range.first.c_p) && (p.c_p<=g.range.second.c_p));
+  return((p.c_p>=g.range.first.c_p) && (p.c_p<g.range.second.c_p));
 }
 
+// 
+// struct pairhash {
+// public:
+//   std::size_t operator()(const std::pair<uint32_t, uint32_t> &x) const
+//   {
+//     return std::hash<T>()(x.first) ^ std::hash<U>()(x.second);
+//   }
+// };
 
-
-
-
-
+//' Assign snps to regions of the genome, breaking up regions based on number of SNPs
+// '@param ld_chr vector of chromosomes	of per region
+// '@param ld_start vector of start positions for each region
+// '@param ld_stop vector of end positions for each region
+// '@return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
+//' @export
 //[[Rcpp::export]]
-Rcpp::IntegerVector set_ld_region(const Rcpp::IntegerVector ld_chr,
-                                  const Rcpp::IntegerVector ld_start,
-                                  const Rcpp::IntegerVector ld_stop,
-                                  const Rcpp::IntegerVector ld_region_id,
-                                  const Rcpp::IntegerVector chr,
-                                  const Rcpp::IntegerVector pos,
-                                  const bool assign_all=true){
+Rcpp::StringVector set_ld_region(const Rcpp::IntegerVector ld_chr,
+				    const Rcpp::IntegerVector ld_start,
+				    const Rcpp::IntegerVector ld_stop,
+				    const Rcpp::IntegerVector ld_region_id,
+				    const Rcpp::IntegerVector chr,
+				    const Rcpp::IntegerVector pos,
+				    uint32_t max_size=0,
+				    int min_size=1,
+				    const bool assign_all=true){
 
   const size_t ld_size=ld_chr.size();
 
@@ -70,22 +82,36 @@ Rcpp::IntegerVector set_ld_region(const Rcpp::IntegerVector ld_chr,
   }
 
   const size_t snp_size = chr.size();
-  Rcpp::IntegerVector ret_region(snp_size);
+  Rcpp::StringVector ret_region(snp_size);
+  using pair_i = uint64_t;
+  std::vector< pair_i > tret_region(snp_size);
+  using ref_p =std::pair<std::vector<pair_i>::iterator,std::vector<pair_i>::iterator >;
+  std::unordered_map<uint32_t,
+                     int> ref_map(ld_size*2);
   if(!std::is_sorted(chr.begin(),chr.end())){
     Rcpp::stop("SNPs must be sorted by chromosome!");
   }
   size_t idx1=0;
   size_t idx2=0;
   GRange gr(ld_chr[idx2],ld_start[idx2],ld_stop[idx2]);
+  max_size = max_size == 0 ? snp_size + 1 : max_size;
+  uint32_t grc=0;
+  
+  Progress p(snp_size, true);
+  
   while(idx1<snp_size){
-
-    //    auto range_start= std::make_tuple(ld_chr[idx2],ld_start[idx2]);
-    //    auto range_stop= std::make_tuple(ld_chr[idx2],ld_stop[idx2]);
+    if (Progress::check_abort() ){
+      Rcpp::stop("aborted");
+    }
     const SNPpos s_pos(chr[idx1],pos[idx1]);
     if(s_pos==gr){
       //point in interval
-      ret_region[idx1]=ld_region_id[idx2];
+      grc++;
+      pair_i rel= (ld_region_id[idx2] << 16) | (grc/max_size);
+      tret_region[idx1]=rel;
+      ref_map[rel]++;
       idx1++;
+      p.increment();
     }else{
       if(s_pos<gr){
         // point before interval
@@ -97,13 +123,15 @@ Rcpp::IntegerVector set_ld_region(const Rcpp::IntegerVector ld_chr,
           }
           Rcpp::stop("Can't map SNP to region! Set assign_all to false to ignore");
         }else{
-          ret_region[idx1]=NA_INTEGER;
+          tret_region[idx1]=(NA_INTEGER << 16) | NA_INTEGER;
         }
         idx1++;
+        p.increment();
       }
       if(s_pos>gr){
         //point after interval
         if((idx2+1)<ld_size){
+          grc=0;
           idx2++;
           gr=GRange(ld_chr[idx2],ld_start[idx2],ld_stop[idx2]);
         }else{
@@ -111,12 +139,21 @@ Rcpp::IntegerVector set_ld_region(const Rcpp::IntegerVector ld_chr,
             Rcpp::Rcerr<<"For SNP: "<<chr[idx1]<<":"<<pos[idx1]<<std::endl;
             Rcpp::stop("Can't map SNP to region! Set assign_all to false to ignore");
           }else{
-            ret_region[idx1]=NA_INTEGER;
+            tret_region[idx1]=(NA_INTEGER << 16) | NA_INTEGER;
           }
           idx1++;
+          p.increment();
         }
       }
     }
   }
+
+  std::transform(tret_region.begin(),tret_region.end(),ret_region.begin(),[&ref_map,min_size](pair_i eli){
+    int high16 = eli >> 16;
+    int low16 = eli & 0xFFFF;
+    low16 = (ref_map[eli] < min_size) ? std::max(0,low16-1) : low16;
+      return((std::to_string(high16)+"."+std::to_string(low16))); 
+  });
   return(ret_region);
 }
+

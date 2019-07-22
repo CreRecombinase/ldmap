@@ -34,8 +34,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // set_ld_region
-Rcpp::IntegerVector set_ld_region(const Rcpp::IntegerVector ld_chr, const Rcpp::IntegerVector ld_start, const Rcpp::IntegerVector ld_stop, const Rcpp::IntegerVector ld_region_id, const Rcpp::IntegerVector chr, const Rcpp::IntegerVector pos, const bool assign_all);
-RcppExport SEXP _ldmap_set_ld_region(SEXP ld_chrSEXP, SEXP ld_startSEXP, SEXP ld_stopSEXP, SEXP ld_region_idSEXP, SEXP chrSEXP, SEXP posSEXP, SEXP assign_allSEXP) {
+Rcpp::StringVector set_ld_region(const Rcpp::IntegerVector ld_chr, const Rcpp::IntegerVector ld_start, const Rcpp::IntegerVector ld_stop, const Rcpp::IntegerVector ld_region_id, const Rcpp::IntegerVector chr, const Rcpp::IntegerVector pos, uint32_t max_size, int min_size, const bool assign_all);
+RcppExport SEXP _ldmap_set_ld_region(SEXP ld_chrSEXP, SEXP ld_startSEXP, SEXP ld_stopSEXP, SEXP ld_region_idSEXP, SEXP chrSEXP, SEXP posSEXP, SEXP max_sizeSEXP, SEXP min_sizeSEXP, SEXP assign_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -45,8 +45,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type ld_region_id(ld_region_idSEXP);
     Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type chr(chrSEXP);
     Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type pos(posSEXP);
+    Rcpp::traits::input_parameter< uint32_t >::type max_size(max_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type min_size(min_sizeSEXP);
     Rcpp::traits::input_parameter< const bool >::type assign_all(assign_allSEXP);
-    rcpp_result_gen = Rcpp::wrap(set_ld_region(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, assign_all));
+    rcpp_result_gen = Rcpp::wrap(set_ld_region(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max_size, min_size, assign_all));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -129,7 +131,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
     {"_ldmap_sorted_snp_df", (DL_FUNC) &_ldmap_sorted_snp_df, 2},
-    {"_ldmap_set_ld_region", (DL_FUNC) &_ldmap_set_ld_region, 7},
+    {"_ldmap_set_ld_region", (DL_FUNC) &_ldmap_set_ld_region, 9},
     {"_ldmap_snp2raw", (DL_FUNC) &_ldmap_snp2raw, 1},
     {"_ldmap_popcnt_v", (DL_FUNC) &_ldmap_popcnt_v, 2},
     {"_ldmap_covbin", (DL_FUNC) &_ldmap_covbin, 2},

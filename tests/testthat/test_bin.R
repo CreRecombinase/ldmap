@@ -18,7 +18,7 @@ sum(  as.integer(rawToBits(x)))
   
 }
 
-test_that("can round trip binary matrices",{
+test_that("can compute covariance for binary matrices",{
   
   ix <- matrix(sample(c(0L,1L),64,replace=T),nrow = 16,ncol = 4)
   tS <- cov(ix)
@@ -29,22 +29,7 @@ test_that("can round trip binary matrices",{
   ret <-   snp2raw(ix)
   
   bS <- covbin(ret)
-  
-  pcv <- popcnt_v(ret)
-  tbdf <- function(x,y){
-    popcnt_fun(x&y)
-  }
-  
-  cS <- matrix(0,4,4)
-  for(i in 1:4){
-    for(j in i:4){
-      cS[i,j] <- tbdf(ret[,i],ret[,j])
-      cS[j,i] <- cS[i,j]
-    }
-  }
-  
-  cS <- (16*cS-outer(pcv,pcv))/(16*15)
-  expect_equal(tS,cS)  
+
   expect_equal(bS,tS)
 
   

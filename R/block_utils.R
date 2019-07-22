@@ -4,13 +4,15 @@
 #' @param break_chr integer vector of chromosome assignment for each LD block
 #' @param break_start integer vector of the start coordinate for each LD block
 #' @param break_stop integer vector of the stop coordinate for each LD block
-#' @param break_id integer vector with a unique id for each LD block
+#' @param break_id vector with a unique id for each LD block
 #' @param snp_chr integer vector giving the chromosome of every SNP
 #' @param snp_pos integer vector giving the coordinate of each SNP
 #' @param assign_all whether to throw an error if a SNP cannot be assigned to a block, or to assign it to block `NA`
+#' @param max_size max number of snps to map to a region.  Each region will be split into sub-regions having no more than `max_size` elements,
+#' unless `max_size` is less than or equal to 0, in which case there is no limit to the number of SNPs mapped to a region.
 #' @return modified `snp_df` dataframe with additional column `region_id` mapping snp to LD block
 #' @export
-assign_region <- function(break_chr, break_start, break_stop, break_id = seq_along(break_chr), snp_chr, snp_pos, assign_all=T){
+assign_region <- function(break_chr, break_start, break_stop, break_id = seq_along(break_chr), snp_chr, snp_pos, assign_all=T,max_size=-1L,min_size=1L){
   stopifnot(!is.null(break_chr),
             length(break_chr)==length(break_start),
             length(break_start)==length(break_stop),
@@ -21,13 +23,14 @@ assign_region <- function(break_chr, break_start, break_stop, break_id = seq_alo
     break_chr <- factor(break_chr,levels = unique(break_chr))
     snp_chr <- factor(snp_chr,levels = levels(break_chr))
   }
-  return(set_ld_region(ld_chr = break_chr,
+  ret <- set_ld_region(ld_chr = break_chr,
                        ld_start = break_start,
                        ld_stop = break_stop,
                        ld_region_id = break_id,
-                       chr = snp_chr,
+                       chr = snp_chr,max_size = max_size,min_size = min_size,
                        pos = snp_pos,
-                       assign_all = assign_all))
+                       assign_all = assign_all)
+  return(ret)
 }
 
 

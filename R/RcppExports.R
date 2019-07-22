@@ -9,12 +9,16 @@ interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE, pro
     .Call('_ldmap_interpolate_genetic_map', PACKAGE = 'ldmap', map, map_pos, target_pos, strict, progress)
 }
 
+#' Assign snps to regions of the genome, breaking up regions based on number of SNPs
+NULL
+
 sorted_snp_df <- function(chr, pos) {
     .Call('_ldmap_sorted_snp_df', PACKAGE = 'ldmap', chr, pos)
 }
 
-set_ld_region <- function(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, assign_all = TRUE) {
-    .Call('_ldmap_set_ld_region', PACKAGE = 'ldmap', ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, assign_all)
+#' @export
+set_ld_region <- function(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max_size = 0L, min_size = 1L, assign_all = TRUE) {
+    .Call('_ldmap_set_ld_region', PACKAGE = 'ldmap', ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max_size, min_size, assign_all)
 }
 
 #' Determine whether 2 alleles are compatible

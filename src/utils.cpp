@@ -166,7 +166,6 @@ Rcpp::NumericVector popcnt_v(Rcpp::RawMatrix X, double sample_size=0){
 //' @export
 //[[Rcpp::export]]
 Rcpp::NumericMatrix covbin(Rcpp::RawMatrix X, double sample_size=0){
-  
   if(sample_size==0){
     sample_size=X.rows()*8.0;
   }
@@ -174,8 +173,6 @@ Rcpp::NumericMatrix covbin(Rcpp::RawMatrix X, double sample_size=0){
   Rcpp::NumericMatrix S(p,p);
   std::vector<uint64_t> popc(p);
   const size_t n_el=X.rows();
-  std::vector<Rcpp::RawMatrix::elem_type> bitwo(n_el);
-  
   using bel = Rcpp::RawMatrix::elem_type;
   // Rcpp::Rcout<<sample_size;
   for(int i=0; i<p; i++){
