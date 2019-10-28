@@ -169,14 +169,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // join_snp
-Rcpp::List join_snp(Rcpp::NumericVector query, Rcpp::NumericVector reference);
-RcppExport SEXP _ldmap_join_snp(SEXP querySEXP, SEXP referenceSEXP) {
+Rcpp::List join_snp(Rcpp::NumericVector query, Rcpp::NumericVector reference, Rcpp::IntegerVector rsid);
+RcppExport SEXP _ldmap_join_snp(SEXP querySEXP, SEXP referenceSEXP, SEXP rsidSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type reference(referenceSEXP);
-    rcpp_result_gen = Rcpp::wrap(join_snp(query, reference));
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type rsid(rsidSEXP);
+    rcpp_result_gen = Rcpp::wrap(join_snp(query, reference, rsid));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -270,7 +271,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_ref_alleles", (DL_FUNC) &_ldmap_ref_alleles, 2},
     {"_ldmap_alt_alleles", (DL_FUNC) &_ldmap_alt_alleles, 2},
     {"_ldmap_ldmap_snp_2_dataframe", (DL_FUNC) &_ldmap_ldmap_snp_2_dataframe, 1},
-    {"_ldmap_join_snp", (DL_FUNC) &_ldmap_join_snp, 2},
+    {"_ldmap_join_snp", (DL_FUNC) &_ldmap_join_snp, 3},
     {"_ldmap_snp2raw", (DL_FUNC) &_ldmap_snp2raw, 1},
     {"_ldmap_popcnt_v", (DL_FUNC) &_ldmap_popcnt_v, 2},
     {"_ldmap_covbin", (DL_FUNC) &_ldmap_covbin, 2},

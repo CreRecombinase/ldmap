@@ -134,8 +134,8 @@ ldmap_snp_2_dataframe <- function(struct_vec) {
 #' @param reference a vector of (sorted) ldmap_snps SNPs
 #'
 #' @export
-join_snp <- function(query, reference) {
-    .Call('_ldmap_join_snp', PACKAGE = 'ldmap', query, reference)
+join_snp <- function(query, reference, rsid = as.integer( c())) {
+    .Call('_ldmap_join_snp', PACKAGE = 'ldmap', query, reference, rsid)
 }
 
 #' Determine whether 2 alleles are compatible

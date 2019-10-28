@@ -78,9 +78,12 @@ testthat::test_that("we can index with ourselves",{
         alt <- sample(letter_to_int,p,replace=T)
         ret <- new_ldmap_snp(chrom,pos,ref,alt)        
         sret <- sort(ret[-1])
+        sret_id <- 1:length(sret)
         query <- sort(c(sample(ret[-1],size=100),ret[1]))
         
         perf_match <- join_snp(query,sret)
+        perf_match_rsid <- join_snp(query,sret,rsid = sret_id)
+        expect_equal(sret[perf_match_rsid$rsid],perf_match_rsid$match)
         
         expect_equal(nrow(perf_match),101)
         expect_equal(sret[perf_match$index],perf_match$match)

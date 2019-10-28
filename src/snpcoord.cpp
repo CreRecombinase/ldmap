@@ -527,7 +527,7 @@ SEXP ldmap_snp_2_dataframe(Rcpp::NumericVector struct_vec){
 //'
 //' @export
 //[[Rcpp::export]]
-Rcpp::List join_snp(Rcpp::NumericVector query,Rcpp::NumericVector reference){
+Rcpp::List join_snp(Rcpp::NumericVector query,Rcpp::NumericVector reference,Rcpp::IntegerVector rsid=Rcpp::IntegerVector::create()){
 
 
 
@@ -548,6 +548,7 @@ Rcpp::List join_snp(Rcpp::NumericVector query,Rcpp::NumericVector reference){
 
 
 
+
   const size_t q_size =query.size();
   Rcpp::IntegerVector ret_index(q_size);
   Rcpp::IntegerVector ret_match(q_size,1);
@@ -556,6 +557,7 @@ Rcpp::List join_snp(Rcpp::NumericVector query,Rcpp::NumericVector reference){
   auto o_ref_b = input_b.begin();
   auto ref_b = input_b.begin();
   auto ref_e = input_b.end();
+
 
   for(int i=0; i<q_size; i++){
     SNP q(query(i));
@@ -597,6 +599,13 @@ Rcpp::List join_snp(Rcpp::NumericVector query,Rcpp::NumericVector reference){
                              _["index"]=ret_index,
                              _["match_type"]=ret_match,
                              _["match"]=ret_ref);
+  if(rsid.size()==reference.size()){
+    Rcpp::IntegerVector ret_rsid = no_init(q_size);
+    std::transform(ret_index.begin(),ret_index.end(),ret_rsid.begin(),[&](const int i){
+        return rsid[i];
+      });
+    dfl["rsid"]=ret_rsid;
+  }
   dfl.attr("class") = StringVector::create("tbl_df","tbl","data.frame");
   dfl.attr("row.names") = seq(1, q_size);
   return dfl;
