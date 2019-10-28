@@ -52,6 +52,134 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// join_ids
+Rcpp::List join_ids(Rcpp::IntegerVector index_a, Rcpp::IntegerVector index_b);
+RcppExport SEXP _ldmap_join_ids(SEXP index_aSEXP, SEXP index_bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type index_a(index_aSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type index_b(index_bSEXP);
+    rcpp_result_gen = Rcpp::wrap(join_ids(index_a, index_b));
+    return rcpp_result_gen;
+END_RCPP
+}
+// new_ldmap_snp
+Rcpp::NumericVector new_ldmap_snp(Rcpp::IntegerVector chrom, Rcpp::NumericVector pos, Rcpp::IntegerVector ascii_ref, Rcpp::IntegerVector ascii_alt);
+RcppExport SEXP _ldmap_new_ldmap_snp(SEXP chromSEXP, SEXP posSEXP, SEXP ascii_refSEXP, SEXP ascii_altSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type chrom(chromSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pos(posSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type ascii_ref(ascii_refSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type ascii_alt(ascii_altSEXP);
+    rcpp_result_gen = Rcpp::wrap(new_ldmap_snp(chrom, pos, ascii_ref, ascii_alt));
+    return rcpp_result_gen;
+END_RCPP
+}
+// format_ldmap_snp
+Rcpp::StringVector format_ldmap_snp(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_format_ldmap_snp(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(format_ldmap_snp(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// order_snps
+Rcpp::IntegerVector order_snps(Rcpp::NumericVector struct_vec);
+RcppExport SEXP _ldmap_order_snps(SEXP struct_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type struct_vec(struct_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(order_snps(struct_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rank_snps
+Rcpp::IntegerVector rank_snps(Rcpp::NumericVector struct_vec);
+RcppExport SEXP _ldmap_rank_snps(SEXP struct_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type struct_vec(struct_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(rank_snps(struct_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// chromosomes
+Rcpp::IntegerVector chromosomes(Rcpp::NumericVector struct_vec);
+RcppExport SEXP _ldmap_chromosomes(SEXP struct_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type struct_vec(struct_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(chromosomes(struct_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// positions
+Rcpp::NumericVector positions(Rcpp::NumericVector struct_vec);
+RcppExport SEXP _ldmap_positions(SEXP struct_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type struct_vec(struct_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(positions(struct_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ref_alleles
+SEXP ref_alleles(Rcpp::NumericVector struct_vec, const bool as_ascii_int);
+RcppExport SEXP _ldmap_ref_alleles(SEXP struct_vecSEXP, SEXP as_ascii_intSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type struct_vec(struct_vecSEXP);
+    Rcpp::traits::input_parameter< const bool >::type as_ascii_int(as_ascii_intSEXP);
+    rcpp_result_gen = Rcpp::wrap(ref_alleles(struct_vec, as_ascii_int));
+    return rcpp_result_gen;
+END_RCPP
+}
+// alt_alleles
+SEXP alt_alleles(Rcpp::NumericVector struct_vec, const bool as_ascii_int);
+RcppExport SEXP _ldmap_alt_alleles(SEXP struct_vecSEXP, SEXP as_ascii_intSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type struct_vec(struct_vecSEXP);
+    Rcpp::traits::input_parameter< const bool >::type as_ascii_int(as_ascii_intSEXP);
+    rcpp_result_gen = Rcpp::wrap(alt_alleles(struct_vec, as_ascii_int));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ldmap_snp_2_dataframe
+SEXP ldmap_snp_2_dataframe(Rcpp::NumericVector struct_vec);
+RcppExport SEXP _ldmap_ldmap_snp_2_dataframe(SEXP struct_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type struct_vec(struct_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(ldmap_snp_2_dataframe(struct_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// join_snp
+Rcpp::List join_snp(Rcpp::NumericVector query, Rcpp::NumericVector reference);
+RcppExport SEXP _ldmap_join_snp(SEXP querySEXP, SEXP referenceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type reference(referenceSEXP);
+    rcpp_result_gen = Rcpp::wrap(join_snp(query, reference));
+    return rcpp_result_gen;
+END_RCPP
+}
 // snp2raw
 Rcpp::RawMatrix snp2raw(Rcpp::IntegerMatrix input_matrix);
 RcppExport SEXP _ldmap_snp2raw(SEXP input_matrixSEXP) {
@@ -132,6 +260,17 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
     {"_ldmap_sorted_snp_df", (DL_FUNC) &_ldmap_sorted_snp_df, 2},
     {"_ldmap_set_ld_region", (DL_FUNC) &_ldmap_set_ld_region, 9},
+    {"_ldmap_join_ids", (DL_FUNC) &_ldmap_join_ids, 2},
+    {"_ldmap_new_ldmap_snp", (DL_FUNC) &_ldmap_new_ldmap_snp, 4},
+    {"_ldmap_format_ldmap_snp", (DL_FUNC) &_ldmap_format_ldmap_snp, 1},
+    {"_ldmap_order_snps", (DL_FUNC) &_ldmap_order_snps, 1},
+    {"_ldmap_rank_snps", (DL_FUNC) &_ldmap_rank_snps, 1},
+    {"_ldmap_chromosomes", (DL_FUNC) &_ldmap_chromosomes, 1},
+    {"_ldmap_positions", (DL_FUNC) &_ldmap_positions, 1},
+    {"_ldmap_ref_alleles", (DL_FUNC) &_ldmap_ref_alleles, 2},
+    {"_ldmap_alt_alleles", (DL_FUNC) &_ldmap_alt_alleles, 2},
+    {"_ldmap_ldmap_snp_2_dataframe", (DL_FUNC) &_ldmap_ldmap_snp_2_dataframe, 1},
+    {"_ldmap_join_snp", (DL_FUNC) &_ldmap_join_snp, 2},
     {"_ldmap_snp2raw", (DL_FUNC) &_ldmap_snp2raw, 1},
     {"_ldmap_popcnt_v", (DL_FUNC) &_ldmap_popcnt_v, 2},
     {"_ldmap_covbin", (DL_FUNC) &_ldmap_covbin, 2},

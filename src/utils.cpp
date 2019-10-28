@@ -76,9 +76,9 @@ int allele_check(const char* query,const char* alt){
 
 
 //' Determine whether 2 alleles are compatible
-// '@param query_ref_alt is a ref/alt pair
-// '@param target_ref_alt is another ref/alt pair
-// '@return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
+//' @param query_ref_alt is a ref/alt pair
+//' @param target_ref_alt is another ref/alt pair
+//' @return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
 //' @export
 //[[Rcpp::export]]
 Rcpp::RawMatrix snp2raw(Rcpp::IntegerMatrix input_matrix){
@@ -204,9 +204,9 @@ Rcpp::NumericMatrix covbin(Rcpp::RawMatrix X, double sample_size=0){
 
 
 //' Determine whether 2 alleles are compatible
-// '@param query_ref_alt is a ref/alt pair
-// '@param target_ref_alt is another ref/alt pair
-// '@return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
+//' @param query_ref_alt is a ref/alt pair
+//' @param target_ref_alt is another ref/alt pair
+//' @return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
 //' @export
 //[[Rcpp::export]]
 Rcpp::StringVector strand_flip(Rcpp::StringVector ref_alt,bool reverse=false){

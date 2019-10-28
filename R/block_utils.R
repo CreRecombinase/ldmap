@@ -121,8 +121,6 @@ calc_theta <- function(m){
 #' #create "allele" column
 #' panel_allele <- paste0(panel_df$ref,",",panel_df$alt)
 #' stopifnot(all(nchar(panel_allele)==3))
-
-#'
 query_reference_snpset <- function(query_chr,query_pos,query_allele,query_block=NULL,panel_chr,panel_pos,panel_allele,panel_block=NULL){
 
   stopifnot(is.null(query_block)==is.null(panel_block))

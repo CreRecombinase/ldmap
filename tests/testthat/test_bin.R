@@ -13,6 +13,7 @@ test_that("can round trip binary matrices",{
 
 
 
+
 popcnt_fun <- function(x){
 sum(  as.integer(rawToBits(x)))
   

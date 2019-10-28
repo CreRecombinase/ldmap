@@ -2,31 +2,146 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' Linear interpolation of genetic map values
-NULL
-
+#'
+#' @param map  is a length `p` vector of cumulative genetic map values. `map` must be _strictly_ _sorted_
+#' @param map_pos  is a length `p` vector of genome coordinates corresponding to the reference genetic map. `map_pos` must be _strictly_ _sorted_
+#' @param target_pos is a vector of coordinates to interpolate
+#' @param strict a boolean indicating whether to strictly interpolate
+#' @param progress a boolean indicating whether to indicate progress with a progress bar
+#'
 #' @export
 interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE, progress = FALSE) {
     .Call('_ldmap_interpolate_genetic_map', PACKAGE = 'ldmap', map, map_pos, target_pos, strict, progress)
 }
 
-#' Assign snps to regions of the genome, breaking up regions based on number of SNPs
-NULL
-
+#' Find out of vector of SNPs is sorted
+#' 
+#' @param chr vector of chromosomes	of per region
+#' @param pos vector of start positions for each region
+#' @return returns true if the vector is sorted
+#' @export
 sorted_snp_df <- function(chr, pos) {
     .Call('_ldmap_sorted_snp_df', PACKAGE = 'ldmap', chr, pos)
 }
 
+#' Assign snps to regions of the genome, breaking up regions based on number of SNPs
+#' 
+#' @param ld_chr vector of chromosomes	of per region
+#' @param ld_start vector of start positions for each region
+#' @param ld_stop vector of end positions for each region
+#' @return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
 #' @export
 set_ld_region <- function(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max_size = 0L, min_size = 1L, assign_all = TRUE) {
     .Call('_ldmap_set_ld_region', PACKAGE = 'ldmap', ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max_size, min_size, assign_all)
 }
 
-#' Determine whether 2 alleles are compatible
-NULL
+join_ids <- function(index_a, index_b) {
+    .Call('_ldmap_join_ids', PACKAGE = 'ldmap', index_a, index_b)
+}
+
+#' Creation of new ldmap_snps
+#' 
+#' @param chrom an integer vector of chromosomes
+#' @param pos a double vector of positions 
+#' @param ascii_ref an optional integer vector of reference allele (see `?utf8ToInt`)
+#' @param ascii_ref an optional integer vector of alternate allele (see `?utf8ToInt`)
+#' 
+#' @export
+new_ldmap_snp <- function(chrom = as.integer( c()), pos = as.numeric( c()), ascii_ref = as.integer( c()), ascii_alt = as.integer( c())) {
+    .Call('_ldmap_new_ldmap_snp', PACKAGE = 'ldmap', chrom, pos, ascii_ref, ascii_alt)
+}
+
+#' Formatting method for ldmap snps
+#'
+#' @param x a vector of ldmap_snps
+#' @method format ldmap_snp
+#' @export
+#' @export format.ldmap_snp
+format.ldmap_snp <- function(x) {
+    .Call('_ldmap_format_ldmap_snp', PACKAGE = 'ldmap', x)
+}
+
+#' sorting method for ldmap snps
+#'
+#' @param struct_vec the vector of SNPs
+#'
+#' @method order ldmap_snp
+#' @export
+#' @export order.ldmap_snp
+order.ldmap_snp <- function(struct_vec) {
+    .Call('_ldmap_order_snps', PACKAGE = 'ldmap', struct_vec)
+}
+
+#' ranking method for ldmap snps
+#'
+#' @param struct_vec the vector of SNPs
+#'
+#' @method rank ldmap_snp
+#' @export
+#' @export rank.ldmap_snp
+rank.ldmap_snp <- function(struct_vec) {
+    .Call('_ldmap_rank_snps', PACKAGE = 'ldmap', struct_vec)
+}
+
+#' get chroms from a ldmap_snp
+#'
+#' @param struct_vec the vector of SNPs
+#'
+#' @export
+chromosomes <- function(struct_vec) {
+    .Call('_ldmap_chromosomes', PACKAGE = 'ldmap', struct_vec)
+}
+
+#' get positions from a ldmap_snp
+#'
+#' @param struct_vec the vector of SNPs
+#'
+#' @export
+positions <- function(struct_vec) {
+    .Call('_ldmap_positions', PACKAGE = 'ldmap', struct_vec)
+}
+
+#' get ref alleles from a ldmap_snp
+#'
+#' @param struct_vec the vector of SNPs
+#'
+#' @export
+ref_alleles <- function(struct_vec, as_ascii_int = TRUE) {
+    .Call('_ldmap_ref_alleles', PACKAGE = 'ldmap', struct_vec, as_ascii_int)
+}
+
+#' get ref alleles from a ldmap_snp
+#'
+#' @param struct_vec the vector of SNPs
+#'
+#' @export
+alt_alleles <- function(struct_vec, as_ascii_int = TRUE) {
+    .Call('_ldmap_alt_alleles', PACKAGE = 'ldmap', struct_vec, as_ascii_int)
+}
+
+#' Formatting method for ldmap snps
+#'
+#' @param struct_vec the vector of SNPs
+#'
+#' @export
+ldmap_snp_2_dataframe <- function(struct_vec) {
+    .Call('_ldmap_ldmap_snp_2_dataframe', PACKAGE = 'ldmap', struct_vec)
+}
+
+#' Find SNPs that match (and find out what to do with them)
+#'
+#' @param query a vector of (sorted) ldmap_snps SNPs
+#' @param reference a vector of (sorted) ldmap_snps SNPs
+#'
+#' @export
+join_snp <- function(query, reference) {
+    .Call('_ldmap_join_snp', PACKAGE = 'ldmap', query, reference)
+}
 
 #' Determine whether 2 alleles are compatible
-NULL
-
+#' @param query_ref_alt is a ref/alt pair
+#' @param target_ref_alt is another ref/alt pair
+#' @return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
 #' @export
 snp2raw <- function(input_matrix) {
     .Call('_ldmap_snp2raw', PACKAGE = 'ldmap', input_matrix)
@@ -42,6 +157,10 @@ covbin <- function(X, sample_size = 0) {
     .Call('_ldmap_covbin', PACKAGE = 'ldmap', X, sample_size)
 }
 
+#' Determine whether 2 alleles are compatible
+#' @param query_ref_alt is a ref/alt pair
+#' @param target_ref_alt is another ref/alt pair
+#' @return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
 #' @export
 strand_flip <- function(ref_alt, reverse = FALSE) {
     .Call('_ldmap_strand_flip', PACKAGE = 'ldmap', ref_alt, reverse)

@@ -1,6 +1,6 @@
 Package: ldmap
-Title: Manipulate and Interpolate Genetic Map Data
-Version: 0.0.0.9000
+Title: Manipulate SNP coordinates and Interpolate Genetic Map Data
+Version: 0.0.1.9000
 Authors@R: 
     person(given = "First",
            family = "Last",
@@ -12,12 +12,17 @@ Encoding: UTF-8
 LazyData: true
 URL: https://github.com/CreRecombinase/ldmap
 BugReports: https://github.com/CreRecombinase/ldmap/issues
+Imports: 
+    methods,
+    rlang,
+    vctrs,
+    magrittr
 LinkingTo: 
     RcppEigen,
     RcppProgress,
     RcppParallel,
     Rcpp
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 6.1.99.9001
 Suggests: 
     testthat
