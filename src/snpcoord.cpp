@@ -1,4 +1,3 @@
-#include <bits/stdint-uintn.h>
 #include <ldmap/ldmap.hpp>
 #include <ldmap/genetic_map.hpp>
 #include <progress.hpp>
