@@ -3,3 +3,6 @@
 .Rproj.user
 src/*o
 compile_commands.json
+inst/test_data/*
+.clangd/**
+
