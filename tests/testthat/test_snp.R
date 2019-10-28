@@ -15,7 +15,7 @@ testthat::test_that("crazy bit packing works",{
         ret <- new_ldmap_snp(chrom,pos,ref,alt)        
         so_ret <- sort(ret)
         head(sort(ret))
-        cdf <- as.data.frame(ret)
+        cdf <- ldmap::ldmap_snp_2_dataframe(ret)
         testthat::expect_equal(cdf$chrom,chrom)
         testthat::expect_equal(cdf$pos,pos)
         testthat::expect_equal(cdf$ascii_ref,unname(ref))
@@ -54,12 +54,14 @@ testthat::test_that("sorting works",{
         op <- order(chromosomes(ret),positions(ret))
         order_ret <- order.ldmap_snp(ret)
         so_ret <- sort(ret)
+        
         od_ret <- ret[order.ldmap_snp(ret)]
         expect_true(!is.unsorted(chromosomes(so_ret)))
         expect_true(!is.unsorted(chromosomes(od_ret)))
-        expect_true(all(split(positions(so_ret),chromosomes(so_ret)) %>% map_lgl(~!is.unsorted(.x))))
-        expect_true(all(split(positions(od_ret),chromosomes(od_ret)) %>% map_lgl(~!is.unsorted(.x))))
+        expect_true(all(split(positions(so_ret),chromosomes(so_ret)) %>% purrr::map_lgl(~!is.unsorted(.x))))
+        expect_true(all(split(positions(od_ret),chromosomes(od_ret)) %>% purrr::map_lgl(~!is.unsorted(.x))))
         expect_equal(as.numeric(unclass(ret[op])),as.numeric(unclass(ret[order_ret])))
+        
 })
 
 

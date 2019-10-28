@@ -324,15 +324,17 @@ Rcpp::StringVector format_ldmap_snp(Rcpp::NumericVector x){
 Rcpp::IntegerVector order_snps(Rcpp::NumericVector struct_vec){
   using namespace Rcpp;
   const size_t p= struct_vec.size();
-  IntegerVector ret=seq(0, p-1);
+  IntegerVector ret=seq(1, p);
   if(ret.size()!=p){
     Rcpp::stop("you can't make seqs right");
   }
   RcppParallel::RVector<double> input_a(struct_vec);
 
   std::sort(ret.begin(),ret.end(),[&](const int i,const int j){
-                                    return (SNP(input_a[i])<SNP(input_a[j]));
+                                    return (SNP(input_a[i-1])<SNP(input_a[j-1]));
                                   });
+
+
   return(ret);
 }
 
