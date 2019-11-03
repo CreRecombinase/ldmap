@@ -1,7 +1,7 @@
 context("assigning to ld region")
 
- input_f <- system.file("test_data/fourier_ls-all.bed.gz",package = "ldshrink")
-  ld_df <- readr::read_tsv(input_f,col_types=readr::cols(
+ input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
+ ld_df <- readr::read_tsv(input_f,col_types=readr::cols(
     chr = readr::col_character(),
     start = readr::col_integer(),
     stop = readr::col_integer()

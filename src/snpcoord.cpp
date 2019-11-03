@@ -550,7 +550,7 @@ Rcpp::List join_snp(Rcpp::NumericVector query,Rcpp::NumericVector reference,Rcpp
 
 
   const size_t q_size =query.size();
-  Rcpp::IntegerVector ret_index(q_size);
+  Rcpp::IntegerVector ret_index(q_size,NA_INTEGER);
   Rcpp::IntegerVector ret_match(q_size,1);
   Rcpp::NumericVector ret_ref(q_size);
 
@@ -602,8 +602,10 @@ Rcpp::List join_snp(Rcpp::NumericVector query,Rcpp::NumericVector reference,Rcpp
   if(rsid.size()==reference.size()){
     Rcpp::IntegerVector ret_rsid = no_init(q_size);
     std::transform(ret_index.begin(),ret_index.end(),ret_rsid.begin(),[&](const int i){
-        return rsid[i];
-      });
+                                                                        if(i==NA_INTEGER)
+                                                                          return NA_INTEGER;
+                                                                        return rsid[i-1];
+                                                                      });
     dfl["rsid"]=ret_rsid;
   }
   dfl.attr("class") = StringVector::create("tbl_df","tbl","data.frame");
