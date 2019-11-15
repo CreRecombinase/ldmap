@@ -4,10 +4,10 @@
 \alias{ref_alleles}
 \title{get ref alleles from a ldmap_snp}
 \usage{
-ref_alleles(struct_vec, as_ascii_int = TRUE)
+ref_alleles(ldmap_snp, as_ldmap_allele = TRUE)
 }
 \arguments{
-\item{struct_vec}{the vector of SNPs}
+\item{ldmap_snp}{the vector of SNPs}
 }
 \description{
 get ref alleles from a ldmap_snp

@@ -16,13 +16,14 @@ Imports:
     methods,
     rlang,
     vctrs,
-    magrittr
+    magrittr,
+    fs
 LinkingTo: 
     RcppEigen,
     RcppProgress,
     RcppParallel,
     Rcpp
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.99.9001
+RoxygenNote: 7.0.0
 Suggests: 
     testthat

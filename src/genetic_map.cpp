@@ -1,6 +1,7 @@
-#include <ldmap/ldmap.hpp>
-#include <ldmap/genetic_map.hpp>
+#include "alleles.hpp"
+#include "ldmap/genetic_map.hpp"
 #include <progress.hpp>
+
 double ConstantGeneticMap::interpolate_post(const int pos)const {
   const std::string error_mess="position"+std::to_string(pos)+" is after final position";
   if (strict) {
@@ -141,3 +142,5 @@ Rcpp::NumericVector interpolate_genetic_map(const Rcpp::NumericVector &map,
 		   return (ref_map.interpolate(i)); });
   return (ret);
 }
+
+

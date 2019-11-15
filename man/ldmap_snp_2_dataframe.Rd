@@ -2,13 +2,13 @@
 % Please edit documentation in R/RcppExports.R
 \name{ldmap_snp_2_dataframe}
 \alias{ldmap_snp_2_dataframe}
-\title{Formatting method for ldmap snps}
+\title{Convert ldmap snp back to dataframe}
 \usage{
-ldmap_snp_2_dataframe(struct_vec)
+ldmap_snp_2_dataframe(ldmap_snp, alleles_to_character = FALSE)
 }
 \arguments{
-\item{struct_vec}{the vector of SNPs}
+\item{ldmap_snp}{the vector of SNPs}
 }
 \description{
-Formatting method for ldmap snps
+Convert ldmap snp back to dataframe
 }

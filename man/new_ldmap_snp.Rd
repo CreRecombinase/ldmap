@@ -7,8 +7,9 @@
 new_ldmap_snp(
   chrom = as.integer(c()),
   pos = as.numeric(c()),
-  ascii_ref = as.integer(c()),
-  ascii_alt = as.integer(c())
+  ref = as.integer(c()),
+  alt = as.integer(c()),
+  NA2N = FALSE
 )
 }
 \arguments{
@@ -16,7 +17,11 @@ new_ldmap_snp(
 
 \item{pos}{a double vector of positions}
 
-\item{ascii_ref}{an optional integer vector of alternate allele (see \code{?utf8ToInt})}
+\item{ref}{an optional vector of reference allele (see \code{?new_ldmap_allele})}
+
+\item{alt}{an optional vector of alternate allele (see \code{?new_ldmap_allele})}
+
+\item{NA2N}{an optional boolean specifying whether missing/NA alleles should be treated as "N"}
 }
 \description{
 Creation of new ldmap_snps

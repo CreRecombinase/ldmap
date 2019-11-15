@@ -4,10 +4,10 @@
 \alias{positions}
 \title{get positions from a ldmap_snp}
 \usage{
-positions(struct_vec)
+positions(ldmap_snp)
 }
 \arguments{
-\item{struct_vec}{the vector of SNPs}
+\item{ldmap_snp}{the vector of SNPs}
 }
 \description{
 get positions from a ldmap_snp

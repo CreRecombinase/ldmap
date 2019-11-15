@@ -25,7 +25,7 @@ sorted_snp_df <- function(chr, pos) {
 }
 
 #' Assign snps to regions of the genome, breaking up regions based on number of SNPs
-#' 
+#'
 #' @param ld_chr vector of chromosomes	of per region
 #' @param ld_start vector of start positions for each region
 #' @param ld_stop vector of end positions for each region
@@ -35,30 +35,70 @@ set_ld_region <- function(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max
     .Call('_ldmap_set_ld_region', PACKAGE = 'ldmap', ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max_size, min_size, assign_all)
 }
 
-join_ids <- function(index_a, index_b) {
-    .Call('_ldmap_join_ids', PACKAGE = 'ldmap', index_a, index_b)
+#' Creation of new ldmap_ranges
+#'
+#' @param chrom an integer vector of chromosomes
+#' @param start an integer vector of start positions
+#' @param stop an integer vector of stop positions
+#' @export
+new_ldmap_range <- function(chrom = as.integer( c()), start = as.integer( c()), end = as.integer( c())) {
+    .Call('_ldmap_new_ldmap_range', PACKAGE = 'ldmap', chrom, start, end)
+}
+
+#' formatting of ldmap_ranges
+#'
+#' @param ldmap_snp vector of ldmap_snps
+#' @param ldmap_range vector of ldmap_snps
+#' @export
+snp_in_range <- function(ldmap_snp, ldmap_range) {
+    .Call('_ldmap_snp_in_range', PACKAGE = 'ldmap', ldmap_snp, ldmap_range)
+}
+
+#' formatting of ldmap_ranges
+#'
+#' @param x an ldmap_range
+#' @export
+format_ldmap_range <- function(x) {
+    .Call('_ldmap_format_ldmap_range', PACKAGE = 'ldmap', x)
+}
+
+#' convert ldmap_range to dataframe
+#'
+#' @param ldmap_range an ldmap_range
+#' @export
+ldmap_range_2_data_frame <- function(ldmap_range) {
+    .Call('_ldmap_ldmap_range_2_data_frame', PACKAGE = 'ldmap', ldmap_range)
 }
 
 #' Creation of new ldmap_snps
-#' 
+#'
 #' @param chrom an integer vector of chromosomes
-#' @param pos a double vector of positions 
-#' @param ascii_ref an optional integer vector of reference allele (see `?utf8ToInt`)
-#' @param ascii_ref an optional integer vector of alternate allele (see `?utf8ToInt`)
-#' 
+#' @param pos a double vector of positions
+#' @param ref an optional vector of reference allele (see `?new_ldmap_allele`)
+#' @param alt an optional vector of alternate allele (see `?new_ldmap_allele`)
+#' @param NA2N an optional boolean specifying whether missing/NA alleles should be treated as "N"
+#'
 #' @export
-new_ldmap_snp <- function(chrom = as.integer( c()), pos = as.numeric( c()), ascii_ref = as.integer( c()), ascii_alt = as.integer( c())) {
-    .Call('_ldmap_new_ldmap_snp', PACKAGE = 'ldmap', chrom, pos, ascii_ref, ascii_alt)
+new_ldmap_snp <- function(chrom = as.integer( c()), pos = as.numeric( c()), ref = as.integer( c()), alt = as.integer( c()), NA2N = FALSE) {
+    .Call('_ldmap_new_ldmap_snp', PACKAGE = 'ldmap', chrom, pos, ref, alt, NA2N)
 }
 
-#' Formatting method for ldmap snps
+#' Which SNPs are strand ambiguous
 #'
-#' @param x a vector of ldmap_snps
-#' @method format ldmap_snp
+#' @param x the ldmap_snp struct
+#'
 #' @export
-#' @export format.ldmap_snp
-format.ldmap_snp <- function(x) {
-    .Call('_ldmap_format_ldmap_snp', PACKAGE = 'ldmap', x)
+is_strand_ambiguous <- function(x) {
+    .Call('_ldmap_is_strand_ambiguous', PACKAGE = 'ldmap', x)
+}
+
+#' Convert allele info to ldmap_alleles
+#'
+#' @param allele vector of alleles, coded either as character, integer or raw
+#'
+#' @export
+new_ldmap_allele <- function(allele = as.integer( c())) {
+    .Call('_ldmap_new_ldmap_allele', PACKAGE = 'ldmap', allele)
 }
 
 #' sorting method for ldmap snps
@@ -83,7 +123,7 @@ rank.ldmap_snp <- function(struct_vec) {
     .Call('_ldmap_rank_snps', PACKAGE = 'ldmap', struct_vec)
 }
 
-#' get chroms from a ldmap_snp
+#' get chroms from a ldmap_snp 
 #'
 #' @param struct_vec the vector of SNPs
 #'
@@ -94,38 +134,71 @@ chromosomes <- function(struct_vec) {
 
 #' get positions from a ldmap_snp
 #'
-#' @param struct_vec the vector of SNPs
+#' @param ldmap_snp the vector of SNPs
 #'
 #' @export
-positions <- function(struct_vec) {
-    .Call('_ldmap_positions', PACKAGE = 'ldmap', struct_vec)
+positions <- function(ldmap_snp) {
+    .Call('_ldmap_positions', PACKAGE = 'ldmap', ldmap_snp)
 }
 
 #' get ref alleles from a ldmap_snp
 #'
-#' @param struct_vec the vector of SNPs
+#' @param ldmap_snp the vector of SNPs
 #'
 #' @export
-ref_alleles <- function(struct_vec, as_ascii_int = TRUE) {
-    .Call('_ldmap_ref_alleles', PACKAGE = 'ldmap', struct_vec, as_ascii_int)
+ref_alleles <- function(ldmap_snp, as_ldmap_allele = TRUE) {
+    .Call('_ldmap_ref_alleles', PACKAGE = 'ldmap', ldmap_snp, as_ldmap_allele)
 }
 
 #' get ref alleles from a ldmap_snp
 #'
-#' @param struct_vec the vector of SNPs
+#' @param x ldmap allele vec
 #'
 #' @export
-alt_alleles <- function(struct_vec, as_ascii_int = TRUE) {
-    .Call('_ldmap_alt_alleles', PACKAGE = 'ldmap', struct_vec, as_ascii_int)
+format_ldmap_allele <- function(x) {
+    .Call('_ldmap_format_ldmap_allele', PACKAGE = 'ldmap', x)
 }
 
-#' Formatting method for ldmap snps
+#' coerce ldmap allele to integer
 #'
-#' @param struct_vec the vector of SNPs
+#' @param x ldmap_allele vec
+#'
+as_integer_ldmap_allele <- function(x) {
+    .Call('_ldmap_as_integer_ldmap_allele', PACKAGE = 'ldmap', x)
+}
+
+#' coerce ldmap range to integer(64)
+#'
+#' @param x ldmap_range vec
+#'
+as_integer_ldmap_range <- function(x) {
+    .Call('_ldmap_as_integer_ldmap_range', PACKAGE = 'ldmap', x)
+}
+
+#' coerce ldmap snp to integer(64)
+#'
+#' @param x ldmap_snp vec
+#'
+as_integer_ldmap_snp <- function(x) {
+    .Call('_ldmap_as_integer_ldmap_snp', PACKAGE = 'ldmap', x)
+}
+
+#' get ref alleles from a ldmap_snp
+#'
+#' @param ldmap_snp the vector of SNPs
 #'
 #' @export
-ldmap_snp_2_dataframe <- function(struct_vec) {
-    .Call('_ldmap_ldmap_snp_2_dataframe', PACKAGE = 'ldmap', struct_vec)
+alt_alleles <- function(ldmap_snp, as_ldmap_allele = TRUE) {
+    .Call('_ldmap_alt_alleles', PACKAGE = 'ldmap', ldmap_snp, as_ldmap_allele)
+}
+
+#' Convert ldmap snp back to dataframe
+#'
+#' @param ldmap_snp the vector of SNPs
+#'
+#' @export
+ldmap_snp_2_dataframe <- function(ldmap_snp, alleles_to_character = FALSE) {
+    .Call('_ldmap_ldmap_snp_2_dataframe', PACKAGE = 'ldmap', ldmap_snp, alleles_to_character)
 }
 
 #' Find SNPs that match (and find out what to do with them)
@@ -136,6 +209,37 @@ ldmap_snp_2_dataframe <- function(struct_vec) {
 #' @export
 join_snp <- function(query, reference, rsid = as.integer( c())) {
     .Call('_ldmap_join_snp', PACKAGE = 'ldmap', query, reference, rsid)
+}
+
+#' Extract alternate allele from
+#'
+#' @param ref reference sequence (as obtained from a reference genome fasta file)
+#' @param alleles_as_ambig IUPAC ambiguity codes representing alleles
+#'
+#' @export
+extract_alt <- function(ref, alleles_as_ambig) {
+    .Call('_ldmap_extract_alt', PACKAGE = 'ldmap', ref, alleles_as_ambig)
+}
+
+fast_str2int <- function(input, offset = 0L, prefix = "", na_val = NA_integer_) {
+    .Call('_ldmap_fast_str2int', PACKAGE = 'ldmap', input, offset, prefix, na_val)
+}
+
+#' Create ambiguity codes from two alleles
+#'
+#' @param A1 allele 1
+#' @param A2 allele 2
+#'
+#' @export
+make_ambig <- function(A1, A2) {
+    .Call('_ldmap_make_ambig', PACKAGE = 'ldmap', A1, A2)
+}
+
+#' Formatting method for ldmap snps
+#'
+#' @param x a vector of ldmap_snps
+format_ldmap_snp <- function(x) {
+    .Call('_ldmap_format_ldmap_snp', PACKAGE = 'ldmap', x)
 }
 
 #' Determine whether 2 alleles are compatible

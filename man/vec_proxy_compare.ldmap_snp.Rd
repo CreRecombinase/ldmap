@@ -7,10 +7,12 @@
 \method{vec_proxy_compare}{ldmap_snp}(x, ...)
 }
 \arguments{
-\item{...}{}
+\item{x}{a vector of ldmap_snps}
+
+\item{...}{unused}
 }
 \value{
-
+a ranking of ldmap_snps
 }
 \description{
 Comparison method
