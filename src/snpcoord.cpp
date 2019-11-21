@@ -3,7 +3,6 @@
 
 #include "ldmap/genetic_map.hpp"
 #include "Rinternals.h"
-#include <execution>
 #include <numeric>
 #include "alleles.hpp"
 
