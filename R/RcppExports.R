@@ -14,6 +14,10 @@ interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE, pro
     .Call('_ldmap_interpolate_genetic_map', PACKAGE = 'ldmap', map, map_pos, target_pos, strict, progress)
 }
 
+parse_ldmap_range <- function(input) {
+    .Call('_ldmap_parse_ldmap_range', PACKAGE = 'ldmap', input)
+}
+
 #' Find out of vector of SNPs is sorted
 #' 
 #' @param chr vector of chromosomes	of per region
@@ -45,10 +49,11 @@ new_ldmap_range <- function(chrom = as.integer( c()), start = as.integer( c()), 
     .Call('_ldmap_new_ldmap_range', PACKAGE = 'ldmap', chrom, start, end)
 }
 
-#' formatting of ldmap_ranges
+#' Assign SNPs to ranges
 #'
-#' @param ldmap_snp vector of ldmap_snps
-#' @param ldmap_range vector of ldmap_snps
+#' @param ldmap_snp vector of ldmap_snps (must be sorted)
+#' @param ldmap_range vector of non-overlapping ldmap_ranges (must be sorted)
+#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_range`
 #' @export
 snp_in_range <- function(ldmap_snp, ldmap_range) {
     .Call('_ldmap_snp_in_range', PACKAGE = 'ldmap', ldmap_snp, ldmap_range)
@@ -60,6 +65,51 @@ snp_in_range <- function(ldmap_snp, ldmap_range) {
 #' @export
 format_ldmap_range <- function(x) {
     .Call('_ldmap_format_ldmap_range', PACKAGE = 'ldmap', x)
+}
+
+#' Assign SNPs to ranges
+#'
+#' @param ldmap_snp vector of ldmap_snps (must be sorted)
+#' @param ldmap_range vector of potentially overlapping ldmap_ranges (must be sorted)
+#' @return a list of integer vectors giving the ranges to which each SNP belongs
+#' @export
+match_ranges_snps <- function(df, ldmap_range, snp_col = "snp_struct") {
+    .Call('_ldmap_match_ranges_snps', PACKAGE = 'ldmap', df, ldmap_range, snp_col)
+}
+
+#' Create overlapping regions based on monotonic, point-level annotation
+#'
+#' @param ldmap_snp a (sorted) ldmap_snp vector (`length(ldmap_snp)` is referred to  as  `p`)
+#' @param cm a numeric vector of (length `p`) per-snp annotations (e.g cumulative recombination rate)
+#' @param window the window width.
+#'
+#' @return a vector of `ldmap_range`s of length `p` giving the window for each SNP.  The width of the window
+#' is defined for a target snp `ldmap_snp[i]`, as having the chromosome
+#' from `ldmap_snp[i]` and including the position of all `ldmap_snp[j]` snps such that `abs(cm[i]-cm[j])<window` for all values of `j`
+#' @export
+window_ldmap_range <- function(ldmap_snp, cm, window = 1.0) {
+    .Call('_ldmap_window_ldmap_range', PACKAGE = 'ldmap', ldmap_snp, cm, window)
+}
+
+#' Take a vector of (preferably) sorted and (possibly) overlapping ldmap_ranges and create a new range of (sorted) non-overlapping ldmap_ranges
+#'
+#' @param x a (preferably sorted) ldmap_range vector (`length(x)` is referred to  as  `p`)
+#'
+#' @export
+#' @return a sorted vector ldmap_ranges of length at least `p` and at most `2p`(?) representing the same intervals
+split_ldmap_range_overlap <- function(x) {
+    .Call('_ldmap_split_ldmap_range_overlap', PACKAGE = 'ldmap', x)
+}
+
+#' Merge two ldmap_range vectors
+#'
+#' @param x a (preferably sorted) ldmap_range vector (`length(x)` is referred to  as  `p`)
+#' @param y a (preferably sorted) ldmap_range vector (`length(y)` is referred to  as  `q`)
+#'
+#' @return a sorted vector ldmap_ranges of length at most `p+q` and at least `max(p,q)` representing the union of the two sets of ranges
+#' @export
+merge_ldmap_ranges <- function(x, y) {
+    .Call('_ldmap_merge_ldmap_ranges', PACKAGE = 'ldmap', x, y)
 }
 
 #' convert ldmap_range to dataframe

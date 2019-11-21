@@ -1,10 +1,12 @@
 #pragma once
 // #include <bits/stdint-intn.h>
 // #include <bits/stdint-uintn.h>
+#include <algorithm>
+
+#include <boost/icl/discrete_interval.hpp>
+#include <boost/icl/interval_bounds.hpp>
 #include <cstdint>
-#ifndef EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
-#define EIGEN_PERMANENTLY_DISABLE_STUPID_WARNINGS
-#endif
+#include <boost/icl/split_interval_set.hpp>
 #include <optional>
 #include <cstring>
 #include <tuple>
@@ -331,22 +333,24 @@ class Region;
 class SNP{
 public:
   Snp snp;
-  // SNP(const unsigned char chrom, const uint64_t pos, const Nuc ref, const Nuc alt) noexcept:
-  //   snp({.str={.chrom=chrom,.pos=pos,.ref=ref.let,.alt=alt.let}}){
 
-    // if(ref.is_ambiguous() || ref.is_NA()){
-    //   throw std::invalid_argument("Ref allele: "+std::string(Nuc2string(ref))+" cannot be ambiguous (or NA) with ambigRef=false");
-    // }
-  // }
-  // SNP(const unsigned char chrom, const uint64_t pos) noexcept:
-  //   snp({chrom,pos,'\0','\0'}){
-  // }
-  // SNP(double data) noexcept{
-  //   snp.dat=bit_cast<int64_t>(data);
-  // }
-  // SNP(std::int64_t dat) noexcept{
-  //   snp.dat=dat;
-  // }
+    static constexpr SNP  make_snp(const double &x) noexcept{
+      return SNP{.snp={.flt=x}};
+    }
+
+  constexpr unsigned char chrom() const noexcept{
+    return snp.str.chrom;
+  }
+  constexpr uint64_t start() const noexcept {
+    return snp.str.pos;
+  }
+  constexpr uint64_t end() const noexcept{
+    return snp.str.pos+1;
+  }
+  boost::icl::discrete_interval<uint64_t> interval() const{
+    return boost::icl::construct<boost::icl::discrete_interval<uint64_t>>(snp.str.pos,snp.str.pos+1,boost::icl::interval_bounds::left_open());
+  }
+
 
   template<bool NA2N>
   static constexpr SNP  make_snp(const unsigned char chrom, const uint64_t pos, const Nuc ref, const Nuc alt) noexcept{
@@ -405,6 +409,11 @@ public:
 
 
 
+
+
+
+
+
   double to_double() const{
     return snp.flt;
   }
@@ -450,13 +459,48 @@ class Region{
   public:
   bed_range br;
 
+  constexpr unsigned char chrom() const noexcept{
+    return br.str.chrom;
+  }
+  constexpr uint64_t start() const noexcept {
+    return br.str.start;
+  }
+  constexpr uint64_t end() const noexcept{
+    return br.str.end;
+  }
+  boost::icl::discrete_interval<uint64_t> interval() const{
+    return boost::icl::construct<boost::icl::discrete_interval<uint64_t>>(br.str.start,br.str.end,boost::icl::interval_bounds::left_open());
+  }
+
+
+  static constexpr Region make_Region(const double x) noexcept{
+    return Region{.br={.flt=x}};
+  }
+
+  static constexpr Region make_Region(const SNP& a,const SNP& b) noexcept{
+    if( a.snp.str.chrom!=b.snp.str.chrom)
+      return Region{.br={.str={.end=0,
+                               .start=0,
+                               .chrom=0}}};
+    return Region{.br={.str={.end=b.snp.str.pos+1,
+                             .start=a.snp.str.pos,
+                             .chrom=a.snp.str.chrom}}};
+  }
+  constexpr SNP start_SNP() const noexcept{
+
+    return SNP::make_snp<true>(chrom(),start());
+  }
+  constexpr SNP end_SNP() const noexcept{
+    return SNP::make_snp<true>(chrom(),end());
+  }
+
   // constexpr Region(const unsigned char chrom, const uint64_t offset,const uint64_t size)noexcept :br({chrom,offset,size}){}
   // constexpr Region(std::int64_t data):br({.dat=data}){
   // }
-  constexpr bool operator ==(const Region& other)const{
+  constexpr bool operator ==(const Region& other)const noexcept{
     return this->br.dat==other.br.dat;
   }
-  constexpr bool operator!=(const Region& other)const{
+  constexpr bool operator!=(const Region& other)const noexcept{
     return this->br.dat!=other.br.dat;
   }
   // constexpr bool operator<=(const Region& other)const{
@@ -465,12 +509,69 @@ class Region{
   // constexpr bool operator>=(const Region& other)const{
   //   return this->br.dat >= other.br.dat;
   // }
-  constexpr bool operator<(const Region& other)const{
+  constexpr bool operator<(const Region& other)const noexcept{
     return this->br.dat < other.br.dat;
   }
-  constexpr bool operator>(const Region& other)const{
+  constexpr bool operator>(const Region& other)const noexcept{
     return this->br.dat > other.br.dat;
   }
+
+  constexpr Region operator|(const Region &other) const noexcept{
+
+    if(this->br.str.chrom!=other.br.str.chrom){
+      return Region{.br={.dat=0}};
+    }
+    auto [sa,sb] = std::minmax(*this,other);
+    if( sa.br.str.end < sb.br.str.start){
+      return Region{.br={.dat=0}};
+    }
+    return Region{.br={.str={.end=sb.br.str.end,
+                             .start=sa.br.str.start,
+                             .chrom=sa.br.str.chrom}}};
+  }
+  constexpr Region operator|=(const Region &other) noexcept{
+
+    if(this->br.str.chrom!=other.br.str.chrom){
+      this->br.dat=0;
+      return *this;
+    }
+    auto [sa,sb] = std::minmax(*this,other);
+    if( sa.br.str.end < sb.br.str.start){
+      this->br.dat=0;
+      return *this;
+    }
+    this->br.str={.end=sb.br.str.end,
+                  .start=sa.br.str.start,
+                  .chrom=sa.br.str.chrom};
+    return *this;
+  }
+  constexpr bool overlap(const Region &other) const noexcept{
+
+    if(this->br.str.chrom!=other.br.str.chrom)
+      return false;
+
+    auto [sa,sb] = std::minmax(*this,other);
+    return sa.br.str.end > sb.br.str.start;
+  }
+
+  constexpr bool overlap(const SNP &other) const noexcept{
+
+    if(this->br.str.chrom!=other.snp.str.chrom)
+      return false;
+    return (this->br.str.start <= other.snp.str.pos && other.snp.str.pos < this->br.str.end);
+  }
+
+  std::optional<Region> operator+(const SNP &other) {
+
+    if(this->br.str.chrom!=other.snp.str.chrom){
+      return std::nullopt;
+    }
+    return Region{.br={.str={.end=std::max(this->br.str.end,other.snp.str.pos+1),
+                        .start=std::min(this->br.str.start,other.snp.str.pos),
+                             .chrom=this->br.str.chrom}}};
+  }
+
+
   constexpr bool operator==(const SNP& other)const{
     return (this->br.str.chrom==other.snp.str.chrom) and (this->br.str.start <= other.snp.str.pos) and (this->br.str.end > other.snp.str.pos);
   }
@@ -480,6 +581,7 @@ class Region{
   constexpr bool operator>(const SNP& other)const{
     return std::tie(this->br.str.chrom,this->br.str.start) > std::tie(other.snp.str.chrom,other.snp.str.pos);
   }
+
   friend SNP;
 
 };

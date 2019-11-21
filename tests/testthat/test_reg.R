@@ -35,7 +35,17 @@ context("assigning to ld region")
     ld_df <- dplyr::mutate(ld_df,ldmr=new_ldmap_range(chrom = as.integer(gsub("chr","",chr)),start=start,end = stop))
     id_assignment <- snp_df$region_id
     
-    snp_df <- dplyr::mutate(snp_df,result=snp_in_range(ldmap_snp = snp_struct,ldmap_range = ld_df$ldmr)) 
+    snp_df <- dplyr::mutate(snp_df,result=snp_in_range(ldmap_snp = snp_struct,ldmap_range = ld_df$ldmr)) %>% 
+      dplyr::arrange(rank.ldmap_snp(snp_struct)) %>% 
+      dplyr::mutate(ldmap=cumsum(runif(dplyr::n())))
+    tmap <- window_ldmap_range(ldmap_snp = snp_df$snp_struct,cm = snp_df$ldmap)
+
+    snp_l <- match_ranges_snps(snp_df,ld_df$ldmr)
+    expect_equal(as_ldmap_range(names(snp_l)),ld_df$ldmr)
+    snpl_r <- purrr::map_dbl(snp_l,function(x){new_ldmap_range(chrom=x$chrom[1],start=min(x$pos),end=max(x$pos)+1)}) %>% 
+      as_ldmap_range()
+    
+    testthat::expect_equal(unname(lengths(ld_df$snps)),ld_df$snp_ct)
     testthat::expect_equal(snp_df$result,snp_df$region_id)
     
   })
@@ -56,7 +66,20 @@ test_that("Check for assigning SNPs to blocks",{
 })
 
 
-# 
+test_that("can merge regions",{
+  
+  split_ldf_1 <- ld_df$ldmr[1:nrow(ld_df)%%2==0]
+  split_ldf_2 <- ld_df$ldmr[1:nrow(ld_df)%%2!=0]
+  result <- merge_ldmap_ranges(split_ldf_1,split_ldf_2)  
+  expect_equal(result,ld_df$ldmr)
+  
+})
+
+
+
+ 
+
+
 # test_that("Check for finding SNPs works with all snps",{
 #   
 # 

@@ -1,5 +1,5 @@
 #pragma once
-#include <RcppEigen.h>
+#include <Rcpp.h>
 class ConstantGeneticMap{
   const bool strict;
   using	idmap=std::map<int,double>;

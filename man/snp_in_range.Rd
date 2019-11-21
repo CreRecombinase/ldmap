@@ -2,15 +2,18 @@
 % Please edit documentation in R/RcppExports.R
 \name{snp_in_range}
 \alias{snp_in_range}
-\title{formatting of ldmap_ranges}
+\title{Assign SNPs to ranges}
 \usage{
 snp_in_range(ldmap_snp, ldmap_range)
 }
 \arguments{
-\item{ldmap_snp}{vector of ldmap_snps}
+\item{ldmap_snp}{vector of ldmap_snps (must be sorted)}
 
-\item{ldmap_range}{vector of ldmap_snps}
+\item{ldmap_range}{vector of non-overlapping ldmap_ranges (must be sorted)}
+}
+\value{
+a vector of integers of length \code{length(ldmap_snp)} with the index of the \code{ldmap_range}
 }
 \description{
-formatting of ldmap_ranges
+Assign SNPs to ranges
 }

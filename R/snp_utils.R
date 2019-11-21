@@ -99,7 +99,12 @@ format.ldmap_snp <- function(x, ...) {
 #' @export
 #'
 #' @examples
-match_ref_panel <- function(gwas_df, ref_snp_struct, rsid = integer(), remove_ambig = FALSE, snp_struct_col = "snp_struct", flip_sign_col = c("beta")) {
+match_ref_panel <- function(gwas_df,
+                            ref_snp_struct,
+                            rsid = integer(),
+                            remove_ambig = FALSE,
+                            snp_struct_col = "snp_struct",
+                            flip_sign_col = c("beta")) {
   snp_struct <- gwas_df[[snp_struct_col]]
   stopifnot(!is.null(snp_struct), inherits(snp_struct, "ldmap_snp"))
   if (remove_ambig) {
@@ -110,7 +115,12 @@ match_ref_panel <- function(gwas_df, ref_snp_struct, rsid = integer(), remove_am
   gwas_df <- dplyr::arrange(gwas_df, rank.ldmap_snp(snp_struct))
   snp_struct <- gwas_df[[snp_struct_col]]
   match_df <- dplyr::bind_cols(gwas_df, join_snp(snp_struct, ref_snp_struct, rsid = rsid))
-  match_df <- dplyr::mutate_at(match_df, dplyr::vars(flip_sign_col), ~ dplyr::if_else(match_type %in% c("reverse_match", "reverse_ambig_match"), ., -.))
+  match_df <- dplyr::mutate_at(
+                         match_df,
+                         dplyr::vars(flip_sign_col),
+                         ~ dplyr::if_else(
+                                      match_type %in% c("reverse_match", "reverse_ambig_match"),
+                                      ., -.))
   return(match_df)
 }
 
@@ -122,18 +132,22 @@ vec_cast.ldmap_snp.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "") x
 #' @export vec_cast.ldmap_snp.double
 #' @export
 #' @method vec_cast.ldmap_snp double
-vec_cast.ldmap_snp.double <- function(x, to, ..., x_arg = "", to_arg = "") structure(vctrs::vec_data(x), class = c("ldmap_snp", "vctrs_vctr"))
+vec_cast.ldmap_snp.double <- function(x, to, ..., x_arg = "", to_arg = "")
+    structure(vctrs::vec_data(x), class = c("ldmap_snp", "vctrs_vctr"))
 
 #' @export vec_cast.double.ldmap_snp
 #' @export
 #' @method vec_cast.double ldmap_snp
-vec_cast.double.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "") vctrs::vec_data(x)
+vec_cast.double.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
+    vctrs::vec_data(x)
 
 
 #' @export
 as_ldmap_snp <- function(x) {
   vec_cast(x, new_ldmap_snp())
 }
+
+
 
 
 #' Comparison method
@@ -175,7 +189,7 @@ explode_snp_struct <- function(df, snpcol = NA_character_, alleles_to_character 
   if (remove) {
     df <- df[, colnames(df) != snpcol]
   }
-  return(dplyr::bind_cols(df, ldmap_snp_2_dataframe(snpc,alleles_to_character)))
+  return(dplyr::bind_cols(df, ldmap_snp_2_dataframe(snpc, alleles_to_character)))
 }
 
 
@@ -203,14 +217,16 @@ compact_snp_struct <- function(df, chrom = "chrom", pos = "pos", ref = "ref", al
   
   
   use_alt <- !is.na(alt)
-  if(use_alt && !use_ref){
+  if(use_alt && !use_ref) {
     warning("'ref' was explicitly skipped by being set to NA, but alt was specified or left default, `alt` is being skipped as well")
     use_alt <- FALSE    
   }
   
   
   if(use_ref && (!c(ref) %in% colnames(df))){
-    warn(paste0("ref column: ",ref," not found in colnames(df), skipping both alleles"))
+      warn(paste0("ref column: ",
+                  ref,
+                  " not found in colnames(df), skipping both alleles"))
     use_ref <- FALSE
     use_alt <- FALSE
     nref <- nalt <- NA_character_
@@ -219,14 +235,15 @@ compact_snp_struct <- function(df, chrom = "chrom", pos = "pos", ref = "ref", al
     nalt <- alt
   }
   
-  if(use_alt && (!c(alt) %in% colnames(df))){
-    warn(paste0("alt column: ",alt," not found in colnames(df), skipping alt allele"))
+  if(use_alt && (!c(alt) %in% colnames(df))) {
+      warn(paste0("alt column: ",
+                  alt,
+                  " not found in colnames(df), skipping alt allele"))
     use_alt <- FALSE
     nalt <- NA_character_
   }else{
     nalt <- alt
   }
-
   df[[snp_struct]] <- new_ldmap_snp(
     chrom = df[[chrom]],
     pos = df[[pos]],
@@ -240,9 +257,6 @@ compact_snp_struct <- function(df, chrom = "chrom", pos = "pos", ref = "ref", al
   ucols <- ucols[!is.na(ucols)]
   return(dplyr::select(df, -dplyr::one_of(ucols)))
 }
-
-
-
 
 
 #' @method vec_ptype2 ldmap_allele
@@ -266,8 +280,6 @@ vec_ptype2.ldmap_allele.character <- function(x, y, ...) character()
 #' @method vec_ptype2.character ldmap_allele
 #' @export
 vec_ptype2.character.ldmap_allele <- function(x, y, ...) character()
-
-
 
 
 #' @export vec_ptype2.ldmap_allele.integer
@@ -340,10 +352,6 @@ vec_cast.integer.ldmap_allele <- function(x, to, ...) {
 
 
 
-
-
-
-
 #' Formatting method for ldmap allele
 #'
 #' @param x ldmap_snp
@@ -355,6 +363,60 @@ vec_cast.integer.ldmap_allele <- function(x, to, ...) {
 format.ldmap_allele <- function(x, ...) {
   format_ldmap_allele(x)
 }
+
+
+
+
+#' @export
+as_ldmap_range <- function(x) {
+  vec_cast(x, new_ldmap_range())
+}
+
+
+
+#' @export vec_cast.ldmap_range
+#' @method vec_cast ldmap_range
+#' @export
+vec_cast.ldmap_range <- function(x, to, ...) {
+  UseMethod("vec_cast.ldmap_range")
+}
+
+
+#' @export vec_cast.ldmap_range.default
+#' @method vec_cast.ldmap_range default
+#' @export
+vec_cast.ldmap_range.default <- function(x, to, ...) {
+  vec_default_cast(x, to)
+}
+
+
+#' @export vec_cast.double.ldmap_range
+#' @export
+#' @method vec_cast.double ldmap_range
+vec_cast.double.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
+    vctrs::vec_data(x)
+
+
+
+#' @export vec_cast.character.ldmap_range
+#' @export
+#' @method vec_cast.character ldmap_range
+vec_cast.character.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
+    format_ldmap_range(x)
+
+
+#' @export vec_cast.ldmap_range.character
+#' @export
+#' @method vec_cast.ldmap_range character
+vec_cast.ldmap_range.character <- function(x, to, ..., x_arg = "", to_arg = "")
+    parse_ldmap_range(x)
+
+
+#' @export vec_cast.ldmap_range.double
+#' @export
+#' @method vec_cast.ldmap_range double
+vec_cast.ldmap_range.double <- function(x, to, ..., x_arg = "", to_arg = "")
+    structure(vctrs::vec_data(x), class = c("ldmap_range", "vctrs_vctr"))
 
 
 
@@ -370,3 +432,26 @@ format.ldmap_allele <- function(x, ...) {
 format.ldmap_range <- function(x, ...) {
   format_ldmap_range(x)
 }
+
+
+
+
+
+#' @method vec_ptype2 ldmap_range
+#' @export
+#' @export vec_ptype2.ldmap_range
+#'
+vec_ptype2.ldmap_range <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_range", y)
+
+
+#' @method vec_ptype2.ldmap_range ldmap_range
+#' @export
+vec_ptype2.ldmap_range.ldmap_range <- function(x, y, ...) new_ldmap_range()
+
+#' @method vec_ptype2.ldmap_range double
+#' @export
+vec_ptype2.ldmap_range.double <- function(x, y, ...) double()
+
+#' @method vec_ptype2.double ldmap_range
+#' @export
+vec_ptype2.double.ldmap_range <- function(x, y, ...) double()

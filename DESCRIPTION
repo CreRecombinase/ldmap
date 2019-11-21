@@ -2,10 +2,10 @@ Package: ldmap
 Title: Manipulate SNP coordinates and Interpolate Genetic Map Data
 Version: 1.0.1
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Nicholas",
+           family = "Knoblauch",
            role = c("aut", "cre"),
-           email = "first.last@example.com")
+           email = "nwknoblauch@gmail.com")
 Description: What the package does (one paragraph).
 License: GPL-3
 Encoding: UTF-8
@@ -18,8 +18,8 @@ Imports:
     vctrs,
     magrittr,
     fs
-LinkingTo: 
-    RcppEigen,
+LinkingTo:
+    BH,     
     RcppProgress,
     RcppParallel,
     Rcpp

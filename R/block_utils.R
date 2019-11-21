@@ -146,3 +146,36 @@ query_reference_snpset <- function(query_chr,query_pos,query_allele,query_block=
   dplyr::pull(ij_df,allele_match)
 
 }
+
+
+
+#' Estimate LD scores from the LD matrix
+#'
+#' @param R a pxp LD matrix (as obtained from `estimate_LD`)
+#' @param N a scalar representing the number of samples in the reference panel
+#'
+#' @return A length p vector with LD scores at each locus
+#' @export
+#'
+#' @examples
+#' data(reference_genotype)
+#' data(reference_map)
+#' R <- estimate_LD(reference_panel=reference_genotype,map=reference_map)
+#' L2 <- estimate_LDscores(R,nrow(reference_genotype))
+estimate_LDscores <- function(R,N){
+  denom <- ifelse(N>2,N-2,N)
+    if(inherits(R,"Matrix")||inherits(R,"matrix")){
+        L2 <- apply(R^2-(1-R^2)/denom,2,sum)
+    }else{
+        if(inherits(R,"data.frame")){
+            L2 <- purrr::map_dbl(R$data,~sum(.x$r^2-(1-.x$r^2)/denom))-1
+        }else{
+            stop("R must be a data.frame,matrix or Matrix")
+        }
+    }
+  return(L2)
+}
+
+
+
+
