@@ -2,7 +2,6 @@
 "_PACKAGE"
 ## usethis namespace: start
 #' @useDynLib ldmap
-#' @import RcppEigen
 #' @import vctrs
 #' @import rlang
 #' @importFrom Rcpp evalCpp

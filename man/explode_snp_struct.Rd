@@ -2,8 +2,15 @@
 % Please edit documentation in R/snp_utils.R
 \name{explode_snp_struct}
 \alias{explode_snp_struct}
-\title{convert snp struct back into seperate columns}
+\title{convert ldmap_range back in to individual columns}
 \usage{
+explode_snp_struct(
+  df,
+  snpcol = NA_character_,
+  alleles_to_character = FALSE,
+  remove = TRUE
+)
+
 explode_snp_struct(
   df,
   snpcol = NA_character_,
@@ -15,13 +22,21 @@ explode_snp_struct(
 \item{df}{dataframe with at least one ldmap_snp_struct}
 
 \item{snpcol}{}
+
+\item{remove}{boolean indicating whether \code{ldmap_range}
+column should be removed}
 }
 \value{
 
+
+
 }
 \description{
+convert ldmap_range back in to individual columns
+
 convert snp struct back into seperate columns
 }
 \examples{
+
 
 }

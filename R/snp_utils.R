@@ -20,13 +20,13 @@ vec_proxy_equal.ldmap_allele <- function(x, ...) {
 }
 
 
-make_annots <- function(ldmap_snp,...){
-  other_regions <- rlang::list2(...)
-}
+## make_annots <- function(ldmap_snp,...){
+##   other_regions <- rlang::list2(...)
+## }
 
-make_annot <- function(points,regions){
-  return(as.integer(!is.na(snp_in_range(points,regions))))
-}
+## make_annot <- function(points,regions){
+##   return(as.integer(!is.na(snp_in_range(points,regions))))
+## }
 
 
 
@@ -166,28 +166,69 @@ vec_proxy_compare.ldmap_snp <- function(x, ...) {
 
 
 
-#' convert snp struct back into seperate columns
+
+
+#' convert ldmap_range back in to individual columns
 #'
 #' @param df dataframe with at least one ldmap_snp_struct
-#' @param snpcol
+#' @param ldmap_range
+#' @param remove boolean indicating whether `ldmap_range`
+#' column should be removed
 #'
 #' @return
 #' @export
 #'
 #' @examples
 #'
-explode_snp_struct <- function(df, snpcol = NA_character_, alleles_to_character = FALSE, remove = TRUE) {
-  if (is.na(snpcol)) {
-    snpcol <- colnames(df)[purrr::map_lgl(df, ~ inherits(.x, "ldmap_snp"))]
+explode_ldmap_range <- function(df,
+                                ldmap_range = NA_character_,
+                                remove = TRUE) {
+  if (is.na(ldmap_range)) {
+    ldmap_range <- colnames(df)[purrr::map_lgl(df, ~ inherits(.x, "ldmap_range"))]
   }
-  if (length(snpcol) > 1) {
-    warning("Multiple ldmap_snp columns detected, and `snpcol` was not specified, using the first: ", snpcol[1])
-    snpcol <- snpcol[1]
+  if (length(ldmap_range) > 1) {
+      warning("Multiple ldmap_range columns detected,\
+ and `ldmap_range` was not specified, using the first: ",
+ ldmap_range[1])
+      ldmap_range <- ldmap_range[1]
   }
 
-  snpc <- df[[snpcol]]
+  ldr <- df[[snpcol]]
   if (remove) {
-    df <- df[, colnames(df) != snpcol]
+      df <- df[, colnames(df) != ldmap_range]
+  }
+  return(dplyr::bind_cols(df, ldmap_range_2_data_frame(ldr)))
+}
+
+
+
+
+
+#' convert snp struct back into seperate columns
+#'
+#' @param df dataframe with at least one ldmap_snp_struct
+#' @param ldmap_snp
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#'
+explode_snp_struct <- function(df,
+                               ldmap_snp = NA_character_,
+                               alleles_to_character = FALSE, remove = TRUE) {
+  if (is.na(ldmap_snp)) {
+    ldmap_snp <- colnames(df)[purrr::map_lgl(df, ~ inherits(.x, "ldmap_snp"))]
+  }
+  if (length(ldmap_snp) > 1) {
+    warning("Multiple ldmap_snp columns detected,\
+ and `ldmap_snp` was not specified, using the first: ", ldmap_snp[1])
+    ldmap_snp <- ldmap_snp[1]
+  }
+
+  snpc <- df[[ldmap_snp]]
+  if (remove) {
+    df <- df[, colnames(df) != ldmap_snp]
   }
   return(dplyr::bind_cols(df, ldmap_snp_2_dataframe(snpc, alleles_to_character)))
 }
@@ -210,20 +251,27 @@ explode_snp_struct <- function(df, snpcol = NA_character_, alleles_to_character 
 #' @export
 #'
 #' @examples
-compact_snp_struct <- function(df, chrom = "chrom", pos = "pos", ref = "ref", alt = "alt", snp_struct = "snp_struct", remove = TRUE) {
+compact_snp_struct <- function(df,
+                               chrom = "chrom",
+                               pos = "pos",
+                               ref = "ref",
+                               alt = "alt",
+                               snp_struct = "snp_struct",
+                               remove = TRUE) {
   stopifnot(all(c(chrom, pos) %in% colnames(df)))
-  
+
   use_ref <- !is.na(ref)
-  
-  
+
+
   use_alt <- !is.na(alt)
-  if(use_alt && !use_ref) {
-    warning("'ref' was explicitly skipped by being set to NA, but alt was specified or left default, `alt` is being skipped as well")
-    use_alt <- FALSE    
+  if (use_alt && !use_ref) {
+    warning("'ref' was explicitly skipped by being set to NA\
+, but alt was specified or left default, `alt` is being skipped as well")
+    use_alt <- FALSE
   }
-  
-  
-  if(use_ref && (!c(ref) %in% colnames(df))){
+
+
+  if (use_ref && (!c(ref) %in% colnames(df))){
       warn(paste0("ref column: ",
                   ref,
                   " not found in colnames(df), skipping both alleles"))
@@ -234,8 +282,8 @@ compact_snp_struct <- function(df, chrom = "chrom", pos = "pos", ref = "ref", al
     nref <- ref
     nalt <- alt
   }
-  
-  if(use_alt && (!c(alt) %in% colnames(df))) {
+
+  if (use_alt && (!c(alt) %in% colnames(df))) {
       warn(paste0("alt column: ",
                   alt,
                   " not found in colnames(df), skipping alt allele"))
@@ -259,6 +307,49 @@ compact_snp_struct <- function(df, chrom = "chrom", pos = "pos", ref = "ref", al
 }
 
 
+#' convert  of a dataframe into a compact ldmap_range
+#'
+#'
+#' @param df
+#' @param chrom
+#' @param start
+#' @param end
+#' @param ldmap_range
+#' @param remove
+#' @return copy of original datafame with new column `ldmap_range`
+#' @export
+#'
+#' @examples
+compact_ldmap_range <- function(df,
+                                chrom = "chrom",
+                                start = "start",
+                                end = "end",
+                                ldmap_range = "ldmap_range",
+                                remove = TRUE) {
+    stopifnot(all(c(chrom, start, end) %in% colnames(df)))
+
+
+    df[[ldmap_range]] <- new_ldmap_range(
+        chrom = df[[chrom]],
+        start = df[[start]],
+        end =  df[[end]]
+    )
+    if (!remove) {
+        return(df)
+    }
+    ucols <- c(chrom, start, end)
+    ucols <- ucols[!is.na(ucols)]
+    return(dplyr::select(df, -dplyr::one_of(ucols)))
+}
+
+
+
+
+
+
+
+
+
 #' @method vec_ptype2 ldmap_allele
 #' @export
 #' @export vec_ptype2.ldmap_allele
@@ -268,18 +359,21 @@ vec_ptype2.ldmap_allele <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_allel
 #' @method vec_ptype2.ldmap_allele ldmap_allele
 #' @export
 #' @export vec_ptype2.ldmap_allele.ldmap_allele
-vec_ptype2.ldmap_allele.ldmap_allele <- function(x, y, ...) new_ldmap_allele()
+vec_ptype2.ldmap_allele.ldmap_allele <- function(x, y, ...)
+    new_ldmap_allele()
 
 
 #' @export vec_ptype2.ldmap_allele.character
 #' @method vec_ptype2.ldmap_allele character
 #' @export
-vec_ptype2.ldmap_allele.character <- function(x, y, ...) character()
+vec_ptype2.ldmap_allele.character <- function(x, y, ...)
+    character()
 
 #' @export vec_ptype2.character.ldmap_allele
 #' @method vec_ptype2.character ldmap_allele
 #' @export
-vec_ptype2.character.ldmap_allele <- function(x, y, ...) character()
+vec_ptype2.character.ldmap_allele <- function(x, y, ...)
+    character()
 
 
 #' @export vec_ptype2.ldmap_allele.integer

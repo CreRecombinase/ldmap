@@ -1,10 +1,10 @@
 context("assigning to ld region")
 
 
-  library(ldmap)
- input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
-  ld_df <- readr::read_tsv(input_f,col_types=readr::cols(
-    chr = readr::col_character(),
+library(ldmap)
+input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
+ld_df <- readr::read_tsv(input_f,col_types=readr::cols(
+  chr = readr::col_character(),
     start = readr::col_integer(),
     stop = readr::col_integer()
   ))
