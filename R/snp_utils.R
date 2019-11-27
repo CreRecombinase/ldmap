@@ -142,6 +142,14 @@ vec_cast.double.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
     vctrs::vec_data(x)
 
 
+#' @export vec_cast.character.ldmap_snp
+#' @export
+#' @method vec_cast.character ldmap_snp
+vec_cast.character.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
+    format_ldmap_snp(x)
+
+
+
 #' @export
 as_ldmap_snp <- function(x) {
   vec_cast(x, new_ldmap_snp())
