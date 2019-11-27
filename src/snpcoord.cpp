@@ -25,7 +25,7 @@
 #include "tbb/parallel_for.h"
 #include "tbb/parallel_for_each.h"
 #include "tbb/concurrent_unordered_map.h"
-#include "tbb/iterators.h"
+
 
 #include "tbb/parallel_sort.h"
 #endif
@@ -491,16 +491,16 @@ Rcpp::IntegerVector snp_in_range(Rcpp::NumericVector ldmap_snp,Rcpp::NumericVect
 Rcpp::List vec_from_bitset(tbb::concurrent_vector<std::pair<double,std::bitset<64> >> &bsp,const size_t num_ranges){
   const size_t p=bsp.size();
   //  Rcpp::IntegerVector ret = Rcpp::no_init(p);
-  std::vector<int> ch(num_ranges);
+  std::vector<int> ch(num_ranges+1);
   std::iota(ch.begin(),ch.end(),0);
-  tbb::counting_iterator<int> cnt0(0), cntp(p);
-  Rcpp::List outr = Rcpp::List::import_transform(tbb::counting_iterator<int>(0),tbb::counting_iterator<int>(num_ranges+1),[&](int i){
-                                                                                                                            if(i>0){
-                                                                                                                              Rcpp::IntegerVector r(p);
-                                                                                                                              return(SEXP(r));
-                                                                                                                            }
-                                                                                                                            return SEXP(Rcpp::NumericVector(p));
-                                                                                                                          });
+
+  Rcpp::List outr = Rcpp::List::import_transform(ch.begin(),ch.end(),[&](int i){
+                                                                       if(i>0){
+                                                                         Rcpp::IntegerVector r(p);
+                                                                         return(SEXP(r));
+                                                                       }
+                                                                       return SEXP(Rcpp::NumericVector(p));
+                                                                     });
   std::vector<RcppParallel::RVector<int>> output_ranges;
   Rcpp::NumericVector ret_v = outr[0];
   ret_v.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
@@ -508,22 +508,23 @@ Rcpp::List vec_from_bitset(tbb::concurrent_vector<std::pair<double,std::bitset<6
                                                                                Rcpp::IntegerVector rel(el);
                                                                                return RcppParallel::RVector<int>(rel);
                                                                              });
-  auto start = tbb::make_zip_iterator(cnt0,bsp.cbegin());
-  auto end = tbb::make_zip_iterator(cntp,bsp.cend());
+  // auto start = tbb::make_zip_iterator(cnt0,bsp.cbegin());
+  // auto end = tbb::make_zip_iterator(cntp,bsp.cend());
 
-  std::for_each(start,end,
-                [&](auto itr){
-                  int i=std::get<0>(itr);
-                  auto ir=std::get<1>(itr);
-                  double sp = ir.first;
-                  ret_v[i]=sp;
-                  std::bitset<64> x=ir.second;
-                  for(int j=0; j<num_ranges; j++){
-                    if(x[j]){
-                      output_ranges[j][i]=1;
-                    }
-                  }
-                });
+  // std::for_each(start,end,
+  tbb::parallel_for(tbb::blocked_range<size_t>(0,p),
+                    [&](const tbb::blocked_range<size_t> &r){
+                      for(int i=r.begin(); i<r.end(); i++){
+                        const auto &ir=bsp[i];
+                        double sp = ir.first;
+                        ret_v[i]=sp;
+                        std::bitset<64> x=ir.second;
+                        for(int j=0; j<num_ranges; j++){
+                          if(x[j]){
+                            output_ranges[j][i]=1;
+                          }
+                        }
+                      }});
   return outr;
 }
 
