@@ -4,7 +4,13 @@
 \alias{read_bed}
 \title{Read a bed (genomic interval, not binary ped) file}
 \usage{
-read_bed(file, compact = TRUE, cols = bed_cols, ...)
+read_bed(
+  file,
+  compact = TRUE,
+  cols = bed_region_cols(),
+  read_fun = readr::read_tsv,
+  ...
+)
 }
 \arguments{
 \item{file}{path to plink bim file, \code{file} can be any type you can pass to
@@ -12,9 +18,15 @@ read_bed(file, compact = TRUE, cols = bed_cols, ...)
 
 \item{compact}{a boolean indicating whether to compact chrom,pos,ref and alt
 as \code{ldmap_snp} (default to TRUE)}
+
+\item{cols}{column specification}
+
+\item{read_fun}{function to use to read data(must accept \code{col_names} and \code{col_types} arguments)}
+
+\item{...}{}
 }
 \value{
-a \code{tibble} with the contents of the \code{bim} file
+a \code{tibble} with the contents of the \code{bed} file
 }
 \description{
 Read a bed (genomic interval, not binary ped) file

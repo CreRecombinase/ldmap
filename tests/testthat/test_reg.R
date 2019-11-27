@@ -33,6 +33,9 @@ ld_df <- readr::read_tsv(input_f,col_types=readr::cols(
     
     snp_df <- dplyr::mutate(snp_df,chrom=as.integer(gsub("chr","",chr)),pos=pos) %>% compact_snp_struct(ref=NA,alt=NA,remove = FALSE)
     ld_df <- dplyr::mutate(ld_df,ldmr=new_ldmap_range(chrom = as.integer(gsub("chr","",chr)),start=start,end = stop))
+    
+   
+    
     id_assignment <- snp_df$region_id
     
     snp_df <- dplyr::mutate(snp_df,result=snp_in_range(ldmap_snp = snp_struct,ldmap_range = ld_df$ldmr)) %>% 
@@ -42,15 +45,37 @@ ld_df <- readr::read_tsv(input_f,col_types=readr::cols(
 
     snp_l <- match_ranges_snps(snp_df,ld_df$ldmr)
     expect_equal(as_ldmap_range(names(snp_l)),ld_df$ldmr)
-    snpl_r <- purrr::map_dbl(snp_l,function(x){new_ldmap_range(chrom=x$chrom[1],start=min(x$pos),end=max(x$pos)+1)}) %>% 
-      as_ldmap_range()
     
-    testthat::expect_equal(unname(lengths(ld_df$snps)),ld_df$snp_ct)
+    
+    
+    testthat::expect_equal(unname(purrr::map_int(snp_l,nrow)),ld_df$snp_ct)
     testthat::expect_equal(snp_df$result,snp_df$region_id)
+    })
+  
+  
+  test_that("we can get something looking like torus-formatted input from snps and annotations",{
+    
+     
+    k <- 10
+    kv <- paste0("feature_",1:k)
+    ld_df <- dplyr::mutate(ld_df,list_l=sample(kv,dplyr::n(),replace=TRUE))
+    ldl <- split(ld_df$ldmr,ld_df$list_l)
+    ldl <- purrr::map(ldl,sort)
+    snp_df <- dplyr::inner_join(snp_df,dplyr::select(ld_df,region_id,list_l)) %>% dplyr::distinct(snp_struct,.keep_all=TRUE)
+    snp_dfr <- dplyr::mutate(snp_df,value=1L) %>% dplyr::select(snp_struct,list_l,value) %>% 
+      tidyr::spread(key=list_l,value=value,fill=0L) %>%
+      dplyr::rename(ldmap_snp=snp_struct)
+    rl <- snp_in_ranges(snp_df$snp_struct,ldl)
+    expect_equal(rl,snp_dfr)
+    anno_k <- 15
+    rn <- sample(50:100,anno_k,replace=FALSE)
+    anno_l <- purrr::map(rn,~rregion(n = .x,sort = TRUE))
+    expect_equal(lengths(anno_l),rn)
+    
+    
+    
     
   })
-  
-  
   
 test_that("Check for assigning SNPs to blocks",{
   

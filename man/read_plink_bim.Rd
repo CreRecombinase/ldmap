@@ -4,7 +4,13 @@
 \alias{read_plink_bim}
 \title{Read a plink bim file}
 \usage{
-read_plink_bim(file, compact = TRUE, cols = bim_cols(), ...)
+read_plink_bim(
+  file,
+  compact = TRUE,
+  cols = bim_cols(),
+  read_fun = readr::read_tsv,
+  ...
+)
 }
 \arguments{
 \item{file}{path to plink bim file, \code{file} can be any type you can pass to \code{readr::read_delim}}
@@ -12,6 +18,10 @@ read_plink_bim(file, compact = TRUE, cols = bim_cols(), ...)
 \item{compact}{a boolean indicating whether to compact chrom,pos,ref and alt as \code{ldmap_snp} (default to TRUE)}
 
 \item{cols}{column specification (see \code{?readr::cols} for more info)}
+
+\item{read_fun}{function to use to read data(must accept \code{col_names} and \code{col_types} arguments)}
+
+\item{...}{}
 }
 \value{
 a \code{tibble} with the contents of the \code{bim} file

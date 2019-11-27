@@ -24,6 +24,9 @@
 #if __has_include("tbb/parallel_for.h")
 #include "tbb/parallel_for.h"
 #include "tbb/parallel_for_each.h"
+#include "tbb/concurrent_unordered_map.h"
+#include "tbb/iterators.h"
+
 #include "tbb/parallel_sort.h"
 #endif
 #include <type_traits>
@@ -68,11 +71,6 @@ vector_variant get_vector_variant(SEXP x){
     Rcpp::stop("x must be a vector type in get_vector_variant (it also can't be a string type...) (this is likely not a user error)");
   }
 }
-
-
-
-
-
 
 
 template <typename A, typename B>
@@ -340,11 +338,6 @@ Rcpp::StringVector set_ld_region(const Rcpp::IntegerVector ld_chr,
 }
 
 
-
-
-
-
-
 //' Creation of new ldmap_ranges
 //'
 //' @param chrom an integer vector of chromosomes
@@ -379,7 +372,7 @@ Rcpp::NumericVector new_ldmap_range(Rcpp::IntegerVector chrom=Rcpp::IntegerVecto
 Rcpp::NumericVector snps_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end){
 
   const auto sas= Region::make_Region(x).start_SNP().snp.flt;
-  const auto saf= Region::make_Region(x).end_SNP().snp.flt;
+  const auto saf= Region::make_Region(x).last_SNP().snp.flt;
   auto xbl =std::lower_bound(begin,end,sas,[](const double& snp_a, const double &snp_b){
                                              return(SNP{.snp={.flt=snp_a}}<SNP{.snp={.flt=snp_b}});
                                            });
@@ -401,7 +394,7 @@ Rcpp::NumericVector snps_in_range(const double x, RcppParallel::RVector<double>:
 SEXP snps_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end, Rcpp::DataFrame index_with){
 
   const auto sas= Region::make_Region(x).start_SNP().snp.flt;
-  const auto saf= Region::make_Region(x).end_SNP().snp.flt;
+  const auto saf= Region::make_Region(x).last_SNP().snp.flt;
   auto xbl =std::lower_bound(begin,end,sas,[](const double& snp_a, const double &snp_b){
                                              return(SNP{.snp={.flt=snp_a}}<SNP{.snp={.flt=snp_b}});
                                            });
@@ -426,7 +419,7 @@ int snp_in_range(const double x, RcppParallel::RVector<double>::const_iterator b
 
   SNP sx{.snp={.flt=x}};
   auto xb=std::lower_bound(begin,end,sx,[](double  range_a,const SNP &snp_b){
-                                          return(Region{.br={.flt=range_a}}< snp_b);
+                                          return(Region{.br={.flt=range_a}} < snp_b);
                                         });
   if( (xb==end ) or !(Region{.br={.flt=*xb}} ==sx))
     return NA_INTEGER;
@@ -493,6 +486,117 @@ Rcpp::IntegerVector snp_in_range(Rcpp::NumericVector ldmap_snp,Rcpp::NumericVect
   return ret;
 
 }
+
+
+Rcpp::List vec_from_bitset(tbb::concurrent_vector<std::pair<double,std::bitset<64> >> &bsp,const size_t num_ranges){
+  const size_t p=bsp.size();
+  //  Rcpp::IntegerVector ret = Rcpp::no_init(p);
+  std::vector<int> ch(num_ranges);
+  std::iota(ch.begin(),ch.end(),0);
+  tbb::counting_iterator<int> cnt0(0), cntp(p);
+  Rcpp::List outr = Rcpp::List::import_transform(tbb::counting_iterator<int>(0),tbb::counting_iterator<int>(num_ranges+1),[&](int i){
+                                                                                                                            if(i>0){
+                                                                                                                              Rcpp::IntegerVector r(p);
+                                                                                                                              return(SEXP(r));
+                                                                                                                            }
+                                                                                                                            return SEXP(Rcpp::NumericVector(p));
+                                                                                                                          });
+  std::vector<RcppParallel::RVector<int>> output_ranges;
+  Rcpp::NumericVector ret_v = outr[0];
+  ret_v.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
+  std::transform(outr.begin()+1,outr.end(),std::back_inserter(output_ranges),[](SEXP el){
+                                                                               Rcpp::IntegerVector rel(el);
+                                                                               return RcppParallel::RVector<int>(rel);
+                                                                             });
+  auto start = tbb::make_zip_iterator(cnt0,bsp.cbegin());
+  auto end = tbb::make_zip_iterator(cntp,bsp.cend());
+
+  std::for_each(start,end,
+                [&](auto itr){
+                  int i=std::get<0>(itr);
+                  auto ir=std::get<1>(itr);
+                  double sp = ir.first;
+                  ret_v[i]=sp;
+                  std::bitset<64> x=ir.second;
+                  for(int j=0; j<num_ranges; j++){
+                    if(x[j]){
+                      output_ranges[j][i]=1;
+                    }
+                  }
+                });
+  return outr;
+}
+
+
+std::vector<RcppParallel::RVector<double>> prepare_ranges(Rcpp::ListOf<Rcpp::NumericVector> &ldmap_ranges){
+  std::vector<RcppParallel::RVector<double>> input_ranges;
+  auto rcmp = [](const double a,const double b){
+                return Region::make_Region(a)<Region::make_Region(b);
+              };
+  std::transform(ldmap_ranges.begin(),ldmap_ranges.end(),
+                 std::back_inserter(input_ranges),[&rcmp](SEXP el){
+                                                    Rcpp::NumericVector rel(el);
+                                                    RcppParallel::RVector<double> ret(rel);
+                                                    if(!std::is_sorted(ret.begin(),ret.end(),rcmp)){
+                                                      std::sort(ret.begin(),ret.end(),rcmp);
+                                                    }
+                                                    return ret;
+                                                  });
+  return input_ranges;
+}
+
+//' Assign SNPs to ranges
+//'
+//' @param ldmap_snp vector of ldmap_snps (must be sorted)
+//' @param ldmap_range vector of non-overlapping ldmap_ranges (must be sorted)
+//' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_range`
+//' @export
+//[[Rcpp::export]]
+Rcpp::List snp_in_ranges(Rcpp::NumericVector ldmap_snp,Rcpp::ListOf<Rcpp::NumericVector> ldmap_ranges){
+
+  const size_t p=ldmap_snp.size();
+  RcppParallel::RVector<double> input_snp(ldmap_snp);
+  auto input_ranges = prepare_ranges(ldmap_ranges);
+
+  const size_t num_ranges = input_ranges.size();
+
+  if(num_ranges>64){
+    Rcpp::stop("snp_in_ranges currently ony supports up to 64 ranges at a time");
+  }
+  tbb::concurrent_vector<std::pair<double,std::bitset<64>>> bsp;
+  bsp.reserve(p/10);
+
+
+  static_assert(bed_range{.str={.end=100,.start=50,.chrom=1}}.str.end == 100,"bed_range is having issues");
+  // static_assert(bed_range{.str={.end=2147483647ull,.start=247344518ull,.chrom=1}}.str.end == 100,"bed_range is having issues");
+
+  tbb::parallel_for(tbb::blocked_range<size_t>(0,p),
+                    [&input_snp=std::as_const(input_snp),&bsp,&num_ranges,&input_ranges](const tbb::blocked_range<size_t> &r){
+                      for(int i=r.begin(); i<r.end(); i++){
+                        const double tx=input_snp[i];
+                        std::bitset<64> bs;
+                        for(int j=0; j<num_ranges; j++){
+                          if( !Rcpp::IntegerVector::is_na(snp_in_range(tx,input_ranges[j].begin(),input_ranges[j].end()))){
+                            bs[j]=true;
+                          }
+                        }
+                        if(bs.any()){
+                          bsp.emplace_back(std::make_pair(tx,bs));
+                        }
+                      }
+                    });
+  const size_t retp=bsp.size();
+  Rcpp::StringVector new_names=ldmap_ranges.names();
+  new_names.push_front("ldmap_snp");
+
+  auto retlist = vec_from_bitset(bsp,num_ranges);
+  retlist.names() = new_names;
+  retlist.attr("class") = Rcpp::StringVector::create("tbl_df","tbl","data.frame");
+  retlist.attr("row.names") = Rcpp::seq(1, retp);
+  return retlist;
+
+}
+
 
 
 
@@ -735,6 +839,7 @@ SEXP ldmap_range_2_data_frame(Rcpp::NumericVector ldmap_range){
 
   dfl.attr("class") = StringVector::create("tbl_df","tbl","data.frame");
   dfl.attr("row.names") = seq(1, p);
+  
   return(dfl);
 }
 
@@ -1055,17 +1160,21 @@ Rcpp::IntegerVector rank_snps(Rcpp::NumericVector struct_vec){
 
 //' get chroms from a ldmap_snp 
 //'
-//' @param struct_vec the vector of SNPs
+//' @param struct_vec the vector of SNPs (or ldmap_ranges)
 //'
 //' @export
 //[[Rcpp::export]]
 Rcpp::IntegerVector chromosomes(Rcpp::NumericVector struct_vec){
   using namespace Rcpp;
   IntegerVector ret = no_init(struct_vec.size());
-
-  std::transform(struct_vec.begin(),struct_vec.end(),ret.begin(),[](double x){
-                                                                   return(static_cast<int>(Snp{.flt=x}.str.chrom));
-                                                                 });
+  if(struct_vec.inherits("ldmap_snp"))
+    std::transform(struct_vec.begin(),struct_vec.end(),ret.begin(),[](double x){
+      return(static_cast<int>(Snp{.flt=x}.str.chrom));
+    });
+  else
+    std::transform(struct_vec.begin(),struct_vec.end(),ret.begin(),[](double x){
+      return(static_cast<int>(bed_range{.flt=x}.str.chrom));
+    });
   return ret;
 }
 

@@ -7,7 +7,7 @@
 chromosomes(struct_vec)
 }
 \arguments{
-\item{struct_vec}{the vector of SNPs}
+\item{struct_vec}{the vector of SNPs (or ldmap_ranges)}
 }
 \description{
 get chroms from a ldmap_snp

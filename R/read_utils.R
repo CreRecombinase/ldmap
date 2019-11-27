@@ -66,12 +66,14 @@ bed_region_cols <- function(chrom = col_chromosome(),
 ##' @param file path to plink bim file, `file` can be any type you can pass to `readr::read_delim`
 ##' @param compact a boolean indicating whether to compact chrom,pos,ref and alt as `ldmap_snp` (default to TRUE)
 ##' @param cols column specification (see `?readr::cols` for more info)
+##' @param read_fun function to use to read data(must accept `col_names` and `col_types` arguments)
 ##' @param ...
+##'
 ##' @return a `tibble` with the contents of the `bim` file
 ##' @export
-read_plink_bim <- function(file, compact = TRUE, cols = bim_cols(), ...) {
+read_plink_bim <- function(file, compact = TRUE, cols = bim_cols(),read_fun=readr::read_tsv, ...) {
 
-    ret_df <- read_tsv(file, col_names = names(bim_cols$cols))
+    ret_df <- read_fun(file, col_names = names(cols$cols),col_types=cols)
     if (compact)
         return(compact_snp_struct(ret_df))
     return(ret_df)
@@ -87,14 +89,16 @@ read_plink_bim <- function(file, compact = TRUE, cols = bim_cols(), ...) {
 ##' `readr::read_delim`
 ##' @param compact a boolean indicating whether to compact chrom,pos,ref and alt
 ##' as `ldmap_snp` (default to TRUE)
-##' @param cols
+##' @param cols column specification
+##' @param read_fun function to use to read data(must accept `col_names` and `col_types` arguments)
 ##' @param ...
-##' @return a `tibble` with the contents of the `bim` file
+##'
+##' @return a `tibble` with the contents of the `bed` file
 ##' @export
-read_bed <- function(file, compact = TRUE, cols = bed_cols, ...) {
-    bcn <- names(bed_cols$cols)
-    ret_df <- read_tsv(file, col_names = bcn,
-                       col_types = bed_cols)
+read_bed <- function(file, compact = TRUE, cols = bed_region_cols(),read_fun=readr::read_tsv, ...) {
+    bcn <- names(cols$cols)
+    ret_df <- read_fun(file, col_names = bcn,
+                       col_types = cols,skip = 1L)
     if (compact)
         return(compact_ldmap_range(ret_df, chrom = bcn[1], start = bcn[2], end = bcn[3]))
     return(ret_df)

@@ -493,6 +493,9 @@ class Region{
   constexpr SNP end_SNP() const noexcept{
     return SNP::make_snp<true>(chrom(),end());
   }
+  constexpr SNP last_SNP() const noexcept{
+    return SNP::make_snp<true>(chrom(),end()-1);
+  }
 
   // constexpr Region(const unsigned char chrom, const uint64_t offset,const uint64_t size)noexcept :br({chrom,offset,size}){}
   // constexpr Region(std::int64_t data):br({.dat=data}){
@@ -576,8 +579,11 @@ class Region{
     return (this->br.str.chrom==other.snp.str.chrom) and (this->br.str.start <= other.snp.str.pos) and (this->br.str.end > other.snp.str.pos);
   }
   constexpr bool operator<(const SNP& other)const{
-    return std::tie(this->br.str.chrom,this->br.str.end) < std::tie(other.snp.str.chrom,other.snp.str.pos);
+    return std::tie(this->br.str.chrom,this->br.str.end) <= std::tie(other.snp.str.chrom,other.snp.str.pos);
   }
+  // constexpr bool operator<=(const SNP& other)const{
+  //   return std::tie(this->br.str.chrom,this->br.str.end) < std::tie(other.snp.str.chrom,other.snp.str.pos);
+  // }
   constexpr bool operator>(const SNP& other)const{
     return std::tie(this->br.str.chrom,this->br.str.start) > std::tie(other.snp.str.chrom,other.snp.str.pos);
   }
@@ -589,6 +595,9 @@ class Region{
 inline constexpr bool SNP::operator==(const Region &other) const{
   return (other.br.str.chrom==this->snp.str.chrom) and (other.br.str.start <= this->snp.str.pos) and (other.br.str.end > this->snp.str.pos);
 }
+// inline constexpr bool SNP::operator==(const  &other) const{
+//   return (other.br.str.chrom==this->snp.str.chrom) and (other.br.str.start <= this->snp.str.pos) and (other.br.str.end > this->snp.str.pos);
+// }
 inline constexpr bool SNP::operator!=(const Region &other) const{
   return !(*this==other);
 }
@@ -596,7 +605,7 @@ inline constexpr bool SNP::operator<(const Region &other) const{
   return (other.br.str.chrom==this->snp.str.chrom) and (this->snp.str.pos < other.br.str.start);
 }
 inline constexpr bool SNP::operator>(const Region &other) const{
-  return (other.br.str.chrom==this->snp.str.chrom) and (this->snp.str.pos > other.br.str.end);
+  return (other.br.str.chrom==this->snp.str.chrom) and (this->snp.str.pos >= other.br.str.end);
 }
 
 

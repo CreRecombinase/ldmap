@@ -59,6 +59,16 @@ snp_in_range <- function(ldmap_snp, ldmap_range) {
     .Call('_ldmap_snp_in_range', PACKAGE = 'ldmap', ldmap_snp, ldmap_range)
 }
 
+#' Assign SNPs to ranges
+#'
+#' @param ldmap_snp vector of ldmap_snps (must be sorted)
+#' @param ldmap_range vector of non-overlapping ldmap_ranges (must be sorted)
+#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_range`
+#' @export
+snp_in_ranges <- function(ldmap_snp, ldmap_ranges) {
+    .Call('_ldmap_snp_in_ranges', PACKAGE = 'ldmap', ldmap_snp, ldmap_ranges)
+}
+
 #' formatting of ldmap_ranges
 #'
 #' @param x an ldmap_range
@@ -175,7 +185,7 @@ rank.ldmap_snp <- function(struct_vec) {
 
 #' get chroms from a ldmap_snp 
 #'
-#' @param struct_vec the vector of SNPs
+#' @param struct_vec the vector of SNPs (or ldmap_ranges)
 #'
 #' @export
 chromosomes <- function(struct_vec) {
