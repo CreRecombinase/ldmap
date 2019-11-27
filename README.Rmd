@@ -37,7 +37,21 @@ devtools::install_github("CreRecombinase/ldmap")
 
 This is a basic example which shows you how to solve a common problem:
 
-```{r example}
-library(ldmap)
-## basic example code
-```
+<!-- ```{r example} -->
+<!-- library(ggplot2) -->
+<!-- library(patchwork) -->
+
+<!-- p1 <- ggplot(mtcars) + geom_point(aes(mpg, disp))+ylab("short label") -->
+<!-- p2 <- ggplot(mtcars) + geom_boxplot(aes(gear, disp, group = gear))+ylab("really really\nreally long\nlabel ") -->
+
+<!-- p1 +theme(axis.title.y = element_text(vjust=1,debug=TRUE))+ p2+theme(axis.title.y = element_text(vjust=0,debug=TRUE))+plot_layout(ncol=1,guides = "keep",) -->
+
+<!-- ## basic example code -->
+<!-- ``` -->
+
+
+
+<!-- ```{r} -->
+<!-- p1 + p2+plot_layout(ncol=1,guides = "keep")&theme(axis.text.y = element_text(hjust=1)) -->
+<!-- ``` -->
+

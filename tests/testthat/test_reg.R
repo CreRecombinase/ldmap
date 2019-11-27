@@ -27,11 +27,11 @@ ld_df <- readr::read_tsv(input_f,col_types=readr::cols(
                   chr=rep(chr,n_snps),region_id=rep(region_id,n_snps))
   })
 
-
+snp_df <- dplyr::mutate(snp_df,chrom=as.integer(gsub("chr","",chr)),pos=pos) %>% compact_snp_struct(ref=NA,alt=NA,remove = FALSE)
 
   test_that("New check for assignment",{
     
-    snp_df <- dplyr::mutate(snp_df,chrom=as.integer(gsub("chr","",chr)),pos=pos) %>% compact_snp_struct(ref=NA,alt=NA,remove = FALSE)
+    
     ld_df <- dplyr::mutate(ld_df,ldmr=new_ldmap_range(chrom = as.integer(gsub("chr","",chr)),start=start,end = stop))
     
    
