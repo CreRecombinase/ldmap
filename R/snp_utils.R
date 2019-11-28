@@ -1,5 +1,12 @@
 
-
+#'
+#' @method vec_duplicate_id ldmap_snp
+#' @export
+#' @export vec_duplicate_id.ldmap_snp
+#'
+vec_duplicate_id.ldmap_snp <- function(x,...){
+  vec_duplicate_id(vctrs::vec_data(x))
+}
 
 #'
 #' @method vec_proxy_equal ldmap_snp
@@ -135,11 +142,19 @@ vec_cast.ldmap_snp.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "") x
 vec_cast.ldmap_snp.double <- function(x, to, ..., x_arg = "", to_arg = "")
     structure(vctrs::vec_data(x), class = c("ldmap_snp", "vctrs_vctr"))
 
+
 #' @export vec_cast.double.ldmap_snp
 #' @export
 #' @method vec_cast.double ldmap_snp
 vec_cast.double.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
     vctrs::vec_data(x)
+
+
+#' @export vec_cast.integer.ldmap_snp
+#' @export
+#' @method vec_cast.integer ldmap_snp
+vec_cast.integer.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
+    as_integer_ldmap_snp(x)
 
 
 #' @export vec_cast.character.ldmap_snp
@@ -201,7 +216,7 @@ explode_ldmap_range <- function(df,
       ldmap_range <- ldmap_range[1]
   }
 
-  ldr <- df[[snpcol]]
+  ldr <- df[[ldmap_range]]
   if (remove) {
       df <- df[, colnames(df) != ldmap_range]
   }
@@ -497,6 +512,14 @@ vec_cast.ldmap_range.default <- function(x, to, ...) {
 #' @method vec_cast.double ldmap_range
 vec_cast.double.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
     vctrs::vec_data(x)
+
+
+#' @export vec_cast.integer.ldmap_range
+#' @export
+#' @method vec_cast.integer ldmap_range
+vec_cast.integer.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
+    as_integer_ldmap_range(x)
+
 
 
 

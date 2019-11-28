@@ -170,6 +170,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sample_interval
+Rcpp::IntegerVector sample_interval(Rcpp::IntegerVector n, Rcpp::IntegerVector begin, Rcpp::IntegerVector end, const bool replace);
+RcppExport SEXP _ldmap_sample_interval(SEXP nSEXP, SEXP beginSEXP, SEXP endSEXP, SEXP replaceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type n(nSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type begin(beginSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type end(endSEXP);
+    Rcpp::traits::input_parameter< const bool >::type replace(replaceSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_interval(n, begin, end, replace));
+    return rcpp_result_gen;
+END_RCPP
+}
 // new_ldmap_snp
 Rcpp::NumericVector new_ldmap_snp(Rcpp::IntegerVector chrom, Rcpp::NumericVector pos, Rcpp::RObject ref, Rcpp::RObject alt, const bool NA2N);
 RcppExport SEXP _ldmap_new_ldmap_snp(SEXP chromSEXP, SEXP posSEXP, SEXP refSEXP, SEXP altSEXP, SEXP NA2NSEXP) {
@@ -237,6 +251,28 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type struct_vec(struct_vecSEXP);
     rcpp_result_gen = Rcpp::wrap(chromosomes(struct_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// starts
+Rcpp::IntegerVector starts(Rcpp::NumericVector ldmap_range);
+RcppExport SEXP _ldmap_starts(SEXP ldmap_rangeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range(ldmap_rangeSEXP);
+    rcpp_result_gen = Rcpp::wrap(starts(ldmap_range));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ends
+Rcpp::IntegerVector ends(Rcpp::NumericVector ldmap_range);
+RcppExport SEXP _ldmap_ends(SEXP ldmap_rangeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range(ldmap_rangeSEXP);
+    rcpp_result_gen = Rcpp::wrap(ends(ldmap_range));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -483,12 +519,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_split_ldmap_range_overlap", (DL_FUNC) &_ldmap_split_ldmap_range_overlap, 1},
     {"_ldmap_merge_ldmap_ranges", (DL_FUNC) &_ldmap_merge_ldmap_ranges, 2},
     {"_ldmap_ldmap_range_2_data_frame", (DL_FUNC) &_ldmap_ldmap_range_2_data_frame, 1},
+    {"_ldmap_sample_interval", (DL_FUNC) &_ldmap_sample_interval, 4},
     {"_ldmap_new_ldmap_snp", (DL_FUNC) &_ldmap_new_ldmap_snp, 5},
     {"_ldmap_is_strand_ambiguous", (DL_FUNC) &_ldmap_is_strand_ambiguous, 1},
     {"_ldmap_new_ldmap_allele", (DL_FUNC) &_ldmap_new_ldmap_allele, 1},
     {"_ldmap_order_snps", (DL_FUNC) &_ldmap_order_snps, 1},
     {"_ldmap_rank_snps", (DL_FUNC) &_ldmap_rank_snps, 1},
     {"_ldmap_chromosomes", (DL_FUNC) &_ldmap_chromosomes, 1},
+    {"_ldmap_starts", (DL_FUNC) &_ldmap_starts, 1},
+    {"_ldmap_ends", (DL_FUNC) &_ldmap_ends, 1},
     {"_ldmap_positions", (DL_FUNC) &_ldmap_positions, 1},
     {"_ldmap_ref_alleles", (DL_FUNC) &_ldmap_ref_alleles, 2},
     {"_ldmap_format_ldmap_allele", (DL_FUNC) &_ldmap_format_ldmap_allele, 1},

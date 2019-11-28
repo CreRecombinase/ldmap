@@ -5,7 +5,7 @@
 #include "Rinternals.h"
 #include <numeric>
 #include "alleles.hpp"
-
+#include <random>
 #include <algorithm>
 #include <iterator>
 #include <limits>
@@ -16,8 +16,10 @@
 //[[Rcpp::depends(RcppParallel)]]
 // //[[Rcpp::depends(BH)]]
 // [[Rcpp::plugins(cpp17)]]
+
 #include <boost/icl/split_interval_set.hpp>
 #include <boost/config/warning_disable.hpp>
+#include <boost/iterator/counting_iterator.hpp>
 #include <boost/spirit/home/x3.hpp>
 #include "Rcpp/Nullable.h"
 #include "Rcpp/vector/instantiation.h"
@@ -953,6 +955,47 @@ Rcpp::NumericVector new_ldmap_snp_s(Rcpp::IntegerVector chrom,
 
 
 
+//[[Rcpp::export]]
+Rcpp::IntegerVector sample_interval(Rcpp::IntegerVector n,Rcpp::IntegerVector begin,Rcpp::IntegerVector end,const bool replace =false){
+
+
+  std::random_device rd;  //Will be used to obtain a seed for the random number engine
+  std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+  const auto ns = n.size();
+  const auto bs = begin.size();
+  const auto es = end.size();
+  const auto p = std::max(std::max(ns,bs),es);
+  size_t ret_size=0;
+
+  for(int i=0; i < p; i++){
+    auto mn= n(i % ns);
+    ret_size +=mn;
+  }
+
+  Rcpp::IntegerVector ret = Rcpp::no_init(ret_size);
+  auto ret_b = ret.begin();
+
+  if(replace){
+    for(int i=0 ; i<p ; i++){
+      auto uid = std::uniform_int_distribution<>(begin[i%bs], end(i%es));
+      ret_b=std::generate_n(ret_b,n(i%ns),[&](){return uid(gen);});
+    }
+  }else{
+    for(int i=0 ; i<p ; i++){
+      auto nret_b = std::sample(boost::counting_iterator<int>(begin[i%bs]),
+                                boost::counting_iterator<int>(end[i%es]),
+                                ret_b,n(i%ns),gen);
+      if(std::distance(ret_b,nret_b) < n(i%ns)){
+        Rcpp::stop("n cannot be  larger than region size, when replace=FALSE");
+      }
+      ret_b=nret_b;
+    }
+  }
+
+  return(ret);
+}
+
+
 //' Creation of new ldmap_snps
 //'
 //' @param chrom an integer vector of chromosomes
@@ -1159,7 +1202,7 @@ Rcpp::IntegerVector rank_snps(Rcpp::NumericVector struct_vec){
 
 
 
-//' get chroms from a ldmap_snp 
+//' get chroms from a ldmap_snp
 //'
 //' @param struct_vec the vector of SNPs (or ldmap_ranges)
 //'
@@ -1178,6 +1221,50 @@ Rcpp::IntegerVector chromosomes(Rcpp::NumericVector struct_vec){
     });
   return ret;
 }
+
+
+//' get starting position from a ldmap_range
+//'
+//' @param ldmap_range the vector of ldmap_ranges
+//'
+//' @export
+//[[Rcpp::export]]
+Rcpp::IntegerVector starts(Rcpp::NumericVector ldmap_range){
+  using namespace Rcpp;
+  IntegerVector ret = no_init(ldmap_range.size());
+  if(ldmap_range.inherits("ldmap_snp"))
+    std::transform(ldmap_range.begin(),ldmap_range.end(),ret.begin(),[](double x){
+      return(static_cast<int>(bed_range{.flt=x}.str.start));
+    });
+  else
+    std::transform(ldmap_range.begin(),ldmap_range.end(),ret.begin(),[](double x){
+      return(static_cast<int>(bed_range{.flt=x}.str.start));
+    });
+  return ret;
+}
+
+
+
+//' get end position from a ldmap_range
+//'
+//' @param ldmap_range the vector of ldmap_ranges
+//'
+//' @export
+//[[Rcpp::export]]
+Rcpp::IntegerVector ends(Rcpp::NumericVector ldmap_range){
+  using namespace Rcpp;
+  IntegerVector ret = no_init(ldmap_range.size());
+  if(ldmap_range.inherits("ldmap_snp"))
+    std::transform(ldmap_range.begin(),ldmap_range.end(),ret.begin(),[](double x){
+      return(static_cast<int>(bed_range{.flt=x}.str.end));
+    });
+  else
+    std::transform(ldmap_range.begin(),ldmap_range.end(),ret.begin(),[](double x){
+      return(static_cast<int>(bed_range{.flt=x}.str.end));
+    });
+  return ret;
+}
+
 
 
 

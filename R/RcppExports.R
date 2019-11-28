@@ -130,6 +130,10 @@ ldmap_range_2_data_frame <- function(ldmap_range) {
     .Call('_ldmap_ldmap_range_2_data_frame', PACKAGE = 'ldmap', ldmap_range)
 }
 
+sample_interval <- function(n, begin, end, replace = FALSE) {
+    .Call('_ldmap_sample_interval', PACKAGE = 'ldmap', n, begin, end, replace)
+}
+
 #' Creation of new ldmap_snps
 #'
 #' @param chrom an integer vector of chromosomes
@@ -183,13 +187,31 @@ rank.ldmap_snp <- function(struct_vec) {
     .Call('_ldmap_rank_snps', PACKAGE = 'ldmap', struct_vec)
 }
 
-#' get chroms from a ldmap_snp 
+#' get chroms from a ldmap_snp
 #'
 #' @param struct_vec the vector of SNPs (or ldmap_ranges)
 #'
 #' @export
 chromosomes <- function(struct_vec) {
     .Call('_ldmap_chromosomes', PACKAGE = 'ldmap', struct_vec)
+}
+
+#' get starting position from a ldmap_range
+#'
+#' @param ldmap_range the vector of ldmap_ranges
+#'
+#' @export
+starts <- function(ldmap_range) {
+    .Call('_ldmap_starts', PACKAGE = 'ldmap', ldmap_range)
+}
+
+#' get end position from a ldmap_range
+#'
+#' @param ldmap_range the vector of ldmap_ranges
+#'
+#' @export
+ends <- function(ldmap_range) {
+    .Call('_ldmap_ends', PACKAGE = 'ldmap', ldmap_range)
 }
 
 #' get positions from a ldmap_snp

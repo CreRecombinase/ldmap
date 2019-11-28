@@ -1,6 +1,5 @@
 ##' pack an array of 1s and 0s into integers
 ##'
-##' .. content for \details{} ..
 ##' @param x data consisting of  all `0`s and `1`s
 ##' @param compact_64 whether to return an `int64` or not
 ##' @return an integer array of `ceiling(length(x)/int_size)` where

@@ -16,7 +16,7 @@ an integer array of \code{ceiling(length(x)/int_size)} where
 \verb{int_size is 32 unless }compact_64\verb{is TRUE, in which case it's}64`
 }
 \description{
-.. content for \details{} ..
+pack an array of 1s and 0s into integers
 }
 \author{
 Nicholas Knoblauch

@@ -181,29 +181,3 @@ estimate_LDscores <- function(R,N){
 
 
 
-#' Generate random genomic regions
-#'
-#' @param n number of ranges to generate
-#' @param chroms chromosomes from which to sample
-#' @param sort whether to sort the output
-#'
-#' @return a vector of length `n` of (optionally sorted ldmap_ranges) 
-#' @export
-#'
-#' @examples
-#' #chromosomes are assumed to be hg19
-#' head(rregion(100,chroms=1L))
-rregion <- function(n,chroms=1L:23L,sort=TRUE){
-  stopifnot(all(chroms %in% 1L:23L))
-  hg19_df <- ldmap_range_2_data_frame(hg19_sizes)
-  chrom <- sample(chroms,n,replace=T)
-  
-  tdf <- dplyr::mutate(tibble::tibble(chrom=chrom),
-                         start=as.integer(runif(n=dplyr::n(),min=1,max=hg19_df$end[chrom])),
-                         end=as.integer(runif(n=dplyr::n(),min=start+1,max = hg19_df$end[chrom])))
-  if(sort)
-    tdf <- dplyr::arrange(tdf,chrom,start,end)
-  
-  stopifnot(all(tdf$end>tdf$start))
-  return(new_ldmap_range(tdf$chrom,tdf$start,tdf$end))
-}
