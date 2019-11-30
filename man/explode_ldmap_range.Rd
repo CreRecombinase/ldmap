@@ -4,7 +4,7 @@
 \alias{explode_ldmap_range}
 \title{convert ldmap_range back in to individual columns}
 \usage{
-explode_ldmap_range(df, ldmap_range = NA_character_, remove = TRUE)
+explode_ldmap_range(df, ldmap_range = range_cols(df), remove = TRUE)
 }
 \arguments{
 \item{df}{dataframe with at least one ldmap_snp_struct}

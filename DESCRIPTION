@@ -9,7 +9,7 @@ Authors@R:
 Description: What the package does (one paragraph).
 Depends: R (>= 3.5.0)
 License: GPL-3
-Encoding: UTF-8P
+Encoding: UTF-8
 LazyData: true
 URL: https://github.com/CreRecombinase/ldmap
 BugReports: https://github.com/CreRecombinase/ldmap/issues
@@ -19,7 +19,8 @@ Imports:
     vctrs,
     magrittr,
     fs,
-    forcats
+    forcats,
+    bigsnpr (>= 0.11.5)
 LinkingTo:
     BH,     
     RcppProgress,

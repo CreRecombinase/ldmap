@@ -1548,6 +1548,10 @@ SEXP ldmap_snp_2_dataframe(Rcpp::NumericVector ldmap_snp,bool alleles_to_charact
 }
 
 
+
+
+
+
 //' Find SNPs that match (and find out what to do with them)
 //'
 //' @param query a vector of (sorted) ldmap_snps SNPs

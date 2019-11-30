@@ -3,23 +3,11 @@ context("assigning to ld region")
 
 library(ldmap)
 input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
-ld_df <- readr::read_tsv(input_f,col_types=readr::cols(
-  chr = readr::col_character(),
-    start = readr::col_integer(),
-    stop = readr::col_integer()
-  ))
-  ld_df <- dplyr::group_by(ld_df,chr)
-  ld_df <-
-    dplyr::mutate(ld_df,start = dplyr::if_else(start==min(start),
-                                               1L,start),
-                  stop = dplyr::if_else(stop==max(stop),
-                                        as.integer(2^29-1),stop))
-    ld_df <- dplyr::ungroup(ld_df)
-    ld_df <- dplyr::mutate(ld_df,region_id=1:dplyr::n())
-
-  n_ld_df <- nrow(ld_df)
-  ld_df <-   dplyr::mutate(ld_df,snp_ct=sample(1:100,n_ld_df,replace=T))
-
+data("ldetect_EUR")
+  ld_df <- explode_ldmap_range(tibble::tibble(ldmr=ldetect_EUR),remove = FALSE) %>% dplyr::mutate(region_id=1:dplyr::n())
+  ld_df <-   dplyr::mutate(ld_df,snp_ct=sample(1:100,dplyr::n(),replace=T))
+  tsnp_df <- rsnp_region(ldmap_region = ld_df$ldmr[1:100],n=ld_df$snp_ct[1:100],replace = F)
+  snp_df <- explode_snp_struct(tibble::tibble(ldmap_snp=rsnp_region(ld_df$ldmr,n=ld_df$snp_ct,replace = FALSE)),remove = FALSE)
   snp_df <- purrr::pmap_dfr(ld_df,function(chr,start,stop,region_id,snp_ct,...){
     n_snps <- snp_ct
     retsnps <- as.integer(sort(sample(start:(stop-1L),n_snps,replace=T)))

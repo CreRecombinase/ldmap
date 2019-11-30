@@ -83,3 +83,20 @@ rsnp_region <- function(ldmap_region, n, sort = TRUE,replace=FALSE){
   
 }
 
+
+##' example bigsnpr data
+##'
+##'
+##' @title bigsnpr dataset from EUR chromosome 22
+##' @param td directory to unzip into
+##' @return rds file path
+##' @author Nicholas Knoblauch
+##' @export
+example_bigsnp <- function(td = tempdir()) {
+
+    fer <- fs::path_package("1kg_eur.tar.bz2",package="ldmap")
+    ret <- untar(fer,exdir=td)
+    bedf <- fs::path(td,"1kg_eur","22.bed")
+    retf <- bigsnpr::snp_readBed(bedf)
+    return(retf)
+}

@@ -80,7 +80,7 @@ vec_cast.ldmap_snp.default <- function(x, to, ...) {
 #' Formatting method for ldmap snps
 #'
 #' @param x ldmap_snp
-#' @param ...
+#' @param ... unused
 #'
 #' @return
 #' @export
@@ -89,6 +89,8 @@ vec_cast.ldmap_snp.default <- function(x, to, ...) {
 format.ldmap_snp <- function(x, ...) {
   format_ldmap_snp(x)
 }
+
+
 
 
 
@@ -105,12 +107,11 @@ format.ldmap_snp <- function(x, ...) {
 #' @return
 #' @export
 #'
-#' @examples
 match_ref_panel <- function(gwas_df,
                             ref_snp_struct,
                             rsid = integer(),
                             remove_ambig = FALSE,
-                            snp_struct_col = "snp_struct",
+                            snp_struct_col = snp_cols(gwas_df),
                             flip_sign_col = c("beta")) {
   snp_struct <- gwas_df[[snp_struct_col]]
   stopifnot(!is.null(snp_struct), inherits(snp_struct, "ldmap_snp"))
@@ -187,7 +188,27 @@ vec_proxy_compare.ldmap_snp <- function(x, ...) {
   rank.ldmap_snp(x)
 }
 
+##' Return the column(s) containing ldmap_ranges
+##'
+##' @param df a dataframe
+##' @return a character vector with the names `ldmap_range` columns
+##' @author Nicholas Knoblauch
+range_cols <- function(df) {
+    stopifnot(is.data.frame(df))
+    colnames(df)[purrr::map_lgl(df, ~ inherits(.x, "ldmap_range"))]
+}
 
+
+
+##' Return the column(s) containing ldmap_snps
+##'
+##' @param df a dataframe
+##' @return a character vector with the names `ldmap_snp` columns
+##' @author Nicholas Knoblauch
+snp_cols <- function(df) {
+    stopifnot(is.data.frame(df))
+    colnames(df)[purrr::map_lgl(df, ~ inherits(.x, "ldmap_snp"))]
+}
 
 
 
@@ -198,24 +219,20 @@ vec_proxy_compare.ldmap_snp <- function(x, ...) {
 #' @param remove boolean indicating whether `ldmap_range`
 #' column should be removed
 #'
-#' @return
+#' @return dataframe with individual columns
 #' @export
 #'
-#' @examples
 #'
 explode_ldmap_range <- function(df,
-                                ldmap_range = NA_character_,
+                                ldmap_range = range_cols(df),
                                 remove = TRUE) {
-  if (is.na(ldmap_range)) {
-    ldmap_range <- colnames(df)[purrr::map_lgl(df, ~ inherits(.x, "ldmap_range"))]
-  }
   if (length(ldmap_range) > 1) {
       warning("Multiple ldmap_range columns detected,\
  and `ldmap_range` was not specified, using the first: ",
  ldmap_range[1])
       ldmap_range <- ldmap_range[1]
   }
-
+  stopifnot(length(ldmap_range) == 1)
   ldr <- df[[ldmap_range]]
   if (remove) {
       df <- df[, colnames(df) != ldmap_range]
@@ -236,21 +253,21 @@ explode_ldmap_range <- function(df,
 #' @export
 #'
 #' @examples
+#' TODO
 #'
 explode_snp_struct <- function(df,
-                               ldmap_snp = NA_character_,
+                               ldmap_snp = snp_cols(df),
                                alleles_to_character = FALSE, remove = TRUE) {
-  if (is.na(ldmap_snp)) {
-    ldmap_snp <- colnames(df)[purrr::map_lgl(df, ~ inherits(.x, "ldmap_snp"))]
-  }
-  if (length(ldmap_snp) > 1) {
-    warning("Multiple ldmap_snp columns detected,\
- and `ldmap_snp` was not specified, using the first: ", ldmap_snp[1])
-    ldmap_snp <- ldmap_snp[1]
-  }
 
-  snpc <- df[[ldmap_snp]]
-  if (remove) {
+    if (length(ldmap_snp) > 1) {
+        warning("Multiple ldmap_snp columns detected,\
+ and `ldmap_snp` was not specified, using the first: ", ldmap_snp[1])
+        ldmap_snp <- ldmap_snp[1]
+    }
+    stopifnot(length(ldmap_snp) == 1)
+
+    snpc <- df[[ldmap_snp]]
+    if (remove) {
     df <- df[, colnames(df) != ldmap_snp]
   }
   return(dplyr::bind_cols(df, ldmap_snp_2_dataframe(snpc, alleles_to_character)))

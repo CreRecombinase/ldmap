@@ -1,19 +1,17 @@
 ## code to prepare `ld_df` dataset goes here
 #create a dataframe 
 input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
-  ld_df <- readr::read_tsv(input_f,col_types=readr::cols(
-    chr = readr::col_character(),
-    start = readr::col_integer(),
-    stop = readr::col_integer()
-  ))
-  ld_df <- dplyr::group_by(ld_df,chr)
-  ld_df <- dplyr::mutate(ld_df,start = dplyr::if_else(start==min(start),
-                                               1L,start),
-                  stop = dplyr::if_else(stop==max(stop),
-                                        as.integer(2^29-1),stop)) %>% dplyr::ungroup()
+ld_df <- read_bed(input_f,compact = FALSE)
+ld_df <- dplyr::group_by(ld_df,chrom)
+ld_df <- dplyr::mutate(ld_df,
+                       start = dplyr::if_else(start==min(start),
+                                              1L,start),
+                       stop = dplyr::if_else(end==max(end),
+                                             as.integer(2^29-1),end)) %>%
+    dplyr::ungroup() %>% dplyr::arrange(chrom,start,end)
   
-  ldetect_EUR <- ldmap::new_ldmap_range(chrom=factor(ld_df$chr),start=ld_df$start,end=ld_df$stop)
-usethis::use_data(ldetect_EUR,overwrite = TRUE)
+ldetect_EUR <- ldmap::new_ldmap_range(ld_df$chrom, start=ld_df$start, end=ld_df$end)
+usethis::use_data(ldetect_EUR, overwrite = TRUE)
 
 chrom_df <- readr::read_tsv("http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes",col_names=c("chrom","end")) %>% 
   dplyr::filter(chrom %in% paste0("chr",c(1:22,"X"))) %>% 

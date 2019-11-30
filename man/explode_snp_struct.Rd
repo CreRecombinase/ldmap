@@ -6,7 +6,7 @@
 \usage{
 explode_snp_struct(
   df,
-  ldmap_snp = NA_character_,
+  ldmap_snp = snp_cols(df),
   alleles_to_character = FALSE,
   remove = TRUE
 )

@@ -9,7 +9,7 @@ match_ref_panel(
   ref_snp_struct,
   rsid = integer(),
   remove_ambig = FALSE,
-  snp_struct_col = "snp_struct",
+  snp_struct_col = snp_cols(gwas_df),
   flip_sign_col = c("beta")
 )
 }
