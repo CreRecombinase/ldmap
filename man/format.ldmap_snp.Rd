@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{ldmap_snp}
 
-\item{...}{}
+\item{...}{unused}
 }
 \value{
 

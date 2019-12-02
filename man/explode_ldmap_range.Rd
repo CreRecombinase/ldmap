@@ -13,11 +13,8 @@ explode_ldmap_range(df, ldmap_range = range_cols(df), remove = TRUE)
 column should be removed}
 }
 \value{
-
+dataframe with individual columns
 }
 \description{
 convert ldmap_range back in to individual columns
-}
-\examples{
-
 }

@@ -3,7 +3,7 @@ context("sets")
 
 testthat::test_that("we can make and print ldmap_ranges",{
   
-
+  
   input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
   ld_df <- read_bed(input_f,compact = FALSE)
   
@@ -61,6 +61,20 @@ testthat::test_that("we can make and print ldmap_ranges",{
 #   
 #   
 # })
+
+testthat::test_that("we can subset bigsnp files with ldmap_ranges",{
+  
+  bs <- example_bigsnp()
+  data(ldetect_EUR)
+  ld22 <- ldetect_EUR[chromosomes(ldetect_EUR)==22]
+  bsl <- c(purrr::map(1:21,~NULL),bs)
+  sld <- sample(ld22,size=1)
+  srds <- ldmap:::subset_rds(ldmr = sld,reference_files = bsl,pattern = "example_")
+  sa <- bigsnpr::snp_attach(srds)
+  expect_gte(min(sa$map$physical.pos),starts(sld))
+  expect_lt(max(sa$map$physical.pos),ends(sld))
+  tR <- ldmap::panel_ld(srds,FALSE)
+})
 
 
 testthat::test_that("we can find windows",{
