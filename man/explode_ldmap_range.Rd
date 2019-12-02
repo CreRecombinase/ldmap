@@ -9,6 +9,8 @@ explode_ldmap_range(df, ldmap_range = range_cols(df), remove = TRUE)
 \arguments{
 \item{df}{dataframe with at least one ldmap_snp_struct}
 
+\item{ldmap_range}{ldmap_range}
+
 \item{remove}{boolean indicating whether \code{ldmap_range}
 column should be removed}
 }

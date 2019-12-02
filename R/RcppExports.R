@@ -49,6 +49,16 @@ new_ldmap_range <- function(chrom = as.integer( c()), start = as.integer( c()), 
     .Call('_ldmap_new_ldmap_range', PACKAGE = 'ldmap', chrom, start, end)
 }
 
+#' Assign ranges to ranges
+#'
+#' @param ldmap_range_query vector of ldmap_ranges
+#' @param ldmap_range_target vector of *non-overlapping* ldmap_ranges (must be sorted)
+#' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target`
+#' @export
+range_in_range <- function(ldmap_range_query, ldmap_range_target) {
+    .Call('_ldmap_range_in_range', PACKAGE = 'ldmap', ldmap_range_query, ldmap_range_target)
+}
+
 #' Assign SNPs to ranges
 #'
 #' @param ldmap_snp vector of ldmap_snps (must be sorted)

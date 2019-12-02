@@ -15,7 +15,19 @@ compact_snp_struct(
 )
 }
 \arguments{
-\item{snp_struct}{}
+\item{df}{dataframe}
+
+\item{chrom}{chrom column}
+
+\item{pos}{position column}
+
+\item{ref}{reference allele column}
+
+\item{alt}{alt allele column}
+
+\item{snp_struct}{name of new ldmap_snp column}
+
+\item{remove}{whether to remove these columns or keep them after compaction}
 }
 \value{
 copy of original datafame with new column \code{snp_struct}

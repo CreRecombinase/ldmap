@@ -341,16 +341,18 @@ public:
   constexpr unsigned char chrom() const noexcept{
     return snp.str.chrom;
   }
+
   constexpr uint64_t start() const noexcept {
     return snp.str.pos;
   }
+
   constexpr uint64_t end() const noexcept{
     return snp.str.pos+1;
   }
+
   boost::icl::discrete_interval<uint64_t> interval() const{
     return boost::icl::construct<boost::icl::discrete_interval<uint64_t>>(snp.str.pos,snp.str.pos+1,boost::icl::interval_bounds::left_open());
   }
-
 
   template<bool NA2N>
   static constexpr SNP  make_snp(const unsigned char chrom, const uint64_t pos, const Nuc ref, const Nuc alt) noexcept{
@@ -405,13 +407,6 @@ public:
   constexpr bool operator>(const Region &other) const;
   constexpr bool operator==(const Region &other) const;
   constexpr bool operator!=(const Region &other) const;
-
-
-
-
-
-
-
 
 
   double to_double() const{
@@ -512,6 +507,27 @@ class Region{
   // constexpr bool operator>=(const Region& other)const{
   //   return this->br.dat >= other.br.dat;
   // }
+  constexpr bool starts_before(const Region& other)const noexcept{
+    if(this->br.str.chrom > other.br.str.chrom)
+      return false;
+
+    if(this->br.str.chrom < other.br.str.chrom){
+      return true;
+    }
+    return this->br.str.start < other.br.str.start;
+  }
+
+  constexpr bool ends_before(const Region& other)const noexcept{
+    if(this->br.str.chrom > other.br.str.chrom)
+      return false;
+
+    if(this->br.str.chrom < other.br.str.chrom){
+      return true;
+    }
+    return this->br.str.end < other.br.str.end;
+  }
+
+
   constexpr bool operator<(const Region& other)const noexcept{
     return this->br.dat < other.br.dat;
   }

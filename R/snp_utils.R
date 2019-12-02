@@ -215,7 +215,7 @@ snp_cols <- function(df) {
 #' convert ldmap_range back in to individual columns
 #'
 #' @param df dataframe with at least one ldmap_snp_struct
-#' @param ldmap_range
+#' @param ldmap_range ldmap_range
 #' @param remove boolean indicating whether `ldmap_range`
 #' column should be removed
 #'
@@ -279,18 +279,17 @@ explode_snp_struct <- function(df,
 #' convert SNP columns of a dataframe into a compact ldmap_snp
 #'
 #'
-#' @param df
-#' @param chrom
-#' @param pos
-#' @param ref
-#' @param alt
-#' @param remove
-#' @param snp_struct
+#' @param df dataframe
+#' @param chrom chrom column
+#' @param pos position column
+#' @param ref reference allele column
+#' @param alt alt allele column
+#' @param remove whether to remove these columns or keep them after compaction
+#' @param snp_struct name of new ldmap_snp column
 #'
 #' @return copy of original datafame with new column `snp_struct`
 #' @export
 #'
-#' @examples
 compact_snp_struct <- function(df,
                                chrom = "chrom",
                                pos = "pos",
@@ -350,16 +349,15 @@ compact_snp_struct <- function(df,
 #' convert  of a dataframe into a compact ldmap_range
 #'
 #'
-#' @param df
-#' @param chrom
-#' @param start
-#' @param end
-#' @param ldmap_range
-#' @param remove
+#' @param df dataframe
+#' @param chrom chromosome column
+#' @param start column name for beginning of range
+#' @param end column name for end of range
+#' @param ldmap_range name for new ldmap_range column
+#' @param remove boolean indicating whether or not to remove aforementioned columns
 #' @return copy of original datafame with new column `ldmap_range`
 #' @export
 #'
-#' @examples
 compact_ldmap_range <- function(df,
                                 chrom = "chrom",
                                 start = "start",

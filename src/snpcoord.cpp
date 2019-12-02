@@ -417,6 +417,21 @@ SEXP snps_in_range(const double x, RcppParallel::RVector<double>::const_iterator
 
 
 
+int range_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end){
+
+  const auto sx=Region::make_Region(x).start_SNP();
+  auto xb=std::lower_bound(begin,end,sx,[](double  range_a,const SNP &reg_b){
+                                          return(Region{.br={.flt=range_a}} < reg_b);
+                                        });
+  if( xb==end )
+    return NA_INTEGER;
+  if(Region{.br={.flt=*xb}}.last_SNP()<Region::make_Region(x).last_SNP()){
+    Rcpp::stop("range_in_range does not support overlap matches");
+  }
+  return std::distance(begin,xb)+1;
+}
+
+
 int snp_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end){
 
   SNP sx{.snp={.flt=x}};
@@ -442,6 +457,44 @@ int snp_in_range(const double x, RcppParallel::RVector<double>::const_iterator b
 //     return NA_INTEGER;
 //   return std::distance(begin,xb)+1;
 // }
+
+//' Assign ranges to ranges
+//'
+//' @param ldmap_range_query vector of ldmap_ranges
+//' @param ldmap_range_target vector of *non-overlapping* ldmap_ranges (must be sorted)
+//' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target`
+//' @export
+//[[Rcpp::export]]
+Rcpp::IntegerVector range_in_range(Rcpp::NumericVector ldmap_range_query,Rcpp::NumericVector ldmap_range_target){
+
+  const size_t p=ldmap_range_query.size();
+  RcppParallel::RVector<double> input_range_query(ldmap_range_query);
+  RcppParallel::RVector<double> input_range_target(ldmap_range_target);
+
+  Rcpp::IntegerVector ret = Rcpp::no_init(p);
+  RcppParallel::RVector<int> output_range(ret);
+  auto irb = input_range_target.begin();
+  auto ire = input_range_target.end();
+  if(!std::is_sorted(irb,ire,[](const double a,const double b){
+                               return Region::make_Region(a)<Region::make_Region(b);
+                             }))
+    Rcpp::stop("ldmap_range_query must be sorted");
+
+
+  // static_assert(Region{.br={.str={.end=100ull,.start=1ull,.chrom=1}}} < Region{.br={.str={.end=100ull,.start=1ull,.chrom=1}}},"bed_range is having issues sorting");
+
+
+  std::transform(
+                 input_range_query.begin(),
+                 input_range_query.end(),
+                 output_range.begin(),
+                 [=](const double x){
+                   return(range_in_range(x,irb,ire));
+                 });
+  return ret;
+
+}
+
 
 
 

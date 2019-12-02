@@ -62,6 +62,14 @@ testthat::test_that("we can make and print ldmap_ranges",{
 #   
 # })
 
+testthat::test_that("we can subset ldmap_ranges with ldmap_ranges",{
+  data(hg19_sizes)
+  data("ldetect_EUR")
+  map_ldetect <- range_in_range(ldetect_EUR,hg19_sizes)
+  checkr <- chromosomes(ldetect_EUR)
+  expect_equal(map_ldetect,checkr)
+})
+
 testthat::test_that("we can subset bigsnp files with ldmap_ranges",{
   
   bs <- example_bigsnp()

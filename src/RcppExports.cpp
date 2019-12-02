@@ -75,6 +75,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// range_in_range
+Rcpp::IntegerVector range_in_range(Rcpp::NumericVector ldmap_range_query, Rcpp::NumericVector ldmap_range_target);
+RcppExport SEXP _ldmap_range_in_range(SEXP ldmap_range_querySEXP, SEXP ldmap_range_targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range_query(ldmap_range_querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range_target(ldmap_range_targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(range_in_range(ldmap_range_query, ldmap_range_target));
+    return rcpp_result_gen;
+END_RCPP
+}
 // snp_in_range
 Rcpp::IntegerVector snp_in_range(Rcpp::NumericVector ldmap_snp, Rcpp::NumericVector ldmap_range);
 RcppExport SEXP _ldmap_snp_in_range(SEXP ldmap_snpSEXP, SEXP ldmap_rangeSEXP) {
@@ -511,6 +523,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_sorted_snp_df", (DL_FUNC) &_ldmap_sorted_snp_df, 2},
     {"_ldmap_set_ld_region", (DL_FUNC) &_ldmap_set_ld_region, 9},
     {"_ldmap_new_ldmap_range", (DL_FUNC) &_ldmap_new_ldmap_range, 3},
+    {"_ldmap_range_in_range", (DL_FUNC) &_ldmap_range_in_range, 2},
     {"_ldmap_snp_in_range", (DL_FUNC) &_ldmap_snp_in_range, 2},
     {"_ldmap_snp_in_ranges", (DL_FUNC) &_ldmap_snp_in_ranges, 2},
     {"_ldmap_format_ldmap_range", (DL_FUNC) &_ldmap_format_ldmap_range, 1},

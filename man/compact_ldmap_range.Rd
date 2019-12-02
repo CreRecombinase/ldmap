@@ -13,6 +13,19 @@ compact_ldmap_range(
   remove = TRUE
 )
 }
+\arguments{
+\item{df}{dataframe}
+
+\item{chrom}{chromosome column}
+
+\item{start}{column name for beginning of range}
+
+\item{end}{column name for end of range}
+
+\item{ldmap_range}{name for new ldmap_range column}
+
+\item{remove}{boolean indicating whether or not to remove aforementioned columns}
+}
 \value{
 copy of original datafame with new column \code{ldmap_range}
 }
