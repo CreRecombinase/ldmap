@@ -61,8 +61,8 @@ reference_panel_ld <- function(gwas_df, reference_file, LDshrink = TRUE, drop_mi
 #' @return gwas summary statistics (ready for fine-mapping etc)
 #' @export
 #'
-align_reference <- function(gwas_df, reference_file, remove_missing = TRUE, read_map_fun =  identity){
-    bsmap <- read_map_fun(reference_file)
+align_reference <- function(gwas_df, reference_file, remove_missing = TRUE, read_map_fn =  identity){
+    bsmap <- read_map_fn(reference_file)
     ## bs <- bigsnpr::snp_attach(reference_file)
     ## bsmap <- tibble::as_tibble(bs$map) %>%
     ##   compact_snp_struct(chrom =  "chromosome",
@@ -98,8 +98,8 @@ align_reference <- function(gwas_df, reference_file, remove_missing = TRUE, read
 subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_fn, filter_geno_fn, write_fn) {
     stopifnot(length(ldmr) == 1)
 
-    reference_files <- init_fn(reference_files = reference_files,ldmr = ldmr)
-    map <- filter_map_fn(reference_file = reference_files,ldmr = ldmr)
+    reference_files <- init_fn(reference_files = reference_files, ldmr = ldmr)
+    map <- filter_map_fn(reference_file = reference_files, ldmr = ldmr)
     ## bsmap <- tibble::as_tibble(bs$map) %>%
     ##     dplyr::mutate(index = 1:dplyr::n()) %>%
     ##     dplyr::filter(
@@ -109,9 +109,9 @@ subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_f
     ##                        ref = "allele2",
     ##                        alt = "allele1",
     ##                        remove = FALSE)
-    bsx <- filter_geno_fn(reference_file = reference_files,ldmr = ldmr,map = map)
+    bsx <- filter_geno_fn(reference_file = reference_files, ldmr = ldmr, map = map)
     ## bsx <- bs$genotypes
-    write_fn(map,bsx,output_file)
+    write_fn(map, bsx, output_file)
 
     ## rdsfile <- subset.bigSNP2(bs,
     ##                           ind.row = seq_len(nrow(bsx)),
