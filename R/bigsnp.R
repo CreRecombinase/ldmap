@@ -95,7 +95,7 @@ align_reference <- function(gwas_df, reference_file, remove_missing = TRUE, read
 ##' @return returns results of write_fun
 ##' @author Nicholas Knoblauch
 ##' @export
-subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_fn, filter_geno_fun, write_fun) {
+subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_fn, filter_geno_fn, write_fn) {
     stopifnot(length(ldmr) == 1)
 
     reference_files <- init_fn(reference_files = reference_files,ldmr = ldmr)
@@ -103,18 +103,15 @@ subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_f
     ## bsmap <- tibble::as_tibble(bs$map) %>%
     ##     dplyr::mutate(index = 1:dplyr::n()) %>%
     ##     dplyr::filter(
-    ##                dplyr::between(
-    ##                           physical.pos,
-    ##                           starts(ldmr) - 1L,
-    ##                           (ends(ldmr) - 1L))) %>%
+    ##
     ##     compact_snp_struct(chrom =  "chromosome",
     ##                        pos =  "physical.pos",
     ##                        ref = "allele2",
     ##                        alt = "allele1",
     ##                        remove = FALSE)
-    bsx <- filter_geno_fun(reference_file = reference_files,ldmr = ldmr,map = map)
+    bsx <- filter_geno_fn(reference_file = reference_files,ldmr = ldmr,map = map)
     ## bsx <- bs$genotypes
-    write_fun(map,bsx,output_file)
+    write_fn(map,bsx,output_file)
 
     ## rdsfile <- subset.bigSNP2(bs,
     ##                           ind.row = seq_len(nrow(bsx)),
@@ -135,7 +132,7 @@ subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_f
 ##' @return LD matrix
 ##' @author Nicholas Knoblauch
 ##' @export
-panel_ld <- function(reference_file, LDshrink = TRUE, read_map_fun, read_dosage_fun) {
+panel_ld <- function(reference_file, LDshrink = TRUE, read_map_fn, read_dosage_fn) {
 
     ## bs <- bigsnpr::snp_attach(reference_file)
     ## bsmap <- tibble::as_tibble(bs$map) %>%
@@ -144,8 +141,8 @@ panel_ld <- function(reference_file, LDshrink = TRUE, read_map_fun, read_dosage_
     ##                        ref = "allele2",
     ##                        alt = "allele1",
     ##                        remove = FALSE)
-    bsmap <- read_map_fun(reference_file)
-    nbsx <- read_dosage_fun(reference_file, bsmap)
+    bsmap <- read_map_fn(reference_file)
+    nbsx <- read_dosage_fn(reference_file, bsmap)
     ## nbsx <- bs$genotypes[,]
     if (LDshrink) {
         if (is.unsorted(bsmap$map, strictly = TRUE)) {
