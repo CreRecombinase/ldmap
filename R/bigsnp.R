@@ -1,3 +1,6 @@
+
+
+
 ##' estimate reference panel LD
 ##'
 ##' @param gwas_df dataframe with a ldmap_snp column (and optionally an effect-size column (beta-hat)
@@ -6,7 +9,7 @@
 ##' @param drop_missing whether to drop missing data or throw an error
 ##' @return correlation matrix
 ##' @author Nicholas Knoblauch
-reference_panel_ld <- function(gwas_df, reference_file,LDshrink = TRUE,drop_missing = TRUE) {
+reference_panel_ld <- function(gwas_df, reference_file, LDshrink = TRUE, drop_missing = TRUE) {
     ## library(ldmap)
     ## data(ldetect_EUR)
     ## reference_file <- example_bigsnp()
@@ -24,7 +27,8 @@ reference_panel_ld <- function(gwas_df, reference_file,LDshrink = TRUE,drop_miss
                            ref = "allele2",
                            alt = "allele1")
 
-    ret_df <- match_ref_panel(gwas_df, bsmap$snp_struct) %>% dplyr::select(-match_type)
+    ret_df <- match_ref_panel(gwas_df, bsmap$snp_struct) %>%
+        dplyr::select(-match_type)
     if (!drop_missing) {
         stopifnot(all(!is.na(ret_df$index)))
     }else {
@@ -48,131 +52,101 @@ reference_panel_ld <- function(gwas_df, reference_file,LDshrink = TRUE,drop_miss
 }
 
 
-
-subset.bigSNP2 <- function(x,
-                          ind.row,
-                          ind.col,
-                          backingfile = bigsnpr:::getNewFile(x, "sub"),
-                          ...) {
-
-  G <- x$genotypes
-  # Support for negative indices
-  ind.row <- bigstatsr::rows_along(G)[ind.row]
-  ind.col <- bigstatsr::cols_along(G)[ind.col]
-
-
-
-  # Create new FBM and fill it
-  G2 <- bigstatsr::FBM.code256(
-    nrow = length(ind.row),
-    ncol = length(ind.col),
-    code = G$code256,
-    init = NULL,
-    backingfile = backingfile,
-    create_bk = TRUE
-  )
-  bigsnpr:::replaceSNP(G2, G, rowInd = ind.row, colInd = ind.col)
-
-  # http://stackoverflow.com/q/19565621/6103040
-  newfam <- x$fam[ind.row, , drop = FALSE]
-  rownames(newfam) <- bigstatsr::rows_along(newfam)
-  newmap <- x$map[ind.col, , drop = FALSE]
-  rownames(newmap) <- bigstatsr::rows_along(newmap)
-
-  # Create the bigSNP object
-  snp.list <- structure(list(genotypes = G2,
-                             fam = newfam,
-                             map = newmap),
-                        class = "bigSNP")
-
-  # save it and return the path of the saved object
-  rds <- bigstatsr::sub_bk(G2$backingfile, ".rds")
-  saveRDS(snp.list, rds)
-  rds
-}
-
-
-
 #' Align to bigsnp reference
 #'
 #' @param gwas_df gwas summary stats
 #' @param reference_file bigsnp reference file
-#'
+#' @param remove_missing whether to remove missing data
+#' @param read_map_fun function for reading metadata from reference_file
 #' @return gwas summary statistics (ready for fine-mapping etc)
 #' @export
 #'
-align_reference <- function(gwas_df,reference_file,remove_missing = TRUE){
-  bs <- bigsnpr::snp_attach(reference_file)
-  bsmap <- tibble::as_tibble(bs$map) %>%
-    compact_snp_struct(chrom =  "chromosome",
-                       pos =  "physical.pos",
-                       ref = "allele2",
-                       alt = "allele1",
-                       remove = FALSE)
-  sc_df <- snp_cols(gwas_df)
-  ret_df <- match_ref_panel(gwas_df,bsmap$snp_struct) %>% 
-    dplyr::select({{sc_df}} := match)
+align_reference <- function(gwas_df, reference_file, remove_missing = TRUE, read_map_fun =  identity){
+    bsmap <- read_map_fun(reference_file)
+    ## bs <- bigsnpr::snp_attach(reference_file)
+    ## bsmap <- tibble::as_tibble(bs$map) %>%
+    ##   compact_snp_struct(chrom =  "chromosome",
+    ##                      pos =  "physical.pos",
+    ##                      ref = "allele2",
+    ##                      alt = "allele1",
+    ##                      remove = FALSE)
+    sc_df <- snp_cols(gwas_df)
+    ret_df <- match_ref_panel(gwas_df,bsmap$snp_struct) %>%
+        dplyr::select({{sc_df}} := match)
     if(remove_missing){
-      ret_df <- dplyr::filter(ret_df,!is.na(index))
+        ret_df <- dplyr::filter(ret_df,!is.na(index))
     }else{
-      stopifnot(all(!is.na(ret_df$index)))
+        stopifnot(all(!is.na(ret_df$index)))
     }
-  return(ret_df)
-  
+    return(ret_df)
+
 }
 
 ##' subset bigsnp by an ldmap_region
 ##'
 ##' @param ldmr an ldmap_region
-##' @param reference_files bigsnpr rds files
-##' @return a new rds file
+##' @param reference_files reference files
+##' @param output_file output file
+##' @param init_fn function that chooses which of the refernce files to
+##' read from reference_files must take args ldmr and reference_files
+##' @param filter_map_fn function that takes one refernce file and an ldmap range and returns a subset map
+##' @param filter_geno_fun funcion that takes one reference file, a dataframe with snp metadata and returns a matrix of genotypes
+##' @param write_fun function for writing the data
+##' @return returns results of write_fun
 ##' @author Nicholas Knoblauch
 ##' @export
-subset_rds <- function(ldmr, reference_files, pattern="sub") {
+subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_fn, filter_geno_fun, write_fun) {
     stopifnot(length(ldmr) == 1)
 
-    bs <- bigsnpr::snp_attach(reference_files[[chromosomes(ldmr)]])
-    stopifnot(all(bs$chromosome == chromosomes(ldmr)))
-    bsmap <- tibble::as_tibble(bs$map) %>%
-        dplyr::mutate(index = 1:dplyr::n()) %>%
-        dplyr::filter(
-                   dplyr::between(
-                              physical.pos,
-                              starts(ldmr) - 1L,
-                              (ends(ldmr) - 1L))) %>%
-        compact_snp_struct(chrom =  "chromosome",
-                           pos =  "physical.pos",
-                           ref = "allele2",
-                           alt = "allele1",
-                           remove = FALSE)
-    bsx <- bs$genotypes
+    reference_files <- init_fn(reference_files = reference_files,ldmr = ldmr)
+    map <- filter_map_fn(reference_file = reference_files,ldmr = ldmr)
+    ## bsmap <- tibble::as_tibble(bs$map) %>%
+    ##     dplyr::mutate(index = 1:dplyr::n()) %>%
+    ##     dplyr::filter(
+    ##                dplyr::between(
+    ##                           physical.pos,
+    ##                           starts(ldmr) - 1L,
+    ##                           (ends(ldmr) - 1L))) %>%
+    ##     compact_snp_struct(chrom =  "chromosome",
+    ##                        pos =  "physical.pos",
+    ##                        ref = "allele2",
+    ##                        alt = "allele1",
+    ##                        remove = FALSE)
+    bsx <- filter_geno_fun(reference_file = reference_files,ldmr = ldmr,map = map)
+    ## bsx <- bs$genotypes
+    write_fun(map,bsx,output_file)
 
-    rdsfile <- subset.bigSNP2(bs,
-                              ind.row = seq_len(nrow(bsx)),
-                              ind.col = bsmap$index,
-                              backingfile = bigsnpr:::getNewFile(bs, pattern))
-    return(rdsfile)
+    ## rdsfile <- subset.bigSNP2(bs,
+    ##                           ind.row = seq_len(nrow(bsx)),
+    ##                           ind.col = bsmap$index,
+    ##                           backingfile = bigsnpr:::getNewFile(bs, pattern))
+
 }
 
 
 ##' estimate LD from a reference panel
 ##'
 ##'
-##' @param reference_files a vector of 22 bigsnpr files
+##' @param reference_file
 ##' @param LDshrink boolean for whether to use ldshrink
+##' @param read_map_fun function for reading snp metadata
+##' @param read_dosage_fun function for reading dosage data
+##' @param reference_files a reference file
 ##' @return LD matrix
 ##' @author Nicholas Knoblauch
 ##' @export
-panel_ld <- function(reference_file, LDshrink = TRUE) {
+panel_ld <- function(reference_file, LDshrink = TRUE, read_map_fun, read_dosage_fun) {
 
-    bs <- bigsnpr::snp_attach(reference_file)
-    bsmap <- tibble::as_tibble(bs$map) %>%
-        compact_snp_struct(chrom =  "chromosome",
-                           pos =  "physical.pos",
-                           ref = "allele2",
-                           alt = "allele1",
-                           remove = FALSE)
-    nbsx <- bs$genotypes[,]
+    ## bs <- bigsnpr::snp_attach(reference_file)
+    ## bsmap <- tibble::as_tibble(bs$map) %>%
+    ##     compact_snp_struct(chrom =  "chromosome",
+    ##                        pos =  "physical.pos",
+    ##                        ref = "allele2",
+    ##                        alt = "allele1",
+    ##                        remove = FALSE)
+    bsmap <- read_map_fun(reference_file)
+    nbsx <- read_dosage_fun(reference_file, bsmap)
+    ## nbsx <- bs$genotypes[,]
     if (LDshrink) {
         if (is.unsorted(bsmap$map, strictly = TRUE)) {
             bsmap$map <- jitter_map(bsmap$map)
