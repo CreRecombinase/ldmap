@@ -419,11 +419,12 @@ SEXP snps_in_range(const double x, RcppParallel::RVector<double>::const_iterator
 
 int range_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end){
 
+  // static_assert(Region{.br={.str={.end=1892607,.start=1,.chrom=1}}}<Region{.br={.str={.end=243199374,.start=1,.chrom=2}}},"I can't write relation operators...");
   const auto sx=Region::make_Region(x).start_SNP();
   auto xb=std::lower_bound(begin,end,sx,[](double  range_a,const SNP &reg_b){
                                           return(Region{.br={.flt=range_a}} < reg_b);
                                         });
-  if( xb==end )
+  if( xb==end or Region{.br={.flt= (*xb)}} > sx)
     return NA_INTEGER;
   if(Region{.br={.flt=*xb}}.last_SNP()<Region::make_Region(x).last_SNP()){
     Rcpp::stop("range_in_range does not support overlap matches");

@@ -99,6 +99,15 @@ test_that("can merge regions",{
 
 
 
+test_that("we can correctly assign regions to regions when they're length 1",{
+
+  for(i in hg19_sizes){  
+    rir <- range_in_range(ldetect_EUR,i)
+    expect_equal(chromosomes(ldetect_EUR)==chromosomes(i),!is.na(rir))
+  }
+  
+  
+})
  
 
 
