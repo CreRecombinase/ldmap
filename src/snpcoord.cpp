@@ -417,7 +417,7 @@ SEXP snps_in_range(const double x, RcppParallel::RVector<double>::const_iterator
 
 
 
-int range_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end){
+int range_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end,const bool allow_overlap=false){
 
   // static_assert(Region{.br={.str={.end=1892607,.start=1,.chrom=1}}}<Region{.br={.str={.end=243199374,.start=1,.chrom=2}}},"I can't write relation operators...");
   const auto sx=Region::make_Region(x).start_SNP();
@@ -426,8 +426,10 @@ int range_in_range(const double x, RcppParallel::RVector<double>::const_iterator
                                         });
   if( xb==end or Region{.br={.flt= (*xb)}} > sx)
     return NA_INTEGER;
-  if(Region{.br={.flt=*xb}}.last_SNP()<Region::make_Region(x).last_SNP()){
-    Rcpp::stop("range_in_range does not support overlap matches");
+  if(!allow_overlap){
+    if(Region{.br={.flt=*xb}}.last_SNP()<Region::make_Region(x).last_SNP()){
+      Rcpp::stop("range_in_range does not support overlap matches");
+    }
   }
   return std::distance(begin,xb)+1;
 }
@@ -463,10 +465,11 @@ int snp_in_range(const double x, RcppParallel::RVector<double>::const_iterator b
 //'
 //' @param ldmap_range_query vector of ldmap_ranges
 //' @param ldmap_range_target vector of *non-overlapping* ldmap_ranges (must be sorted)
+//' @param allow_overlap is it alright if a query is only partially inside the target?
 //' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target`
 //' @export
 //[[Rcpp::export]]
-Rcpp::IntegerVector range_in_range(Rcpp::NumericVector ldmap_range_query,Rcpp::NumericVector ldmap_range_target){
+Rcpp::IntegerVector range_in_range(Rcpp::NumericVector ldmap_range_query,Rcpp::NumericVector ldmap_range_target,bool allow_overlap=false){
 
   const size_t p=ldmap_range_query.size();
   RcppParallel::RVector<double> input_range_query(ldmap_range_query);
@@ -490,7 +493,7 @@ Rcpp::IntegerVector range_in_range(Rcpp::NumericVector ldmap_range_query,Rcpp::N
                  input_range_query.end(),
                  output_range.begin(),
                  [=](const double x){
-                   return(range_in_range(x,irb,ire));
+                   return(range_in_range(x,irb,ire,allow_overlap));
                  });
   return ret;
 

@@ -4,12 +4,14 @@
 \alias{range_in_range}
 \title{Assign ranges to ranges}
 \usage{
-range_in_range(ldmap_range_query, ldmap_range_target)
+range_in_range(ldmap_range_query, ldmap_range_target, allow_overlap = FALSE)
 }
 \arguments{
 \item{ldmap_range_query}{vector of ldmap_ranges}
 
 \item{ldmap_range_target}{vector of \emph{non-overlapping} ldmap_ranges (must be sorted)}
+
+\item{allow_overlap}{is it alright if a query is only partially inside the target?}
 }
 \value{
 a vector of integers of length \code{length(ldmap_range_query)} with the index of the \code{ldmap_range_target}
