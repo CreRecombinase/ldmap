@@ -4,15 +4,34 @@
 \alias{subset_rds}
 \title{subset bigsnp by an ldmap_region}
 \usage{
-subset_rds(ldmr, reference_files, pattern = "sub")
+subset_rds(
+  ldmr,
+  reference_files,
+  output_file,
+  init_fn,
+  filter_map_fn,
+  filter_geno_fn,
+  write_fn
+)
 }
 \arguments{
 \item{ldmr}{an ldmap_region}
 
-\item{reference_files}{bigsnpr rds files}
+\item{reference_files}{reference files}
+
+\item{output_file}{output file}
+
+\item{init_fn}{function that chooses which of the refernce files to
+read from reference_files must take args ldmr and reference_files}
+
+\item{filter_map_fn}{function that takes one refernce file and an ldmap range and returns a subset map}
+
+\item{filter_geno_fun}{funcion that takes one reference file, a dataframe with snp metadata and returns a matrix of genotypes}
+
+\item{write_fun}{function for writing the data}
 }
 \value{
-a new rds file
+returns results of write_fun
 }
 \description{
 subset bigsnp by an ldmap_region

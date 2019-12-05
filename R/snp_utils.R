@@ -188,6 +188,9 @@ vec_proxy_compare.ldmap_snp <- function(x, ...) {
   rank.ldmap_snp(x)
 }
 
+
+
+
 ##' Return the column(s) containing ldmap_ranges
 ##'
 ##' @param df a dataframe
@@ -498,6 +501,39 @@ format.ldmap_allele <- function(x, ...) {
 
 
 
+#' Whether or not your vector is a ldmap_range
+#'
+#' @param x vector
+#'
+#' @return length one boolean
+#' @export
+#'
+#' @examples
+#' #FALSE
+#' is_ldmap_range(letters)
+#' #TRUE
+#' is_ldmap_range(new_ldmap_range(1:22,1:100,200:300))
+is_ldmap_range <- function(x) {
+  inherits(x, "ldmap_range")
+}
+
+
+#' Whether or not your vector is a ldmap_snp
+#'
+#' @param x vector
+#'
+#' @return length one boolean
+#' @export
+#'
+#' @examples
+#' #FALSE
+#' is_ldmap_snp(letters)
+#' #TRUE
+#' is_ldmap_snp(new_ldmap_snp(1:22,1:100))
+is_ldmap_range <- function(x) {
+  inherits(x, "ldmap_snp")
+}
+
 
 #' @export
 as_ldmap_range <- function(x) {
@@ -522,6 +558,7 @@ vec_cast.ldmap_range.default <- function(x, to, ...) {
 }
 
 
+
 #' @export vec_cast.double.ldmap_range
 #' @export
 #' @method vec_cast.double ldmap_range
@@ -534,6 +571,13 @@ vec_cast.double.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
 #' @method vec_cast.integer ldmap_range
 vec_cast.integer.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
     as_integer_ldmap_range(x)
+
+
+#' @export vec_cast.ldmap_range.ldmap_range
+#' @export
+#' @method vec_cast.ldmap_range ldmap_range
+vec_cast.ldmap_range.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
+  x
 
 
 
@@ -577,21 +621,48 @@ format.ldmap_range <- function(x, ...) {
 
 
 
+#' @method vec_ptype2.ldmap_range default
+#' @export
+#' @export vec_ptype2.ldmap_range.default
+vec_ptype2.ldmap_range.default <- function(x, y, ..., x_arg = "x", y_arg = "y") {
+  vec_default_ptype2(x, y, x_arg = x_arg, y_arg = y_arg)
+}
+
+
+
 #' @method vec_ptype2 ldmap_range
 #' @export
 #' @export vec_ptype2.ldmap_range
-#'
 vec_ptype2.ldmap_range <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_range", y)
 
 
-#' @method vec_ptype2.ldmap_range ldmap_range
+#' New ldmap_range
+#'
+#' @param x vector
+#'
+#' @return ldmap_range
 #' @export
+#'
+#' @examples
+#' #under the hood the data is a double
+#' as.numeric(ldetect_EUR[1])
+#' #which means we can convert it back
+#' ldmap_range(as.numeric(ldetect_EUR[1]))
+ldmap_range <- function(x=double()){
+  as_ldmap_range(x)
+}
+
+#' @method vec_ptype2.ldmap_range ldmap_range
+#' @export 
+#' @export vec_ptype2.ldmap_range.ldmap_range
 vec_ptype2.ldmap_range.ldmap_range <- function(x, y, ...) new_ldmap_range()
 
 #' @method vec_ptype2.ldmap_range double
 #' @export
+#' @export vec_ptype2.ldmap_range.double
 vec_ptype2.ldmap_range.double <- function(x, y, ...) double()
 
 #' @method vec_ptype2.double ldmap_range
 #' @export
+#' @export vec_ptype2.double.ldmap_range
 vec_ptype2.double.ldmap_range <- function(x, y, ...) double()

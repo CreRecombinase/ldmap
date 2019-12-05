@@ -1,0 +1,42 @@
+
+
+
+# ldmap
+
+#+BEGIN_HTML
+  <!-- badges: start -->
+#+END_HTML
+
+#+BEGIN_HTML
+  <!-- badges: end -->
+#+END_HTML
+
+The goal of ldmap is to simplify common operations on statistical
+genetics and genomics datasets by providing a set of simple, performant
+classes for dealing with (human) genomic annotation data and GWAS
+summary statistics.
+
+** Installation
+   :PROPERTIES:
+   :CUSTOM_ID: installation
+   :END:
+
+You can install the development version of ldmap from
+[[https://github.com/][GitHub]] with:
+
+#+BEGIN_SRC R
+  # install.packages("devtools")
+  devtools::install_github("CreRecombinase/ldmap")
+#+END_SRC
+
+** Assign SNPs to genomic intervals
+   :PROPERTIES:
+   :CUSTOM_ID: example
+   :END:
+
+
+#+BEGIN_SRC R
+  library(ldmap)
+
+#+END_SRC
+

@@ -4,12 +4,21 @@
 \alias{align_reference}
 \title{Align to bigsnp reference}
 \usage{
-align_reference(gwas_df, reference_file, remove_missing = TRUE)
+align_reference(
+  gwas_df,
+  reference_file,
+  remove_missing = TRUE,
+  read_map_fn = identity
+)
 }
 \arguments{
 \item{gwas_df}{gwas summary stats}
 
 \item{reference_file}{bigsnp reference file}
+
+\item{remove_missing}{whether to remove missing data}
+
+\item{read_map_fun}{function for reading metadata from reference_file}
 }
 \value{
 gwas summary statistics (ready for fine-mapping etc)

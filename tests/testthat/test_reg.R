@@ -65,6 +65,15 @@ snp_df <- dplyr::mutate(snp_df,chrom=as.integer(gsub("chr","",chr)),pos=pos) %>%
     
   })
   
+  test_that("we can concatenate vectors of ranges",{
+    data("ldetect_EUR")
+    ldra <- ldetect_EUR[1]
+    ldrb <- ldetect_EUR[2]
+    expect_equal(c(ldra,ldrb),ldetect_EUR[1:2])
+    
+  })
+  
+  
 test_that("Check for assigning SNPs to blocks",{
   
   n_region_id <- assign_region(break_chr = ld_df$chr,

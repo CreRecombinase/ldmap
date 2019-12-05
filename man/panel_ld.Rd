@@ -4,12 +4,16 @@
 \alias{panel_ld}
 \title{estimate LD from a reference panel}
 \usage{
-panel_ld(reference_file, LDshrink = TRUE)
+panel_ld(reference_file, LDshrink = TRUE, read_map_fn, read_dosage_fn)
 }
 \arguments{
 \item{LDshrink}{boolean for whether to use ldshrink}
 
-\item{reference_files}{a vector of 22 bigsnpr files}
+\item{read_map_fun}{function for reading snp metadata}
+
+\item{read_dosage_fun}{function for reading dosage data}
+
+\item{reference_files}{a reference file}
 }
 \value{
 LD matrix
