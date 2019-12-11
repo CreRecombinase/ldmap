@@ -46,6 +46,9 @@
 using vector_variant =
   std::variant<Rcpp::NumericVector, Rcpp::RawVector, Rcpp::IntegerVector,Rcpp::StringVector,Rcpp::LogicalVector,Rcpp::List>;
 
+
+
+
 vector_variant get_vector_variant(SEXP x){
 
   Rcpp::RObject ro(x);
@@ -89,14 +92,24 @@ public:
 
   SEXP operator()(const Rcpp::StringVector input)const{
     const Rcpp::StringVector::const_iterator ib = input.begin();
-    auto ret = Rcpp::StringVector(ib+offset,ib+offset+size);
+    if(size>0){
+      auto ret = Rcpp::StringVector(ib+offset,ib+offset+size);
+      ret.attr("class")=input.attr("class");
+      return ret;
+    } 
+    auto ret = Rcpp::StringVector();
     ret.attr("class")=input.attr("class");
     return ret;
   }
   template<int RTYPE>
   SEXP operator()(const Rcpp::Vector<RTYPE> input)const{
-    const auto ib = input.begin();
-    auto ret = Rcpp::Vector<RTYPE>(ib+offset,ib+offset+size);
+    if(size>0){
+      const auto ib = input.begin();
+      auto ret = Rcpp::Vector<RTYPE>(ib+offset,ib+offset+size);
+      ret.attr("class")=input.attr("class");
+      return ret;
+    }
+    auto ret = Rcpp::Vector<RTYPE>();
     ret.attr("class")=input.attr("class");
     return ret;
   }
@@ -104,21 +117,23 @@ public:
 
 
 
+
+
+
 template <typename A>
 SEXP indirect_index_df(const A* ab, const Rcpp::DataFrame df,const A* a_itb, const A* a_ite){
 
-
-  auto dfc=df.size();
-  const Indirector idr(std::distance(ab,a_itb),std::distance(a_itb,a_ite));
+  auto dfc=df.size(); 
   std::vector<vector_variant> vv;
-  vv.reserve(dfc);
+  vv.reserve(dfc);  
   std::transform(df.begin(),df.end(),std::back_inserter(vv),[](auto elem){return get_vector_variant(elem);});
+  const Indirector idr(std::distance(ab,a_itb),std::distance(a_itb,a_ite)); 
   Rcpp::List ret = Rcpp::List::import_transform(vv.begin(),vv.end(),[&](const vector_variant &elem){
-                                                                      return std::visit(idr,elem);
-                                                                    });
+    return std::visit(idr,elem);
+  });
   ret.attr("names") = df.names();
   ret.attr("class") = Rcpp::StringVector::create("tbl_df","tbl","data.frame");
-  ret.attr("row.names") = Rcpp::seq(1, std::distance(a_itb,a_ite));
+  ret.attr("row.names") = Rcpp::seq_len(std::distance(a_itb,a_ite));
   return ret;
 }
 
@@ -392,7 +407,6 @@ Rcpp::NumericVector snps_in_range(const double x, RcppParallel::RVector<double>:
 }
 
 
-
 SEXP snps_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end, Rcpp::DataFrame index_with){
 
   const auto sas= Region::make_Region(x).start_SNP().snp.flt;
@@ -403,11 +417,12 @@ SEXP snps_in_range(const double x, RcppParallel::RVector<double>::const_iterator
   auto xbu =std::upper_bound(xbl,end,saf,[](const double& snp_a, const double &snp_b){
                                            return(SNP{.snp={.flt=snp_a}}<SNP{.snp={.flt=snp_b}});
                                            });
-  if(xbl==end){
-    auto ret=Rcpp::NumericVector::create();
-    ret.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
-    return ret;
-  }
+  // if(xbl==end){
+  //   return indirect_index_df<double>(begin,index_with,xbl,xbu);
+  //   auto ret=Rcpp::NumericVector::create();
+  //   ret.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
+  //   return ret;
+  // }
   //  Rcpp::List retdf=
   //  Rcpp::NumericVector ret(xbl,xbu);
 
@@ -419,11 +434,15 @@ SEXP snps_in_range(const double x, RcppParallel::RVector<double>::const_iterator
 
 int range_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end,const bool allow_overlap=false){
 
-  // static_assert(Region{.br={.str={.end=1892607,.start=1,.chrom=1}}}<Region{.br={.str={.end=243199374,.start=1,.chrom=2}}},"I can't write relation operators...");
+
+  auto bc = allow_overlap ? [](double range_a, double range_b){
+                              return(!(Region{.br={.flt=range_a}}.overlap(Region::make_Region(range_b))));
+                            } : [](double range_a, double range_b){
+                                  return(!(Region{.br={.flt=range_a}}<(Region::make_Region(range_b).start_SNP())));
+                                };
+
   const auto sx=Region::make_Region(x).start_SNP();
-  auto xb=std::lower_bound(begin,end,sx,[](double  range_a,const SNP &reg_b){
-                                          return(Region{.br={.flt=range_a}} < reg_b);
-                                        });
+  auto xb=std::lower_bound(begin,end,x,bc);
   if( xb==end or Region{.br={.flt= (*xb)}} > sx)
     return NA_INTEGER;
   if(!allow_overlap){
@@ -433,6 +452,45 @@ int range_in_range(const double x, RcppParallel::RVector<double>::const_iterator
   }
   return std::distance(begin,xb)+1;
 }
+
+
+
+
+
+int range_overlap_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end){
+
+
+  auto bc = [](double range_a, double range_b){
+              return(!(Region{.br={.flt=range_a}}.overlap(Region::make_Region(range_b))));
+            };
+
+  const auto sx=Region::make_Region(x).start_SNP();
+  auto xb=std::lower_bound(begin,end,x,bc);
+  if( xb==end)
+    return NA_INTEGER;
+
+  return std::distance(begin,xb)+1;
+}
+
+
+
+int range_within_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end){
+
+  const auto sx=Region::make_Region(x).start_SNP();
+
+  auto bc =  [](double range_a, SNP snp_b){
+               return(!(Region{.br={.flt=range_a}}.start_SNP()<snp_b));
+             };
+  auto xb=std::lower_bound(begin,end,sx,bc);
+  if( xb==end or Region{.br={.flt= (*xb)}} > sx)
+    return NA_INTEGER;
+  if(Region{.br={.flt=*xb}}.last_SNP()<Region::make_Region(x).last_SNP()){
+    return NA_INTEGER;
+  }
+  return std::distance(begin,xb)+1;
+}
+
+
 
 
 int snp_in_range(const double x, RcppParallel::RVector<double>::const_iterator begin,RcppParallel::RVector<double>::const_iterator end){
@@ -486,15 +544,22 @@ Rcpp::IntegerVector range_in_range(Rcpp::NumericVector ldmap_range_query,Rcpp::N
 
 
   // static_assert(Region{.br={.str={.end=100ull,.start=1ull,.chrom=1}}} < Region{.br={.str={.end=100ull,.start=1ull,.chrom=1}}},"bed_range is having issues sorting");
-
-
-  std::transform(
-                 input_range_query.begin(),
-                 input_range_query.end(),
-                 output_range.begin(),
-                 [=](const double x){
-                   return(range_in_range(x,irb,ire,allow_overlap));
-                 });
+  if(allow_overlap)
+    std::transform(
+                   input_range_query.begin(),
+                   input_range_query.end(),
+                   output_range.begin(),
+                   [=](const double x){
+                     return(range_overlap_range(x,irb,ire));
+                   });
+  else
+    std::transform(
+                   input_range_query.begin(),
+                   input_range_query.end(),
+                   output_range.begin(),
+                   [=](const double x){
+                     return(range_within_range(x,irb,ire));
+                   });
   return ret;
 
 }
@@ -652,7 +717,7 @@ Rcpp::List snp_in_ranges(Rcpp::NumericVector ldmap_snp,Rcpp::ListOf<Rcpp::Numeri
   auto retlist = vec_from_bitset(bsp,num_ranges);
   retlist.names() = new_names;
   retlist.attr("class") = Rcpp::StringVector::create("tbl_df","tbl","data.frame");
-  retlist.attr("row.names") = Rcpp::seq(1, retp);
+  retlist.attr("row.names") = Rcpp::seq_len(retp);
   return retlist;
 
 }
@@ -1034,11 +1099,15 @@ Rcpp::IntegerVector sample_interval(Rcpp::IntegerVector n,Rcpp::IntegerVector be
 
   if(replace){
     for(int i=0 ; i<p ; i++){
+      if(i % 100 == 0)
+        Rcpp::checkUserInterrupt();
       auto uid = std::uniform_int_distribution<>(begin[i%bs], end(i%es));
       ret_b=std::generate_n(ret_b,n(i%ns),[&](){return uid(gen);});
     }
   }else{
     for(int i=0 ; i<p ; i++){
+      if(i % 100 == 0)
+        Rcpp::checkUserInterrupt();
       auto nret_b = std::sample(boost::counting_iterator<int>(begin[i%bs]),
                                 boost::counting_iterator<int>(end[i%es]),
                                 ret_b,n(i%ns),gen);
@@ -1298,6 +1367,55 @@ Rcpp::IntegerVector starts(Rcpp::NumericVector ldmap_range){
       return(static_cast<int>(bed_range{.flt=x}.str.start));
     });
   return ret;
+}
+
+
+
+//' Find convex hull of vector of ranges (or SNPs )
+//'
+//' @param vector of ldmap_range or ldmap_snp of 
+//' @return an ldmap range containg all the ranges (or snps)
+//'
+//' @export
+//[[Rcpp::export]]
+Rcpp::NumericVector convex_hull(Rcpp::NumericVector x){
+  using namespace Rcpp;
+  Rcpp::NumericVector ret(1);
+  ret.attr("class")=Rcpp::StringVector::create("ldmap_range","vctrs_vctr"); 
+  if(x.inherits("ldmap_snp")){  
+    auto [min_pt,max_pt] = std::minmax_element(x.begin(),x.end(),[](const double a,const double b){
+      auto sa=SNP::make_snp(a);
+      auto sb=SNP::make_snp(b);
+      if(sa.chrom()!=sb.chrom()){
+        Rcpp::stop("all elements must share chromosomes for `convex_hull`");
+      }
+      return(sa<sb);
+    });
+    auto asnp=SNP::make_snp(*max_pt);
+    auto bsnp=SNP::make_snp(*min_pt);
+    
+    double retflt=bed_range{.str={.end=asnp.snp.str.pos,
+                            .start=bsnp.snp.str.pos,
+                            .chrom=asnp.snp.str.chrom}}.flt;
+    ret[0]=retflt;
+    return(ret);
+  }
+  if(x.inherits("ldmap_range")){
+    auto start = x.begin();
+    auto retflt = std::accumulate(x.begin(), x.end(), *start, [](const double a, const double b){
+      auto sa=Region::make_Region(a);
+      auto sb=Region::make_Region(b);
+      if(sa.chrom()!=sb.chrom()){
+        Rcpp::stop("all elements must share chromosomes for `convex_hull`");
+      }
+      auto rr = bed_range{.str={.end=std::max(sa.end(),sb.end()),.start=std::min(sa.start(),sb.start()),.chrom=sa.chrom()}};
+      return rr.flt;
+    });
+    ret[0]=retflt;
+    return(ret);
+  }else{
+    Rcpp::stop("`convex_hull` is only defined for ldmap_range and ldmap_snp");
+  }
 }
 
 

@@ -467,6 +467,10 @@ class Region{
     return boost::icl::construct<boost::icl::discrete_interval<uint64_t>>(br.str.start,br.str.end,boost::icl::interval_bounds::left_open());
   }
 
+  template<typename C,typename S>
+  static constexpr Region make_Region(const C chrom,const S start, const S end) noexcept{
+    return Region{.br={.str={.end=end,.start=start,.chrom=chrom}}};
+  }
 
   static constexpr Region make_Region(const double x) noexcept{
     return Region{.br={.flt=x}};
@@ -586,7 +590,7 @@ class Region{
       return std::nullopt;
     }
     return Region{.br={.str={.end=std::max(this->br.str.end,other.snp.str.pos+1),
-                        .start=std::min(this->br.str.start,other.snp.str.pos),
+                             .start=std::min(this->br.str.start,other.snp.str.pos),
                              .chrom=this->br.str.chrom}}};
   }
 

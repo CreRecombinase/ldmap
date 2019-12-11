@@ -216,6 +216,16 @@ starts <- function(ldmap_range) {
     .Call('_ldmap_starts', PACKAGE = 'ldmap', ldmap_range)
 }
 
+#' Find convex hull of vector of ranges (or SNPs )
+#'
+#' @param vector of ldmap_range or ldmap_snp of 
+#' @return an ldmap range containg all the ranges (or snps)
+#'
+#' @export
+convex_hull <- function(x) {
+    .Call('_ldmap_convex_hull', PACKAGE = 'ldmap', x)
+}
+
 #' get end position from a ldmap_range
 #'
 #' @param ldmap_range the vector of ldmap_ranges

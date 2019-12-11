@@ -278,6 +278,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// convex_hull
+Rcpp::NumericVector convex_hull(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_convex_hull(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(convex_hull(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ends
 Rcpp::IntegerVector ends(Rcpp::NumericVector ldmap_range);
 RcppExport SEXP _ldmap_ends(SEXP ldmap_rangeSEXP) {
@@ -541,6 +552,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_rank_snps", (DL_FUNC) &_ldmap_rank_snps, 1},
     {"_ldmap_chromosomes", (DL_FUNC) &_ldmap_chromosomes, 1},
     {"_ldmap_starts", (DL_FUNC) &_ldmap_starts, 1},
+    {"_ldmap_convex_hull", (DL_FUNC) &_ldmap_convex_hull, 1},
     {"_ldmap_ends", (DL_FUNC) &_ldmap_ends, 1},
     {"_ldmap_positions", (DL_FUNC) &_ldmap_positions, 1},
     {"_ldmap_ref_alleles", (DL_FUNC) &_ldmap_ref_alleles, 2},
