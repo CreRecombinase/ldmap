@@ -1,4 +1,52 @@
 
+
+#'
+#' @method is.na ldmap_snp
+#' @export
+#' @export is.na.ldmap_snp
+is.na.ldmap_snp <- function(x,...){
+  is.na(vctrs::vec_data(x))
+}
+
+
+#'
+#' @method vec_duplicate_id ldmap_snp
+#' @export
+#' @export vec_duplicate_id.ldmap_snp
+#'
+vec_duplicate_id.ldmap_snp <- function(x,...){
+  vec_duplicate_id(vctrs::vec_data(x))
+}
+
+
+
+#'
+#' @method vec_duplicate_id ldmap_snp
+#' @export
+#' @export vec_duplicate_id.ldmap_snp
+#'
+vec_duplicate_id.ldmap_snp <- function(x,...){
+  vec_duplicate_id(vctrs::vec_data(x))
+}
+
+
+#' translate a vector of ldmap_ranges by a constant factor
+#'
+#' @param x vector of ldmap_range
+#' @param offset amount to move begin and end (recycled as necessary)
+#'
+#' @return vector of ldmap_ranges
+#' @export
+#'
+#' @examples
+#' # move all regions over by 100 base pairs
+#' ldetect_EUR_100 <- translate_ldmr(ldetect_EUR,100L)
+#' #move first region by 100 and second by 0
+#' ld2 <- translate_ldmr(ldetect_EUR[1:2],c(100L,0L))
+translate_ldmr <- function(x,offset=0L){
+  new_ldmap_range(chromosomes(x),starts(x)+offset,ends(x)+offset)
+}
+
 #'
 #' @method vec_duplicate_id ldmap_snp
 #' @export
@@ -12,10 +60,11 @@ vec_duplicate_id.ldmap_snp <- function(x,...){
 #' @method vec_proxy_equal ldmap_snp
 #' @export
 #' @export vec_proxy_equal.ldmap_snp
-#'
 vec_proxy_equal.ldmap_snp <- function(x, ...) {
   ldmap_snp_2_dataframe(x)
 }
+
+
 
 #'
 #' @method vec_proxy_equal ldmap_allele
@@ -172,7 +221,7 @@ as_ldmap_snp <- function(x) {
 #' @export
 #' @export vec_proxy_compare.ldmap_snp
 vec_proxy_compare.ldmap_snp <- function(x, ...) {
-  rank.ldmap_snp(x)
+  structure(unclass(x),class="integer64")
 }
 
 
@@ -860,7 +909,28 @@ is_range_in_range <- function(query,target,allow_overlap=FALSE){
 }
 
 
+#' Check for overlap
+#'
+#' @param x vector of ldmap_snp or ldmap_range
+#' @param y vector of ldmap_snp or ldmap_range
+#'
+#' @return boolean vector
+#' @export
+#'
+overlaps <- function(x,y){
+  dplyr::if_else(chromosomes(x)==chromosomes(y),starts(x)<= ends(y) & starts(y) <= ends(x),FALSE)
+}
 
 
-
+#' Overlapping interval
+#'
+#' @param x vector of ldmap_snp or ldmap_range
+#' @param y vector of ldmap_snp or ldmap_range
+#'
+#' @return vector of ldmap_range with overlap between x and y
+#' @export
+#'
+common_range <- function(x,y){
+  dplyr::if_else(chromosomes(x)==chromosomes(y),new_ldmap_range(chromosomes(x),pmax(starts(x),starts(y)),pmin(ends(x),ends(y))),new_ldmap_range(NA_integer_,NA_integer_,NA_integer_))
+}
 

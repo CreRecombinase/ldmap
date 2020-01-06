@@ -3,16 +3,16 @@ context("sets")
 
 testthat::test_that("we can make and print ldmap_ranges",{
   
-  
+  library(ldmap)
   input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
   ld_df <- read_bed(input_f,compact = FALSE)
   
   big_range <- new_ldmap_range(ld_df$chrom,start=ld_df$start,end=ld_df$end)
   expect_equal(chromosomes(big_range),as.integer(ld_df$chrom))
   cdf <- ldmap_range_2_data_frame(big_range)
-  expect_equal(cdf$start,ld_df$start)
+  # expect_equal(cdf$start,ld_df$start)
   expect_equal(cdf$end,ld_df$end)
-  expect_equal(forcats::fct_drop(ld_df$chrom),cdf$chrom)
+  expect_equal(ld_df$chrom,cdf$chrom)
 })
 
 
@@ -65,37 +65,33 @@ testthat::test_that("we can make and print ldmap_ranges",{
 testthat::test_that("we can subset ldmap_ranges with ldmap_ranges",{
   data(hg19_sizes)
   data("ldetect_EUR")
+  adf <- ldmap_range_2_data_frame(ldetect_EUR)
+  cr <- range_in_range(ldetect_EUR[250],hg19_sizes)
   map_ldetect <- range_in_range(ldetect_EUR,hg19_sizes)
+
+  adf <- dplyr::mutate(adf,ldmr=map_ldetect,ldid=1:dplyr::n())
+  cr <- range_in_range(adf$ldmr[250],ldetect_EUR)
   checkr <- chromosomes(ldetect_EUR)
   expect_equal(map_ldetect,checkr)
 })
 
-testthat::test_that("we can subset bigsnp files with ldmap_ranges",{
-  
-  bs <- example_bigsnp()
-  data(ldetect_EUR)
-  ld22 <- ldetect_EUR[chromosomes(ldetect_EUR)==22]
-  bsl <- c(purrr::map(1:21,~NULL),bs)
-  sld <- sample(ld22,size=1)
-  srds <- ldmap:::subset_rds(ldmr = sld,reference_files = bsl,pattern = "example_")
-  sa <- bigsnpr::snp_attach(srds)
-  expect_gte(min(sa$map$physical.pos),starts(sld))
-  expect_lt(max(sa$map$physical.pos),ends(sld))
-  tR <- ldmap::panel_ld(srds,FALSE)
-})
 
 
 testthat::test_that("we can find windows",{
 
     p <- 500
     tsnps <- sort(new_ldmap_snp(chrom = rep(1L,p),
-                           pos =  sample(1L:2^28L, p, replace = F),
+                           pos =  sample(as.integer(2^28), p, replace = F),
                            NA2N = TRUE))
     map <- cumsum(runif(p))
-    window_r <- window_ldmap_range(tsnps,map)
-    snp_l <- match_ranges_snps(window_r,tsnps)
+    window_r <- window_ldmap_range(tsnps,map,window = 1)
+    #snp_l <- match_ranges_snps(window_r,tsnps)
     sir  <- snp_in_range(tsnps,window_r)
     df <- tibble::tibble(snp = tsnps,map = map,region = window_r,member = sir)
-    cdiff <- dplyr::group_by(df, member) %>% dplyr::summarise(diff = max(map) - min(map)) %>% dplyr::pull(diff)
+    cdiff_df <- dplyr::group_by(df, member) %>% 
+      dplyr::summarise(diff = max(map) - min(map)) 
+    cdiff <- cdiff_df    %>%
+      dplyr::pull(diff)
+    expect_true(all(cdiff<0.5))
 
     })

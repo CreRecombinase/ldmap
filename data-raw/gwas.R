@@ -7,9 +7,10 @@ fldf <- fs::path_package("22.l2.ldscore.gz",package="ldmap")
   pos = readr::col_double(),
   l2 = readr::col_double()
 )
-  l2df <- readr::read_tsv(fldf,col_names = names(l2c$cols),col_types = l2c,skip = 1L)
+l2df <- readr::read_tsv(fldf,col_names = names(l2c$cols),col_types = l2c,skip = 1L)
+snps <- new_ldmap_snp(chrom=l2df$chrom,pos=l2df$pos)
 
-
+saveRDS(snps,"inst/old_snps.RDS")
 fer <- fs::path_package("1kg_eur.tar.bz2",package="ldmap")
 td <- tempdir()
 ret <- untar(fer,exdir=td)

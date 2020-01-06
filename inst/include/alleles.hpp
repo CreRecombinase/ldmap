@@ -9,7 +9,10 @@
 #include <boost/icl/split_interval_set.hpp>
 #include <optional>
 #include <cstring>
+#include <stdint.h>
 #include <tuple>
+#include <bitset>
+#include <iostream>
 enum class Ref : char { A = 0, C = 1, G = 2, T = 3, N = 4 };
 template <class To, class From>
 typename std::enable_if<
@@ -31,7 +34,7 @@ inline bit_cast(const From &src) noexcept
 
 /*
   1. Represent as much information about a (human) Single nucleotide
-  polymorphism as possible using 64 bit integers
+  polymorphism as possible using a 64 bit integer
   2. Support the case of missing data/NA values for ref and alt alleles
   3. Find the best match in a target for a query SNP, and efficiently and
   effectively communicate operations that need to be done to make a match
@@ -243,7 +246,6 @@ constexpr const char* Nuc2string(Nuc l){
   }
 }
 
-
 struct bit_range{
   uint64_t end :29;
   uint64_t start :29;
@@ -253,15 +255,15 @@ struct bit_range{
 
 union bed_range{
   bit_range str;
-  std::int64_t dat;
+  uint64_t dat;
   double flt;
 };
 
 struct bit_snp{
-  char alt : 8;
-  char ref : 8;
-  uint64_t pos :43;
-  unsigned char chrom : 5;
+  char alt : 8; //8
+  char ref : 8; //8
+  uint64_t pos :43; //42
+  unsigned char chrom : 5; //6
 } __attribute__((packed));
 
 union Snp{
@@ -293,7 +295,6 @@ inline std::optional<Snp_match> is_perfect(const char lref, const char lalt, con
     return std::nullopt;
 }
 
-
 inline std::optional<Snp_match> is_reverse(const char lref, const char lalt, const char rref, const char ralt) {
     const auto match_ref = __builtin_popcount(lref & ralt);
     if(match_ref>0){
@@ -304,7 +305,6 @@ inline std::optional<Snp_match> is_reverse(const char lref, const char lalt, con
     }
     return std::nullopt;
 }
-
 
 inline std::optional<Snp_match> is_complement(const char lref, const char lalt, const char rref, const char ralt) {
   const auto match_ref = __builtin_popcount(complement(Nuc{lref}).let & rref);
@@ -328,80 +328,305 @@ inline std::optional<Snp_match> is_reverse_complement(const char lref, const cha
     return std::nullopt;
 }
 
+
+[[nodiscard]] inline constexpr uint64_t make_mask(const int offset, const int size){
+  uint64_t retval=0;
+  const uint64_t inn=1;
+  for(uint64_t i=offset; i<offset+size; i++){
+    retval|=inn<<i;
+  }
+  return retval;
+}
+
+
+// static_assert(make_mask(0, 1) == 1);//1
+// static_assert(make_mask(0, 2) == 3);//2
+// static_assert(make_mask(0, 3) == 7);//4
+// static_assert(make_mask(0, 4) == 15); // 8
+// static_assert(make_mask(0, 5) == 31);//16
+// static_assert(make_mask(0, 5) == 31); // 32
+// static_assert(make_mask(0, 6) == 63); // 64
+// static_assert(make_mask(0, 7) == 127); // 128
+// static_assert(make_mask(0, 8) == 255); // 256   //
+// static_assert(make_mask(0, 58) == 288230376151711743); // 32
+
+
+
+
+template<typename T>
+[[nodiscard]] inline constexpr uint64_t set_chrom(const uint64_t input,const T chrom)noexcept{
+  return (~make_mask(58,6)&input)|(static_cast<uint64_t>(chrom) << (29+29));
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr T get_chrom(const uint64_t input)noexcept{
+  return static_cast<T>((input|make_mask(0,58))>>(29+29));
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr uint64_t set_end(const uint64_t input,const T end)noexcept{
+  return (~make_mask(0,29)&input)|(static_cast<uint64_t>(end));
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr T get_end(const uint64_t input)noexcept{
+  return static_cast<T>(~make_mask(29,29)&input);
+}
+
+
+
+
+template<typename T>
+[[nodiscard]] inline constexpr uint64_t set_pos(const uint64_t input,const T pos)noexcept{
+  return (~make_mask(16,43)&input)|(static_cast<uint64_t>(pos) << (16));
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr T get_pos(const uint64_t input)noexcept{
+  // clear bits except for offset 16 length 43
+  return static_cast<T>((make_mask(16,43)&input)>>(16));
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr uint64_t set_ref(const uint64_t input,const T ref)noexcept{
+  return (~make_mask(8,8)&input)|(static_cast<uint64_t>(ref) << (8));
+}
+
+
+[[nodiscard]] inline constexpr uint64_t clear_alleles(const uint64_t input)noexcept{
+  return ~make_mask(0,16)&input;
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr T get_ref(const uint64_t input)noexcept{
+  // clear bits except for offset 8 length 8
+  return static_cast<T>((make_mask(8,8)&input)>>(8));
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr uint64_t set_alt(const uint64_t input,const T alt)noexcept{
+  return (~make_mask(0,8)&input)|(static_cast<uint64_t>(alt));
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr T get_alt(const uint64_t input)noexcept{
+  // clear bits except for offset 0 length 8
+  return static_cast<T>((make_mask(0,8)&input));
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr uint64_t set_start(const uint64_t input,const T start)noexcept{
+  return (~make_mask(29,29)&input)|(static_cast<uint64_t>(start) << (29));
+}
+
+template<typename T>
+[[nodiscard]] inline constexpr T get_start(const uint64_t input)noexcept{
+  return static_cast<T>((~make_mask(58,6)&input)>>(29));
+}
+
+// static_assert(0x0000000F << 4 == 0x000000F0);
+// static_assert(0x0000000F << 8 == 0x00000F00);
+// static_assert(make_mask(0, 4) == 0x0000000F);
+// static_assert(make_mask(0, 8) == 0x000000FF);
+
+static_assert(get_start<int>(set_start(288230376151711745ull, 536870911)) == 536870911);
+static_assert(get_start<int>(set_start(18446744073709551615ull, 0)) == 0);
+static_assert(get_start<int>(set_start(288230376151711745ull, 24000)) == 24000);
+static_assert(get_chrom<int>(set_chrom(288230376151711745ull, 24)) == 24);
+
+
+// static_assert(get_pos<int>(set_pos(288230376151711745ull, 536870911)) == 536870911);
+// static_assert(get_pos<int>(set_pos(18446744073709551615ull, 0)) == 0);
+// static_assert(get_pos<int>(set_pos(288230376151711745ull, 24000)) == 24000);
+// static_assert(get_pos<int>(set_pos(288230376151711745ull, 24)) == 24);
+
+
+// static_assert(get_ref<int>(set_ref(288230376151711745ull, 11)) == 11);
+// static_assert(get_ref<int>(set_ref(18446744073709551615ull, 0)) == 0);
+// static_assert(get_ref<int>(set_ref(288230376151711745ull, 15)) == 15);
+// static_assert(get_ref<int>(set_ref(288230376151711745ull, 24)) == 24);
+
+
+static_assert(get_alt<int>(set_alt(288230376151711745ull, 11)) == 11);
+static_assert(get_alt<int>(set_alt(18446744073709551615ull, 0)) == 0);
+static_assert(get_alt<int>(set_alt(288230376151711745ull, 15)) == 15);
+static_assert(get_alt<int>(set_alt(288230376151711745ull, 24)) == 24);
+
+
+static_assert(get_end<int>(set_end(0, 10)) == 10);
+static_assert(get_end<int>(set_end(288230376151711745ull, 536870911)) == 536870911);
+static_assert(get_end<int>(set_end(288230376151711745ull, 240)) == 240);
+static_assert(get_end<int>(set_end(18446744073709551615ull, 24000)) == 24000);
+static_assert(get_end<int>(set_end(288230376151711745ull, 24000)) == 24000);
+static_assert(get_end<int>(set_end(288230376151711745ull, 24)) == 24);
+
+[[nodiscard]]
+inline constexpr uint64_t make_ldmap_region(const int chrom, const unsigned int start, const unsigned int stop) noexcept{
+  //take first 29 bits from stop
+  // next 29 bits from start
+  // next 6 bits from chrom
+  uint64_t retval=0;
+  return(set_end(set_start(set_chrom(retval,chrom),start),stop));
+}
+
+[[nodiscard]]
+inline constexpr uint64_t make_ldmap_snp(const int chrom, const unsigned int pos,const unsigned char ref='\0', const unsigned char alt='\0') noexcept{
+  //take first 29 bits from stop
+  // next 29 bits from start
+  // next 6 bits from chrom
+  //  std::cerr<<std::endl;
+  uint64_t retval=0;
+  retval = set_ref(retval,ref);
+  //  std::cerr<<"ref: "<<static_cast<int>(ref)<<" "<<std::bitset<8>(ref)<<" "<<std::bitset<64>(retval)<<std::endl;
+  retval = set_alt(retval,alt);
+  //  std::cerr<<"alt: "<<static_cast<int>(alt)<<" "<<std::bitset<8>(alt)<<" "<<std::bitset<64>(retval)<<std::endl;
+  retval = set_pos(retval,pos);
+  //  std::cerr<<"pos: "<<static_cast<int>(pos)<<" "<<std::bitset<43>(pos)<<" "<<std::bitset<64>(retval)<<std::endl;
+  retval = set_chrom(retval,chrom);
+  //  std::cerr<<"chrom: "<<chrom<<" "<<std::bitset<64>(retval)<<std::endl;
+  return retval;
+}
+
+inline std::tuple<int, int, int>
+get_ldmap_region(const double x) = delete;
+
+inline std::tuple<int, int, int> get_ldmap_region(const float x) = delete;
+
+inline std::tuple<int, int, int>
+get_ldmap_region(const long double x) = delete;
+
+[[nodiscard]]
+inline std::tuple<int,int,unsigned char,unsigned char> get_ldmap_snp(const uint64_t x) noexcept{
+  return {get_chrom<int>(x),get_pos<int>(x),get_ref<unsigned char>(x),get_alt<unsigned char>(x)};
+}
+
+[[nodiscard]]
+inline
+std::tuple<int,int,int> get_ldmap_region(const uint64_t x) noexcept{
+  return {get_chrom<int>(x),get_start<int>(x),get_end<int>(x)};
+}
+
+
+
+// static_assert(get_chrom<int>(make_ldmap_region(10, 100, 1000)) == 10);
+// static_assert(get_chrom<int>(make_ldmap_region(11, 120, 3456)) == 11);
+// static_assert(get_start<int>(make_ldmap_region(25, 120, 3456)) == 120);
+// static_assert(get_end<int>(make_ldmap_region(25, 120, 3456)) == 3456);
+// static_assert(make_ldmap_region(25, 120, 3456) <
+//               make_ldmap_region(25, 120, 3457));
+// static_assert(make_ldmap_region(24, 120, 3456) <
+//               make_ldmap_region(25, 120, 3456));
+// static_assert(make_ldmap_region(24, 110, 3456) <
+//               make_ldmap_region(25, 120, 3457));
+// static_assert(make_ldmap_region(24, 536870911, 3456) <
+//               make_ldmap_region(25, 120, 3457));
+
+
+
+
+
+
+
+
 class Region;
 
 class SNP{
 public:
-  Snp snp;
+  uint64_t snp;
+  static constexpr SNP  make_snp(const uint64_t &x) noexcept{
+    return SNP{.snp=x};
+  }
+  static constexpr SNP  make_snp(const float &x) = delete;
+  static  SNP  make_snp(const double &x) noexcept {
+    return make_snp(bit_cast<uint64_t>(x));
+  }
+  static constexpr SNP  make_snp(const long double &x) = delete;
 
-    static constexpr SNP  make_snp(const double &x) noexcept{
-      return SNP{.snp={.flt=x}};
-    }
 
   constexpr unsigned char chrom() const noexcept{
-    return snp.str.chrom;
+    return get_chrom<unsigned char>(snp);
   }
-
-  constexpr uint64_t start() const noexcept {
-    return snp.str.pos;
+  constexpr unsigned char ref() const noexcept{
+    return get_ref<unsigned char>(snp);
   }
-
-  constexpr uint64_t end() const noexcept{
-    return snp.str.pos+1;
+  constexpr unsigned char alt() const noexcept{
+    return get_alt<unsigned char>(snp);
+  }
+  constexpr int pos() const noexcept {
+    return get_pos<int>(snp);
+  }
+  constexpr int start() const noexcept {
+    return get_pos<int>(snp);
+  }
+  constexpr int end() const noexcept{
+    return start()+1;
   }
 
   boost::icl::discrete_interval<uint64_t> interval() const{
-    return boost::icl::construct<boost::icl::discrete_interval<uint64_t>>(snp.str.pos,snp.str.pos+1,boost::icl::interval_bounds::left_open());
+    return boost::icl::construct<boost::icl::discrete_interval<uint64_t>>(start(),end(),boost::icl::interval_bounds::left_open());
   }
 
   template<bool NA2N>
   static constexpr SNP  make_snp(const unsigned char chrom, const uint64_t pos, const Nuc ref, const Nuc alt) noexcept{
-    Snp snp{.str={.alt=alt.let,.ref=ref.let,.pos=pos,.chrom=chrom}};
+    SNP snp{.snp=make_ldmap_snp(chrom,pos,ref.let,alt.let)};
     if constexpr(NA2N){
       if(ref.is_NA()){
-        snp.str.ref='N'_L;
+        snp.snp=set_ref(snp.snp,Nuc{'N'_N}.let);
       }
       if(alt.is_NA()){
-        snp.str.alt='N'_L;
+        snp.snp=set_alt(snp.snp,Nuc{'N'_N}.let);
       }
     }
-    return(SNP{.snp=snp});
+    return(SNP{.snp=snp.snp});
   }
+
 
   template<bool NA2N>
   static constexpr SNP  make_snp(const unsigned char chrom, const uint64_t pos, const Nuc ref) noexcept{
-    Snp snp{.str={.alt='\0',.ref=ref.let,.pos=pos,.chrom=chrom}};
+    SNP tsnp{.snp=make_ldmap_snp(chrom,pos,ref.let,'\0')};
     if constexpr(NA2N){
       if(ref.is_NA()){
-        snp.str.ref='N'_L;
+        tsnp.snp=set_ref(tsnp.snp,'N'_N.let);
       }
-      if(Nuc{snp.str.alt}.is_NA()){
-        snp.str.alt='N'_L;
+      if(Nuc{static_cast<char>(tsnp.alt())}.is_NA()){
+        tsnp.snp = set_alt(tsnp.snp,'N'_N.let);
       }
     }
-    return(SNP{.snp=snp});
+    return(SNP{.snp = tsnp.snp});
   }
 
 
   template<bool NA2N>
   static constexpr  SNP  make_snp(const unsigned char chrom, const uint64_t pos) noexcept{
-    Snp snp{.str={.alt='\0',.ref='\0',.pos=pos,.chrom=chrom}};
+    SNP snp{.snp=make_ldmap_snp(chrom,pos,'\0','\0')};
     if constexpr(NA2N){
-        snp.str.ref='N'_L;
-        snp.str.alt='N'_L;
+      snp.snp=set_alt(set_ref(snp.snp,'N'_N.let),'N'_N.let);
     }
-    return(SNP{.snp=snp});
+    return(SNP{.snp=snp.snp});
   }
 
   constexpr bool operator<(const SNP &b) const{
-    return (std::tie(snp.str.chrom,snp.str.pos) < std::tie(b.snp.str.chrom,b.snp.str.pos));
+
+    return (clear_alleles(snp)<clear_alleles(b.snp));
+  }
+  constexpr bool operator>(const SNP &b) const{
+    return (clear_alleles(snp)>clear_alleles(b.snp));
   }
   constexpr bool operator>=(const SNP &b) const{
-    return (std::tie(snp.str.chrom,snp.str.pos) >= std::tie(b.snp.str.chrom,b.snp.str.pos));
+    return clear_alleles(snp)>=clear_alleles(b.snp);
   }
   constexpr bool operator<=(const SNP &b) const{
-    return (std::tie(snp.str.chrom,snp.str.pos) <= std::tie(b.snp.str.chrom,b.snp.str.pos));
+    return clear_alleles(snp)<=clear_alleles(b.snp);
   }
+  constexpr int distance(const SNP &other) const{
+    if(other.chrom()>chrom())
+      return std::numeric_limits<int>::max();
+    if(other.chrom()<chrom())
+      return std::numeric_limits<int>::min();
+    return pos()-other.pos();
+  }
+
+  constexpr int distance(const Region &other) const;
 
   constexpr bool operator<(const Region &other) const;
   constexpr bool operator>(const Region &other) const;
@@ -410,27 +635,27 @@ public:
 
 
   double to_double() const{
-    return snp.flt;
+    return bit_cast<double>(snp);
   }
 
-
   bool is_strand_ambiguous() const{
-    return (snp.str.ref== 'A'_L and snp.str.alt == 'T'_L) or
-      (snp.str.ref== 'T'_L and snp.str.alt == 'A'_L) or
-      (snp.str.ref== 'G'_L and snp.str.alt == 'C'_L) or
-      (snp.str.ref== 'C'_L and snp.str.alt == 'G'_L);
+    return (ref()== 'A'_L and alt() == 'T'_L) or
+      (ref()== 'T'_L and alt() == 'A'_L) or
+      (ref()== 'G'_L and alt() == 'C'_L) or
+      (ref()== 'C'_L and alt() == 'G'_L);
   }
 
   // Assume LHS is the query and RHS is a potential target.
 
   std::optional<Snp_match> allele_match(const SNP &other)const{
-    if(std::tie(this->snp.str.chrom,this->snp.str.pos) != std::tie(other.snp.str.chrom,other.snp.str.pos)){
+    if(clear_alleles(snp) != clear_alleles(other.snp))
       return std::nullopt;
-    }
-    const auto &lref=this->snp.str.ref;
-    const auto &lalt=this->snp.str.alt;
-    const auto &rref = other.snp.str.ref;
-    const auto &ralt = other.snp.str.alt;
+
+    const auto lref=ref();
+    const auto lalt=alt();
+
+    const auto rref = other.ref();
+    const auto ralt = other.alt();
 
     if(auto res = is_perfect(lref,lalt,rref,ralt)){
       return res;
@@ -447,46 +672,57 @@ public:
     return std::nullopt;
   }
   friend Region;
+  friend std::ostream & operator << (std::ostream &out, const SNP &c);
 };
 
 
+inline std::ostream& operator<<( std::ostream& out, const SNP &lra ){
+
+  out<<"chr"<<static_cast<int>(lra.chrom())<<":"<<lra.pos()<<"_"<<static_cast<int>(lra.ref())<<"."<<static_cast<int>(lra.alt());
+  return out;
+}
+
 class Region{
   public:
-  bed_range br;
+  uint64_t br;
 
   constexpr unsigned char chrom() const noexcept{
-    return br.str.chrom;
+    return get_chrom<unsigned char>(br);
   }
-  constexpr uint64_t start() const noexcept {
-    return br.str.start;
+  constexpr int start() const noexcept {
+    return get_start<int>(br);
   }
-  constexpr uint64_t end() const noexcept{
-    return br.str.end;
+  constexpr int end() const noexcept{
+    auto ret = get_end<int>(br);
+    return ret;
   }
   boost::icl::discrete_interval<uint64_t> interval() const{
-    return boost::icl::construct<boost::icl::discrete_interval<uint64_t>>(br.str.start,br.str.end,boost::icl::interval_bounds::left_open());
+    return boost::icl::construct<boost::icl::discrete_interval<uint64_t>>(start(),end(),boost::icl::interval_bounds::left_open());
   }
 
   template<typename C,typename S>
   static constexpr Region make_Region(const C chrom,const S start, const S end) noexcept{
-    return Region{.br={.str={.end=end,.start=start,.chrom=chrom}}};
+    return Region{.br=make_ldmap_region(chrom,start,end)};
   }
 
-  static constexpr Region make_Region(const double x) noexcept{
-    return Region{.br={.flt=x}};
+  static constexpr Region make_Region(const uint64_t x) noexcept{
+    return Region{.br=x};
   }
+  static Region make_Region(const double x){
+    return Region{.br=bit_cast<uint64_t>(x)};
+  }
+
+  static Region make_Region(const long double x) = delete;
+  static Region make_Region(const float x) = delete;
+  static Region make_Region(const int x) = delete;
 
   static constexpr Region make_Region(const SNP& a,const SNP& b) noexcept{
-    if( a.snp.str.chrom!=b.snp.str.chrom)
-      return Region{.br={.str={.end=0,
-                               .start=0,
-                               .chrom=0}}};
-    return Region{.br={.str={.end=b.snp.str.pos+1,
-                             .start=a.snp.str.pos,
-                             .chrom=a.snp.str.chrom}}};
+    if( a.chrom()!=b.chrom())
+      return make_Region(0ul);
+    auto [pa,pb] = std::minmax(a.pos(),b.pos());
+    return make_Region(a.chrom(),pa,pb+1);
   }
   constexpr SNP start_SNP() const noexcept{
-
     return SNP::make_snp<true>(chrom(),start());
   }
   constexpr SNP end_SNP() const noexcept{
@@ -495,144 +731,165 @@ class Region{
   constexpr SNP last_SNP() const noexcept{
     return SNP::make_snp<true>(chrom(),end()-1);
   }
-
-  // constexpr Region(const unsigned char chrom, const uint64_t offset,const uint64_t size)noexcept :br({chrom,offset,size}){}
-  // constexpr Region(std::int64_t data):br({.dat=data}){
-  // }
   constexpr bool operator ==(const Region& other)const noexcept{
-    return this->br.dat==other.br.dat;
+    return this->br==other.br;
   }
   constexpr bool operator!=(const Region& other)const noexcept{
-    return this->br.dat!=other.br.dat;
+    return this->br!=other.br;
   }
-  // constexpr bool operator<=(const Region& other)const{
-  //   return this->br.dat <= other.br.dat;
-  // }
-  // constexpr bool operator>=(const Region& other)const{
-  //   return this->br.dat >= other.br.dat;
-  // }
   constexpr bool starts_before(const Region& other)const noexcept{
-    if(this->br.str.chrom > other.br.str.chrom)
+    if(chrom() > other.chrom())
       return false;
 
-    if(this->br.str.chrom < other.br.str.chrom){
+    if(chrom() < other.chrom()){
       return true;
     }
-    return this->br.str.start < other.br.str.start;
+    return start() < other.start();
   }
 
   constexpr bool ends_before(const Region& other)const noexcept{
-    if(this->br.str.chrom > other.br.str.chrom)
+    if(get_chrom<unsigned char>(this->br) > other.chrom())
       return false;
 
-    if(this->br.str.chrom < other.br.str.chrom){
+    if(get_chrom<unsigned char>(this->br) < other.chrom()){
       return true;
     }
-    return this->br.str.end < other.br.str.end;
+    return this->end() < other.end();
   }
-
 
   constexpr bool operator<(const Region& other)const noexcept{
-    return this->br.dat < other.br.dat;
+    return this->br < other.br;
   }
   constexpr bool operator>(const Region& other)const noexcept{
-    return this->br.dat > other.br.dat;
+    return this->br > other.br;
   }
 
   constexpr Region operator|(const Region &other) const noexcept{
 
-    if(this->br.str.chrom!=other.br.str.chrom){
-      return Region{.br={.dat=0}};
+    if(get_chrom<unsigned char>(this->br)!=other.chrom()){
+      return Region{.br=0};
     }
     auto [sa,sb] = std::minmax(*this,other);
-    if( sa.br.str.end < sb.br.str.start){
-      return Region{.br={.dat=0}};
+    if( sa.end() < sb.start()){
+      return Region{.br=0};
     }
-    return Region{.br={.str={.end=sb.br.str.end,
-                             .start=sa.br.str.start,
-                             .chrom=sa.br.str.chrom}}};
+    return Region{.br=make_ldmap_region(sa.chrom(),sa.start(),sb.end())};
   }
   constexpr Region operator|=(const Region &other) noexcept{
 
-    if(this->br.str.chrom!=other.br.str.chrom){
-      this->br.dat=0;
+    if(get_chrom<unsigned char>(this->br)!=other.chrom()){
+      this->br=0;
       return *this;
     }
     auto [sa,sb] = std::minmax(*this,other);
-    if( sa.br.str.end < sb.br.str.start){
-      this->br.dat=0;
+    if( sa.end() < sb.start()){
+      this->br=0;
       return *this;
     }
-    this->br.str={.end=sb.br.str.end,
-                  .start=sa.br.str.start,
-                  .chrom=sa.br.str.chrom};
+    this->br=make_ldmap_region(sa.chrom(),sa.start(),sb.end());
     return *this;
   }
+
   constexpr bool overlap(const Region &other) const noexcept{
 
-    if(this->br.str.chrom!=other.br.str.chrom)
+    if(get_chrom<unsigned char>(this->br)!=other.chrom())
       return false;
+    return start() <= other.end() && other.start() <= end();
+  }
 
-    auto [sa,sb] = std::minmax(*this,other);
-    return sa.br.str.end > sb.br.str.start;
+  constexpr int distance(const SNP &other) const noexcept{
+    if(other.chrom()>chrom())
+      return std::numeric_limits<int>::max();
+    if(other.chrom()<chrom())
+      return std::numeric_limits<int>::min();
+    if(abs(other.pos()-start())>abs(other.pos()-end()))
+      return other.pos()-end();
+    return other.pos()-end();
+  }
+
+  constexpr int distance(const Region &other) const noexcept{
+    if(other.chrom()>chrom())
+      return std::numeric_limits<int>::max();
+    if(other.chrom()<chrom())
+      return std::numeric_limits<int>::min();
+    if(overlap(other))
+      return 0;
+    if(other.start()>end())
+      return other.start()-end();
+    return other.end()-start();
+  }
+
+
+  constexpr bool contains(const Region &other) const noexcept{
+
+    if(get_chrom<unsigned char>(this->br)!=other.chrom())
+      return false;
+    return start() <= other.start() && other.end() <= end();
+  }
+
+  constexpr bool contains(const SNP &other) const noexcept{
+    return overlap(other);
   }
 
   constexpr bool overlap(const SNP &other) const noexcept{
 
-    if(this->br.str.chrom!=other.snp.str.chrom)
+    if(get_chrom<unsigned char>(this->br)!=other.chrom())
       return false;
-    return (this->br.str.start <= other.snp.str.pos && other.snp.str.pos < this->br.str.end);
+    return (this->start() <= other.pos() && other.pos() < this->end());
   }
-
-  std::optional<Region> operator+(const SNP &other) {
-
-    if(this->br.str.chrom!=other.snp.str.chrom){
-      return std::nullopt;
-    }
-    return Region{.br={.str={.end=std::max(this->br.str.end,other.snp.str.pos+1),
-                             .start=std::min(this->br.str.start,other.snp.str.pos),
-                             .chrom=this->br.str.chrom}}};
-  }
-
 
   constexpr bool operator==(const SNP& other)const{
-    return (this->br.str.chrom==other.snp.str.chrom) and (this->br.str.start <= other.snp.str.pos) and (this->br.str.end > other.snp.str.pos);
+    return (chrom()==other.chrom()) and (this->start() <= other.pos()) and (this->end() > other.pos());
   }
   constexpr bool operator<(const SNP& other)const{
-    return std::tie(this->br.str.chrom,this->br.str.end) <= std::tie(other.snp.str.chrom,other.snp.str.pos);
+    return std::make_pair(chrom(),end()) <= std::make_pair(other.chrom(),other.pos());
   }
-  // constexpr bool operator<=(const SNP& other)const{
-  //   return std::tie(this->br.str.chrom,this->br.str.end) < std::tie(other.snp.str.chrom,other.snp.str.pos);
-  // }
+
   constexpr bool operator>(const SNP& other)const{
-    return std::tie(this->br.str.chrom,this->br.str.start) > std::tie(other.snp.str.chrom,other.snp.str.pos);
+    return std::make_pair(chrom(),start()) > std::make_pair(other.chrom(),other.pos());
   }
 
   friend SNP;
+  friend std::ostream & operator << (std::ostream &out, const Region &c);
 
 };
 
+
+constexpr int SNP::distance(const Region &other) const{
+    if(other.chrom()>chrom())
+      return std::numeric_limits<int>::max();
+    if(other.chrom()<chrom())
+      return std::numeric_limits<int>::min();
+    if(abs(pos()-other.start())>abs(pos()-other.end()))
+      return pos()-other.end();
+    return pos()-other.start();
+}
+
+
+
+
 inline constexpr bool SNP::operator==(const Region &other) const{
-  return (other.br.str.chrom==this->snp.str.chrom) and (other.br.str.start <= this->snp.str.pos) and (other.br.str.end > this->snp.str.pos);
+  return (other.chrom()==this->chrom()) and (other.start() <= this->pos()) and (other.end() > this->pos());
 }
 // inline constexpr bool SNP::operator==(const  &other) const{
-//   return (other.br.str.chrom==this->snp.str.chrom) and (other.br.str.start <= this->snp.str.pos) and (other.br.str.end > this->snp.str.pos);
+//   return (other.chrom()==this->chrom()) and (other.start() <= this->pos()) and (other.end() > this->pos());
 // }
 inline constexpr bool SNP::operator!=(const Region &other) const{
   return !(*this==other);
 }
 inline constexpr bool SNP::operator<(const Region &other) const{
-  return (other.br.str.chrom==this->snp.str.chrom) and (this->snp.str.pos < other.br.str.start);
+  return (other.chrom()==this->chrom()) and (this->pos() < other.start());
 }
 inline constexpr bool SNP::operator>(const Region &other) const{
-  return (other.br.str.chrom==this->snp.str.chrom) and (this->snp.str.pos >= other.br.str.end);
+  return (other.chrom()==this->chrom()) and (this->pos() >= other.end());
 }
 
 
+inline std::ostream& operator<<( std::ostream& out, const Region &lra ){
 
-
-
-
+  out<<"chr"<<static_cast<int>(lra.chrom())<<":"<<lra.start()<<"-"<<lra.end();
+  return out;
+}
 
 inline Snp reverse_snp(Snp a){
   auto tmp=a.str.ref;
@@ -646,3 +903,5 @@ inline Snp complement_snp(Snp a ){
   a.str.alt = complement(Nuc{a.str.alt}).let;
   return(a);
 }
+
+

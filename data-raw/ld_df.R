@@ -15,6 +15,6 @@ usethis::use_data(ldetect_EUR, overwrite = TRUE)
 
 chrom_df <- readr::read_tsv("http://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.chrom.sizes",col_names=c("chrom","end")) %>% 
   dplyr::filter(chrom %in% paste0("chr",c(1:22,"X"))) %>% 
-  dplyr::mutate(chrom=factor(chrom,levels=paste0("chr",c(1:22,"X")))) %>% arrange()
+  dplyr::mutate(chrom=factor(chrom,levels=paste0("chr",c(1:22,c("X","Y"))))) %>% dplyr::arrange(chrom)
 hg19_sizes <- new_ldmap_range(chrom=chrom_df$chrom,start=rep(1L,nrow(chrom_df)),end=chrom_df$end+1L)
 usethis::use_data(hg19_sizes,overwrite = TRUE)

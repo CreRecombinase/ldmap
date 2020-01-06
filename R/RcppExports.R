@@ -18,25 +18,8 @@ parse_ldmap_range <- function(input) {
     .Call('_ldmap_parse_ldmap_range', PACKAGE = 'ldmap', input)
 }
 
-#' Find out of vector of SNPs is sorted
-#' 
-#' @param chr vector of chromosomes	of per region
-#' @param pos vector of start positions for each region
-#' @return returns true if the vector is sorted
-#' @export
-sorted_snp_df <- function(chr, pos) {
-    .Call('_ldmap_sorted_snp_df', PACKAGE = 'ldmap', chr, pos)
-}
-
-#' Assign snps to regions of the genome, breaking up regions based on number of SNPs
-#'
-#' @param ld_chr vector of chromosomes	of per region
-#' @param ld_start vector of start positions for each region
-#' @param ld_stop vector of end positions for each region
-#' @return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
-#' @export
-set_ld_region <- function(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max_size = 0L, min_size = 1L, assign_all = TRUE) {
-    .Call('_ldmap_set_ld_region', PACKAGE = 'ldmap', ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max_size, min_size, assign_all)
+parse_ldmap_SNP <- function(input) {
+    .Call('_ldmap_parse_ldmap_SNP', PACKAGE = 'ldmap', input)
 }
 
 #' Creation of new ldmap_ranges
@@ -47,6 +30,16 @@ set_ld_region <- function(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max
 #' @export
 new_ldmap_range <- function(chrom = as.integer( c()), start = as.integer( c()), end = as.integer( c())) {
     .Call('_ldmap_new_ldmap_range', PACKAGE = 'ldmap', chrom, start, end)
+}
+
+#' Assign ranges to nearest ranges
+#'
+#' @param query vector of query ldmap_snps
+#' @param target vector of target ldmap_snps (must be sorted)
+#' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target`
+#' @export
+nearest_snp_range <- function(query, target) {
+    .Call('_ldmap_nearest_snp_range', PACKAGE = 'ldmap', query, target)
 }
 
 #' Assign ranges to ranges
@@ -141,8 +134,8 @@ ldmap_range_2_data_frame <- function(ldmap_range) {
     .Call('_ldmap_ldmap_range_2_data_frame', PACKAGE = 'ldmap', ldmap_range)
 }
 
-sample_interval <- function(n, begin, end, replace = FALSE) {
-    .Call('_ldmap_sample_interval', PACKAGE = 'ldmap', n, begin, end, replace)
+sample_interval <- function(n, beginv, endv, replace = FALSE) {
+    .Call('_ldmap_sample_interval', PACKAGE = 'ldmap', n, beginv, endv, replace)
 }
 
 #' Creation of new ldmap_snps
@@ -278,12 +271,20 @@ as_integer_ldmap_range <- function(x) {
     .Call('_ldmap_as_integer_ldmap_range', PACKAGE = 'ldmap', x)
 }
 
-#' coerce ldmap snp to integer(64)
+#' migrate from old representation of ldmap_snp to new representation
 #'
 #' @param x ldmap_snp vec
 #'
-as_integer_ldmap_snp <- function(x) {
-    .Call('_ldmap_as_integer_ldmap_snp', PACKAGE = 'ldmap', x)
+migrate_ldmap_snp <- function(x) {
+    .Call('_ldmap_migrate_ldmap_snp', PACKAGE = 'ldmap', x)
+}
+
+#' migrate from new representation of ldmap_snp to old representation
+#'
+#' @param x ldmap_snp vec
+#'
+old_ldmap_snp <- function(x) {
+    .Call('_ldmap_old_ldmap_snp', PACKAGE = 'ldmap', x)
 }
 
 #' get ref alleles from a ldmap_snp

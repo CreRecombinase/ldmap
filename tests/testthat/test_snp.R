@@ -44,15 +44,17 @@ testthat::test_that("sorting works",{
   names(nucs) <- nucs
   letter_to_int <- new_ldmap_allele(nucs)
   chrom <- sample(1:23,p,replace=TRUE)
-  pos <- sample(2^43,p,replace=T)
+  pos <- sample(as.integer(max(ends(hg19_sizes))),p,replace=T)
   ref <- sample(letter_to_int,p,replace=T)
   alt <- sample(letter_to_int,p,replace=T)
   ret <- new_ldmap_snp(chrom,pos,ref,alt)      
-  as.character(ret)
   hd <- as.double(ret)
   hd <- vctrs::vec_cast(ret,double())
+  shd <- sort(hd)
   tret <- as_ldmap_snp(hd)
+  ldshd <- as_ldmap_snp(shd)
   so_ret <- sort(ret)
+  vso_ret <- vec_sort(ret)
   expect_true(!is.unsorted(chromosomes(so_ret)))
   
   expect_equal(tret,ret)
@@ -63,24 +65,6 @@ testthat::test_that("sorting works",{
     dplyr::mutate(order_ret=order.ldmap_snp(id))
   sort_ntib <- dplyr::arrange(ntib,chrom,pos,ref,alt)
   expect_equal(so_ret,sort_ntib$id)
-  sort_ntib2 <- dplyr::slice(ntib,order_ret)
-  
-  expect_equal(sort_ntib2,sort_ntib,ignore_row_order=FALSE)
-  sort_ntib2 <- dplyr::arrange(ntib,rank.ldmap_snp(id),ref,alt)
-  expect_equal(sort_ntib2,sort_ntib,ignore_row_order=FALSE)
-  
-
-  # op <- order(chromosomes(ret),positions(ret))
-  order_ret <- order.ldmap_snp(ret)
-  so_ret <- sort(ret)
-  
-  od_ret <- ret[order.ldmap_snp(ret)]
-  expect_true(!is.unsorted(chromosomes(so_ret)))
-  expect_true(!is.unsorted(chromosomes(od_ret)))
-  expect_true(all(split(positions(so_ret),chromosomes(so_ret)) %>% purrr::map_lgl(purrr::compose(`!`,is.unsorted))))
-  expect_true(all(split(positions(od_ret),chromosomes(od_ret)) %>% purrr::map_lgl(purrr::compose(`!`,is.unsorted))))
- 
-  
 })
 
 
@@ -181,5 +165,23 @@ testthat::test_that("we get the best match possible",{
   expect_equal(result$match,rev_result$match)
   
 })
+
+test_that("we can migrate old SNP storage to new SNP storage",{
+  fldf <- fs::path_package("22.l2.ldscore.gz",package="ldmap")
+  l2c <- readr::cols(
+    chrom = readr::col_integer(),
+    rsid = readr::col_character(),
+    pos = readr::col_double(),
+    l2 = readr::col_double()
+  )
+  l2df <- readr::read_tsv(fldf,col_names = names(l2c$cols),col_types = l2c,skip = 1L)
+  tsnps <- new_ldmap_snp(chrom=l2df$chrom,pos=l2df$pos)
+  osnps <- readRDS(fs::path_package(package = "ldmap","old_snps.RDS"))
+  csnps <- ldmap:::migrate_ldmap_snp(osnps)
+  
+  expect_equal(chromosomes(csnps),chromosomes(tsnps))
+  expect_equal(positions(csnps),positions(tsnps))
+})
+
 
 

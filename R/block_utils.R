@@ -87,6 +87,7 @@ assign_genetic_map <- function(snp_df, map_df, strict=FALSE){
 }
 
 
+
 calc_theta <- function(m){
   nmsum <- sum(1 / (1:(2*m-1)))
   (1/nmsum) / (2*m + 1/nmsum)

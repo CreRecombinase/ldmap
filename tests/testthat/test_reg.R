@@ -6,7 +6,7 @@ input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
 data("ldetect_EUR")
   ld_df <- explode_ldmap_range(tibble::tibble(ldmr=ldetect_EUR),remove = FALSE) %>% dplyr::mutate(region_id=1:dplyr::n())
   ld_df <-   dplyr::mutate(ld_df,snp_ct=sample(1:100,dplyr::n(),replace=T))
-  tsnp_df <- rsnp_region(ldmap_region = ld_df$ldmr[1:100],n=ld_df$snp_ct[1:100],replace = F)
+  tsnp_df <- rsnp_region(ldmap_region = ld_df$ldmr[1:10],n=ld_df$snp_ct[1:10],replace = F)
   snp_df <- explode_snp_struct(tibble::tibble(ldmap_snp=rsnp_region(ld_df$ldmr,n=ld_df$snp_ct,replace = FALSE)),remove = FALSE)
   snp_df <- purrr::pmap_dfr(ld_df,function(chr,start,stop,region_id,snp_ct,...){
     n_snps <- snp_ct
@@ -17,29 +17,27 @@ data("ldetect_EUR")
 
 snp_df <- dplyr::mutate(snp_df,chrom=as.integer(gsub("chr","",chr)),pos=pos) %>% compact_snp_struct(ref=NA,alt=NA,remove = FALSE)
 
-  test_that("New check for assignment",{
-    
-    
-    ld_df <- dplyr::mutate(ld_df,ldmr=new_ldmap_range(chrom = as.integer(gsub("chr","",chr)),start=start,end = stop))
-    
-   
-    
-    id_assignment <- snp_df$region_id
-    
-    snp_df <- dplyr::mutate(snp_df,result=snp_in_range(ldmap_snp = snp_struct,ldmap_range = ld_df$ldmr)) %>% 
-      dplyr::arrange(rank.ldmap_snp(snp_struct)) %>% 
-      dplyr::mutate(ldmap=cumsum(runif(dplyr::n())))
-    tmap <- window_ldmap_range(ldmap_snp = snp_df$snp_struct,cm = snp_df$ldmap)
-
-    snp_l <- match_ranges_snps(snp_df,ld_df$ldmr)
-    expect_equal(as_ldmap_range(names(snp_l)),ld_df$ldmr)
-    
-    
-    
-    testthat::expect_equal(unname(purrr::map_int(snp_l,nrow)),ld_df$snp_ct)
-    testthat::expect_equal(snp_df$result,snp_df$region_id)
-    })
-  
+  # test_that("New check for assignment",{
+  #   
+  #   snp_df <- rsnp_region(ldmap_region = head(ldetect_EUR),n = 5) %>% 
+  #     tibble::enframe(name = NULL,value="snp") %>% dplyr::mutate(region_id=rep(1L:6L,each=5))
+  #   
+  #   id_assignment <- snp_df$region_id
+  #   
+  #   snp_df <- dplyr::mutate(snp_df,result=snp_in_range(ldmap_snp = snp,ldmap_range = head(ldetect_EUR))) %>% 
+  #     dplyr::arrange(snp) %>% 
+  #     dplyr::mutate(ldmap=cumsum(runif(dplyr::n())))
+  #   tmap <- window_ldmap_range(ldmap_snp = snp_df$snp,cm = snp_df$ldmap)
+  # 
+  #   snp_l <- match_ranges_snps(snp_df,ld_df$ldmr)
+  #   expect_equal(as_ldmap_range(names(snp_l)),ld_df$ldmr)
+  #   
+  #   
+  #   
+  #   testthat::expect_equal(unname(purrr::map_int(snp_l,nrow)),ld_df$snp_ct)
+  #   testthat::expect_equal(snp_df$result,snp_df$region_id)
+  #   })
+  # 
   
   test_that("we can get something looking like torus-formatted input from snps and annotations",{
     
@@ -101,12 +99,10 @@ test_that("can merge regions",{
 
 test_that("we can correctly assign regions to regions when they're length 1",{
 
-  for(i in hg19_sizes){  
-    rir <- range_in_range(ldetect_EUR,i)
-    expect_equal(chromosomes(ldetect_EUR)==chromosomes(i),!is.na(rir))
+  for(i in seq_along(hg19_sizes)){  
+    rir <- range_in_range(ldetect_EUR,hg19_sizes[i])
+    expect_equal(chromosomes(ldetect_EUR)==chromosomes(hg19_sizes[i]),!is.na(rir))
   }
-  
-  
 })
  
 

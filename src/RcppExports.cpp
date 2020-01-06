@@ -31,34 +31,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sorted_snp_df
-bool sorted_snp_df(const Rcpp::IntegerVector chr, const Rcpp::IntegerVector pos);
-RcppExport SEXP _ldmap_sorted_snp_df(SEXP chrSEXP, SEXP posSEXP) {
+// parse_ldmap_SNP
+Rcpp::NumericVector parse_ldmap_SNP(Rcpp::StringVector input);
+RcppExport SEXP _ldmap_parse_ldmap_SNP(SEXP inputSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type chr(chrSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type pos(posSEXP);
-    rcpp_result_gen = Rcpp::wrap(sorted_snp_df(chr, pos));
-    return rcpp_result_gen;
-END_RCPP
-}
-// set_ld_region
-Rcpp::StringVector set_ld_region(const Rcpp::IntegerVector ld_chr, const Rcpp::IntegerVector ld_start, const Rcpp::IntegerVector ld_stop, const Rcpp::IntegerVector ld_region_id, const Rcpp::IntegerVector chr, const Rcpp::IntegerVector pos, uint32_t max_size, int min_size, const bool assign_all);
-RcppExport SEXP _ldmap_set_ld_region(SEXP ld_chrSEXP, SEXP ld_startSEXP, SEXP ld_stopSEXP, SEXP ld_region_idSEXP, SEXP chrSEXP, SEXP posSEXP, SEXP max_sizeSEXP, SEXP min_sizeSEXP, SEXP assign_allSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type ld_chr(ld_chrSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type ld_start(ld_startSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type ld_stop(ld_stopSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type ld_region_id(ld_region_idSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type chr(chrSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type pos(posSEXP);
-    Rcpp::traits::input_parameter< uint32_t >::type max_size(max_sizeSEXP);
-    Rcpp::traits::input_parameter< int >::type min_size(min_sizeSEXP);
-    Rcpp::traits::input_parameter< const bool >::type assign_all(assign_allSEXP);
-    rcpp_result_gen = Rcpp::wrap(set_ld_region(ld_chr, ld_start, ld_stop, ld_region_id, chr, pos, max_size, min_size, assign_all));
+    Rcpp::traits::input_parameter< Rcpp::StringVector >::type input(inputSEXP);
+    rcpp_result_gen = Rcpp::wrap(parse_ldmap_SNP(input));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -72,6 +52,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type start(startSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type end(endSEXP);
     rcpp_result_gen = Rcpp::wrap(new_ldmap_range(chrom, start, end));
+    return rcpp_result_gen;
+END_RCPP
+}
+// nearest_snp_range
+Rcpp::IntegerVector nearest_snp_range(Rcpp::NumericVector query, Rcpp::NumericVector target);
+RcppExport SEXP _ldmap_nearest_snp_range(SEXP querySEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(nearest_snp_range(query, target));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -184,16 +176,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // sample_interval
-Rcpp::IntegerVector sample_interval(Rcpp::IntegerVector n, Rcpp::IntegerVector begin, Rcpp::IntegerVector end, const bool replace);
-RcppExport SEXP _ldmap_sample_interval(SEXP nSEXP, SEXP beginSEXP, SEXP endSEXP, SEXP replaceSEXP) {
+Rcpp::IntegerVector sample_interval(Rcpp::IntegerVector n, Rcpp::IntegerVector beginv, Rcpp::IntegerVector endv, const bool replace);
+RcppExport SEXP _ldmap_sample_interval(SEXP nSEXP, SEXP beginvSEXP, SEXP endvSEXP, SEXP replaceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type n(nSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type begin(beginSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type end(endSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type beginv(beginvSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type endv(endvSEXP);
     Rcpp::traits::input_parameter< const bool >::type replace(replaceSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_interval(n, begin, end, replace));
+    rcpp_result_gen = Rcpp::wrap(sample_interval(n, beginv, endv, replace));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -356,14 +348,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// as_integer_ldmap_snp
-Rcpp::NumericVector as_integer_ldmap_snp(Rcpp::NumericVector x);
-RcppExport SEXP _ldmap_as_integer_ldmap_snp(SEXP xSEXP) {
+// migrate_ldmap_snp
+Rcpp::NumericVector migrate_ldmap_snp(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_migrate_ldmap_snp(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(as_integer_ldmap_snp(x));
+    rcpp_result_gen = Rcpp::wrap(migrate_ldmap_snp(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// old_ldmap_snp
+Rcpp::NumericVector old_ldmap_snp(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_old_ldmap_snp(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(old_ldmap_snp(x));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -532,9 +535,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
     {"_ldmap_parse_ldmap_range", (DL_FUNC) &_ldmap_parse_ldmap_range, 1},
-    {"_ldmap_sorted_snp_df", (DL_FUNC) &_ldmap_sorted_snp_df, 2},
-    {"_ldmap_set_ld_region", (DL_FUNC) &_ldmap_set_ld_region, 9},
+    {"_ldmap_parse_ldmap_SNP", (DL_FUNC) &_ldmap_parse_ldmap_SNP, 1},
     {"_ldmap_new_ldmap_range", (DL_FUNC) &_ldmap_new_ldmap_range, 3},
+    {"_ldmap_nearest_snp_range", (DL_FUNC) &_ldmap_nearest_snp_range, 2},
     {"_ldmap_range_in_range", (DL_FUNC) &_ldmap_range_in_range, 3},
     {"_ldmap_snp_in_range", (DL_FUNC) &_ldmap_snp_in_range, 2},
     {"_ldmap_snp_in_ranges", (DL_FUNC) &_ldmap_snp_in_ranges, 2},
@@ -559,7 +562,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_format_ldmap_allele", (DL_FUNC) &_ldmap_format_ldmap_allele, 1},
     {"_ldmap_as_integer_ldmap_allele", (DL_FUNC) &_ldmap_as_integer_ldmap_allele, 1},
     {"_ldmap_as_integer_ldmap_range", (DL_FUNC) &_ldmap_as_integer_ldmap_range, 1},
-    {"_ldmap_as_integer_ldmap_snp", (DL_FUNC) &_ldmap_as_integer_ldmap_snp, 1},
+    {"_ldmap_migrate_ldmap_snp", (DL_FUNC) &_ldmap_migrate_ldmap_snp, 1},
+    {"_ldmap_old_ldmap_snp", (DL_FUNC) &_ldmap_old_ldmap_snp, 1},
     {"_ldmap_alt_alleles", (DL_FUNC) &_ldmap_alt_alleles, 2},
     {"_ldmap_ldmap_snp_2_dataframe", (DL_FUNC) &_ldmap_ldmap_snp_2_dataframe, 2},
     {"_ldmap_join_snp", (DL_FUNC) &_ldmap_join_snp, 3},
