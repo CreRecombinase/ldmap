@@ -54,7 +54,7 @@ testthat::test_that("sorting works",{
   tret <- as_ldmap_snp(hd)
   ldshd <- as_ldmap_snp(shd)
   so_ret <- sort(ret)
-  vso_ret <- vec_sort(ret)
+  vso_ret <- vctrs::vec_sort(ret)
   expect_true(!is.unsorted(chromosomes(so_ret)))
   
   expect_equal(tret,ret)

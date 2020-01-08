@@ -55,6 +55,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// distance_rr
+Rcpp::IntegerVector distance_rr(Rcpp::NumericVector query, Rcpp::NumericVector target);
+RcppExport SEXP _ldmap_distance_rr(SEXP querySEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(distance_rr(query, target));
+    return rcpp_result_gen;
+END_RCPP
+}
 // nearest_snp_range
 Rcpp::IntegerVector nearest_snp_range(Rcpp::NumericVector query, Rcpp::NumericVector target);
 RcppExport SEXP _ldmap_nearest_snp_range(SEXP querySEXP, SEXP targetSEXP) {
@@ -537,6 +549,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_parse_ldmap_range", (DL_FUNC) &_ldmap_parse_ldmap_range, 1},
     {"_ldmap_parse_ldmap_SNP", (DL_FUNC) &_ldmap_parse_ldmap_SNP, 1},
     {"_ldmap_new_ldmap_range", (DL_FUNC) &_ldmap_new_ldmap_range, 3},
+    {"_ldmap_distance_rr", (DL_FUNC) &_ldmap_distance_rr, 2},
     {"_ldmap_nearest_snp_range", (DL_FUNC) &_ldmap_nearest_snp_range, 2},
     {"_ldmap_range_in_range", (DL_FUNC) &_ldmap_range_in_range, 3},
     {"_ldmap_snp_in_range", (DL_FUNC) &_ldmap_snp_in_range, 2},

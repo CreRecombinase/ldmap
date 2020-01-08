@@ -518,8 +518,7 @@ std::tuple<int,int,int> get_ldmap_region(const uint64_t x) noexcept{
 //               make_ldmap_region(25, 120, 3456));
 // static_assert(make_ldmap_region(24, 110, 3456) <
 //               make_ldmap_region(25, 120, 3457));
-// static_assert(make_ldmap_region(24, 536870911, 3456) <
-//               make_ldmap_region(25, 120, 3457));
+
 
 
 
@@ -605,6 +604,12 @@ public:
     return(SNP{.snp=snp.snp});
   }
 
+  constexpr bool operator!=(const SNP &other) const noexcept{
+    return snp!=other.snp;
+  };
+  constexpr bool operator==(const SNP &other) const noexcept{
+    return snp==other.snp;
+  };
   constexpr bool operator<(const SNP &b) const{
 
     return (clear_alleles(snp)<clear_alleles(b.snp));
@@ -632,6 +637,7 @@ public:
   constexpr bool operator>(const Region &other) const;
   constexpr bool operator==(const Region &other) const;
   constexpr bool operator!=(const Region &other) const;
+
 
 
   double to_double() const{
@@ -719,8 +725,10 @@ class Region{
   static constexpr Region make_Region(const SNP& a,const SNP& b) noexcept{
     if( a.chrom()!=b.chrom())
       return make_Region(0ul);
-    auto [pa,pb] = std::minmax(a.pos(),b.pos());
-    return make_Region(a.chrom(),pa,pb+1);
+    const auto pai=a.pos();
+    const auto pab=b.pos();
+    auto [pa,pb] = std::minmax(pai,pab);
+    return make_Region<unsigned char,int>(a.chrom(),pa,pb+1);
   }
   constexpr SNP start_SNP() const noexcept{
     return SNP::make_snp<true>(chrom(),start());
@@ -802,10 +810,15 @@ class Region{
       return std::numeric_limits<int>::max();
     if(other.chrom()<chrom())
       return std::numeric_limits<int>::min();
-    if(abs(other.pos()-start())>abs(other.pos()-end()))
-      return other.pos()-end();
-    return other.pos()-end();
+    if (start() <= other.pos()){
+      if(other.pos() < end())
+        return 0;
+      else
+        return other.pos()-end();
+    }
+    return other.pos()-start();
   }
+
 
   constexpr int distance(const Region &other) const noexcept{
     if(other.chrom()>chrom())
@@ -814,8 +827,8 @@ class Region{
       return std::numeric_limits<int>::min();
     if(overlap(other))
       return 0;
-    if(other.start()>end())
-      return other.start()-end();
+    if(other.start()>=end())
+      return other.start()-(end()-1);
     return other.end()-start();
   }
 
@@ -905,3 +918,29 @@ inline Snp complement_snp(Snp a ){
 }
 
 
+static_assert(Region::make_Region(SNP::make_snp<true>(1,50),SNP::make_snp<true>(1,55)).start_SNP()==SNP::make_snp<true>(1,50));
+
+static_assert(make_ldmap_region(24, 536870911, 3456) <
+              make_ldmap_region(25, 120, 3457));
+static_assert(120 - 100 == 20);
+static_assert(Region::make_Region(23, 100, 200)
+                  .distance(SNP{.snp = make_ldmap_snp(23, 120)}) == 0);
+static_assert(Region::make_Region(23, 100, 200)
+                  .distance(SNP{.snp = make_ldmap_snp(23, 220)}) == 20);
+static_assert(Region::make_Region(23, 100, 200)
+                  .distance(SNP{.snp = make_ldmap_snp(23, 90)}) == -10);
+static_assert(Region::make_Region(23, 100, 200)
+                  .distance(SNP{.snp = make_ldmap_snp(23, 90)}) == -10);
+
+static_assert(Region::make_Region(23, 100, 200)
+                  .distance(Region::make_Region(23, 100, 200)) == 0);
+static_assert(Region::make_Region(23, 100, 200)
+                  .distance(Region::make_Region(23, 120, 250)) == 0);
+static_assert(Region::make_Region(23, 100, 200)
+                  .distance(Region::make_Region(23, 90, 250)) == 0);
+
+static_assert(Region::make_Region(23, 100, 200)
+                  .distance(Region::make_Region(23, 90, 91)) == -9);
+
+static_assert(Region::make_Region(23, 100, 200)
+              .distance(Region::make_Region(23, 201, 202)) == 2);

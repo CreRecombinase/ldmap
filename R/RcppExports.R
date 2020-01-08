@@ -32,11 +32,22 @@ new_ldmap_range <- function(chrom = as.integer( c()), start = as.integer( c()), 
     .Call('_ldmap_new_ldmap_range', PACKAGE = 'ldmap', chrom, start, end)
 }
 
+#' Quickly calculate distance between to ldmap_ranges
+#'
+#' @param query vector of query ldmap_snps
+#' @param target vector of target ldmap_ranges (must be sorted)
+#' @return a vector of integers with the length between the two ranges
+#' @export
+distance_rr <- function(query, target) {
+    .Call('_ldmap_distance_rr', PACKAGE = 'ldmap', query, target)
+}
+
 #' Assign ranges to nearest ranges
 #'
 #' @param query vector of query ldmap_snps
-#' @param target vector of target ldmap_snps (must be sorted)
-#' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target`
+#' @param target vector of target ldmap_ranges (must be sorted)
+#' @param use_begin logical scalar indicating whether to use the start of the target range(TRUE), the end(FALSE), or them min distance of the two (NA_LOGICAL)
+#' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target` (or NA_INTEGER if there is no overlap in the set of chromosomes)
 #' @export
 nearest_snp_range <- function(query, target) {
     .Call('_ldmap_nearest_snp_range', PACKAGE = 'ldmap', query, target)

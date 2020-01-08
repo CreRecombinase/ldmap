@@ -1,19 +1,6 @@
 context("sets")
 
 
-testthat::test_that("we can make and print ldmap_ranges",{
-  
-  library(ldmap)
-  input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
-  ld_df <- read_bed(input_f,compact = FALSE)
-  
-  big_range <- new_ldmap_range(ld_df$chrom,start=ld_df$start,end=ld_df$end)
-  expect_equal(chromosomes(big_range),as.integer(ld_df$chrom))
-  cdf <- ldmap_range_2_data_frame(big_range)
-  # expect_equal(cdf$start,ld_df$start)
-  expect_equal(cdf$end,ld_df$end)
-  expect_equal(ld_df$chrom,cdf$chrom)
-})
 
 
 # 
@@ -85,7 +72,8 @@ testthat::test_that("we can find windows",{
                            NA2N = TRUE))
     map <- cumsum(runif(p))
     window_r <- window_ldmap_range(tsnps,map,window = 1)
-    #snp_l <- match_ranges_snps(window_r,tsnps)
+    expect_true(all(starts(window_r)<=positions(tsnps)))
+    expect_true(all(ends(window_r)>=positions(tsnps)))
     sir  <- snp_in_range(tsnps,window_r)
     df <- tibble::tibble(snp = tsnps,map = map,region = window_r,member = sir)
     cdiff_df <- dplyr::group_by(df, member) %>% 

@@ -92,11 +92,6 @@ vector_variant get_vector_variant(SEXP x){
 }
 
 
-template <typename A, typename B>
-const B* indirect_index(const A* ab, const B* bb,const A* a_it){
-  return bb+std::distance(ab,a_it);
-}
-
 
 class Indirector{
   size_t offset;
@@ -326,35 +321,43 @@ int snp_in_range(const double x, RcppParallel::RVector<double>::const_iterator b
 
 
 
-// class
 
-// std::vector<int> snps_in_range(const double x,
-// RcppParallel::RVector<double>::const_iterator
-// begin,RcppParallel::RVector<double>::const_iterator end){
-//   SNP sx{.snp={.flt=x}};
-//   auto [xbb,xbe]=std::equal_range(begin,end,sx,[](double  range_a,const SNP
-//   &snp_b){
-//                                           return(Region{.br={.flt=range_a}}<
-//                                           snp_b);
-//                                         });
-//   if( (xbe==end ) or !(Region{.br={.flt=*xbb}} ==sx))
-//     return NA_INTEGER;
-//   return std::distance(begin,xb)+1;
-// }
 
+//' Quickly calculate distance between to ldmap_ranges
+//'
+//' @param query vector of query ldmap_snps
+//' @param target vector of target ldmap_ranges (must be sorted)
+//' @return a vector of integers with the length between the two ranges
+//' @export
+//[[Rcpp::export]]
+Rcpp::IntegerVector distance_rr(Rcpp::NumericVector query,Rcpp::NumericVector target){
+
+  using namespace ranges;
+  const size_t p=query.size();
+  const size_t target_p=target.size();
+  RcppParallel::RVector<double> input_range_query(query);
+  RcppParallel::RVector<double> input_range_target(target);
+  Rcpp::IntegerVector retvec = Rcpp::no_init(p);
+  RcppParallel::RVector<int> output_range(retvec);
+  std::transform(input_range_query.begin(),input_range_query.end(),input_range_target.begin(),output_range.begin(),[](const double mpa,const double mpb){
+    return Region::make_Region(mpa).distance(Region::make_Region(mpb));
+  });
+
+  return retvec;
+}
 
 //' Assign ranges to nearest ranges
 //'
 //' @param query vector of query ldmap_snps
-//' @param target vector of target ldmap_snps (must be sorted)
-//' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target`
+//' @param target vector of target ldmap_ranges (must be sorted)
+//' @param use_begin logical scalar indicating whether to use the start of the target range(TRUE), the end(FALSE), or them min distance of the two (NA_LOGICAL)
+//' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target` (or NA_INTEGER if there is no overlap in the set of chromosomes)
 //' @export
 //[[Rcpp::export]]
 Rcpp::IntegerVector nearest_snp_range(Rcpp::NumericVector query,Rcpp::NumericVector target){
 
 
   using namespace ranges;
-
   const size_t p=query.size();
   const size_t target_p=target.size();
   RcppParallel::RVector<double> input_range_query(query);
@@ -370,28 +373,28 @@ Rcpp::IntegerVector nearest_snp_range(Rcpp::NumericVector query,Rcpp::NumericVec
   double* irqb = query.begin();
   double* irqe = query.end();
   auto msfun = [](double x){
-    return(SNP::make_snp(x));
-  };
+                 return(SNP::make_snp(x));
+               };
   auto mrfun = [](double x){
-    return(Region::make_Region(x));
-  };
+                 return(Region::make_Region(x));
+               };
 
 
-  auto irtr = subrange(irtb,irte);
-  auto irt= view::transform(irtr,mrfun);
-  auto irq = subrange(irqb,irqe) | view::transform(msfun);
+  using namespace Rcpp;
+
+  // auto irtr = subrange(irtb,irte);
+  // auto irt= views::transform(irtr,mrfun);
+  // auto irq = subrange(irqb,irqe) | view::transform(msfun);
 
 
-  if(!is_sorted(irt,[](Region ra, Region rb){
-    return ra<rb;
-  }))
+  if(!is_sorted(input_range_target.begin(),input_range_target.end(),[](double &ra, double rb){
+                                                                      return Region::make_Region(ra)<Region::make_Region(rb);
+                                                                    }))
     Rcpp::stop("target must be sorted");
 
-
-  auto result_thing = transform(irq,op,
-                                [&](SNP x){
-                                  return(nearest_snp(x,irt));
-                                });
+  Rcpp::IntegerVector result =Rcpp::IntegerVector::import_transform(query.begin(),query.end(),[&](double x){
+                                                                                                return(nearest_snp(SNP::make_snp(x),input_range_target.begin(),input_range_target.end()));
+                                                                                              });
   return ret;
 
 }
@@ -682,7 +685,10 @@ auto find_window(const T* begin,const T* end,const  T *query,const T diff){
 
   auto ld = std::lower_bound(begin,query,*query-diff);
   auto ud = std::upper_bound(query,end,*query+diff);
-  return std::make_pair(ld,ud-1);
+  if(ud==begin){
+    ud=ud+1;
+  }
+  return std::make_pair(std::distance(begin,ld),std::distance(begin,ud-1));
 }
 
 
@@ -700,17 +706,33 @@ auto find_window(const T* begin,const T* end,const  T *query,const T diff){
 Rcpp::NumericVector window_ldmap_range(Rcpp::NumericVector ldmap_snp,Rcpp::NumericVector cm,const double window=1.0){
 
   const size_t p=ldmap_snp.size();
-  Rcpp::NumericVector ret(p);
+  Rcpp::NumericVector ret=Rcpp::no_init(p);
   double *ldmb = ldmap_snp.begin();
   double *cmb = cm.begin();
   double *cme = cm.end();
 
   for(int i=0; i<p; i++){
+    auto snpit=SNP::make_snp(*(ldmb+i));
+    auto cmbi=cmb+i;
     auto [fw_l, fw_u] =
-        find_window(cmb, cme, cmb + i, window/2);
-    auto lb = indirect_index(cmb,ldmb,fw_l);
-    auto ub = indirect_index(cmb,ldmb,fw_u);
-    ret(i)=bit_cast<double>(Region::make_Region(SNP::make_snp(bit_cast<uint64_t>(*lb)),SNP::make_snp(bit_cast<uint64_t>(*ub))).br);
+        find_window(cmb, cme, cmbi, window/2);
+
+    auto lb = SNP::make_snp(*(ldmb+fw_l));
+    auto ub = SNP::make_snp(*(ldmb+fw_u));
+    if( (lb>snpit) or (snpit>ub)){
+      Rcpp::Rcerr<<"Error: "<<lb<<"<"<<snpit<<"<"<<ub<<" is violated"<<std::endl;
+      Rcpp::Rcerr<<"Window is "<<*(cmb+fw_l)<<"<="<<*cmbi<<"<="<<*(cmb+fw_u)<<std::endl;
+      Rcpp::stop("Error in imp of window_ldmap_range");
+    }
+
+    auto ret_el = Region::make_Region(lb,ub);
+    if(ret_el.start_SNP()!=lb or ret_el.last_SNP()!=ub){
+      Rcpp::Rcerr<<"Error: "<<lb<<"<"<<snpit<<"<<"<<ub<<" is violated"<<std::endl;
+      Rcpp::Rcerr<<"Window is "<<*(cmb+fw_l)<<"<="<<*cmbi<<"<="<<*(cmb+fw_u)<<std::endl;
+      Rcpp::Rcerr<<"Region is "<<ret_el<<"("<<ret_el.start_SNP()<<"-"<<ret_el.last_SNP()<<")"<<std::endl;
+      Rcpp::stop("Error in imp of window_ldmap_range");
+    }
+    ret(i)=bit_cast<double>(ret_el.br);
   }
   ret.attr("class")=Rcpp::StringVector::create("ldmap_range","vctrs_vctr");
   return ret;
@@ -994,12 +1016,14 @@ Rcpp::IntegerVector sample_interval(Rcpp::IntegerVector n,Rcpp::IntegerVector be
     auto mn= n(i % ns);
     ret_size +=mn;
   }
-
-  auto vi =    views::for_each(views::zip(begin_range,end_range,n_range), [](std::tuple<int,int,int> tup) {
-      return yield_from(views::sample(views::ints(std::get<0>(tup),std::get<1>(tup)), std::get<2>(tup)));
-    }) | to<std::vector>();
-
-  Rcpp::IntegerVector ret(vi.begin(),vi.end());
+  Rcpp::IntegerVector ret=Rcpp::no_init(ret_size);
+  auto rd = std::random_device{}();
+  int* outip=ret.begin();
+  for(int i=0; i<p; i++){
+    int tn=n[i];
+    auto range_v = views::ints(beginv[i],endv[i]);
+    outip=std::sample(begin(range_v),end(range_v),outip,tn,std::mt19937{rd});
+  }
   // auto ret_b = ret.begin();
 
   // if(replace){
