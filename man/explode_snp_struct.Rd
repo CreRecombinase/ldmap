@@ -23,6 +23,6 @@ explode_snp_struct(
 convert snp struct back into seperate columns
 }
 \examples{
-TODO
+#TODO
 
 }

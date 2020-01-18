@@ -2,18 +2,18 @@
 % Please edit documentation in R/snp_utils.R
 \name{chromosomes<-}
 \alias{chromosomes<-}
-\title{Change chromosome value for a range or SNP}
+\title{Change chromosome value for a region or SNP}
 \usage{
 chromosomes(x) <- value
 }
 \arguments{
-\item{x}{ldmap_range or ldmap_snp}
+\item{x}{ldmap_region or ldmap_snp}
 
 \item{value}{new chromosome value}
 }
 \value{
-an ldmap_range or ldmap_snp with the appropriate chromsome
+an ldmap_region or ldmap_snp with the appropriate chromsome
 }
 \description{
-Change chromosome value for a range or SNP
+Change chromosome value for a region or SNP
 }

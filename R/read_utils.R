@@ -100,6 +100,6 @@ read_bed <- function(file, compact = TRUE, cols = bed_region_cols(),read_fun=rea
     ret_df <- read_fun(file, col_names = bcn,
                        col_types = cols,skip = 1L)
     if (compact)
-        return(compact_ldmap_range(ret_df, chrom = bcn[1], start = bcn[2], end = bcn[3]))
+        return(compact_ldmap_region(ret_df, chrom = bcn[1], start = bcn[2], end = bcn[3]))
     return(ret_df)
 }

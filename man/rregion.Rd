@@ -14,7 +14,7 @@ rregion(n, chroms = 1L:23L, sort = TRUE)
 \item{sort}{whether to sort the output}
 }
 \value{
-a vector of length \code{n} of (optionally sorted ldmap_ranges)
+a vector of length \code{n} of (optionally sorted ldmap_regions)
 }
 \description{
 Generate random genomic regions

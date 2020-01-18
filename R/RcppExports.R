@@ -14,92 +14,150 @@ interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE, pro
     .Call('_ldmap_interpolate_genetic_map', PACKAGE = 'ldmap', map, map_pos, target_pos, strict, progress)
 }
 
-parse_ldmap_range <- function(input) {
-    .Call('_ldmap_parse_ldmap_range', PACKAGE = 'ldmap', input)
+parse_ldmap_region <- function(input) {
+    .Call('_ldmap_parse_ldmap_region', PACKAGE = 'ldmap', input)
 }
 
 parse_ldmap_SNP <- function(input) {
     .Call('_ldmap_parse_ldmap_SNP', PACKAGE = 'ldmap', input)
 }
 
-#' Creation of new ldmap_ranges
+#' Creation of new ldmap_regions
 #'
 #' @param chrom an integer vector of chromosomes
 #' @param start an integer vector of start positions
 #' @param stop an integer vector of stop positions
 #' @export
-new_ldmap_range <- function(chrom = as.integer( c()), start = as.integer( c()), end = as.integer( c())) {
-    .Call('_ldmap_new_ldmap_range', PACKAGE = 'ldmap', chrom, start, end)
+nldmap_region <- function(chrom = as.integer( c()), start = as.integer( c()), end = as.integer( c())) {
+    .Call('_ldmap_nldmap_region', PACKAGE = 'ldmap', chrom, start, end)
 }
 
-#' Quickly calculate distance between to ldmap_ranges
+#' Quickly calculate distance between to ldmap_regions
 #'
 #' @param query vector of query ldmap_snps
-#' @param target vector of target ldmap_ranges (must be sorted)
+#' @param target vector of target ldmap_regions (must be sorted)
 #' @return a vector of integers with the length between the two ranges
+#' @export distance.ldmap_region.ldmap_region
+#' @method distance.ldmap_region ldmap_region
 #' @export
-distance_rr <- function(query, target) {
-    .Call('_ldmap_distance_rr', PACKAGE = 'ldmap', query, target)
+distance.ldmap_region.ldmap_region <- function(query, target) {
+    .Call('_ldmap_distance_ldmap_region_ldmap_region', PACKAGE = 'ldmap', query, target)
+}
+
+#' Quickly calculate distance between to ldmap_regions
+#'
+#' @param query vector of query ldmap_snps
+#' @param target vector of target ldmap_regions (must be sorted)
+#' @return a vector of integers with the length between the two ranges
+#' @export distance.ldmap_region.ldmap_snp
+#' @method distance.ldmap_region ldmap_snp
+#' @export
+distance.ldmap_region.ldmap_snp <- function(query, target) {
+    .Call('_ldmap_distance_ldmap_region_ldmap_snp', PACKAGE = 'ldmap', query, target)
+}
+
+#' Quickly calculate distance between to ldmap_regions
+#'
+#' @param query vector of query ldmap_snps
+#' @param target vector of target ldmap_regions (must be sorted)
+#' @return a vector of integers with the length between the two ranges
+#' @export distance.ldmap_snp.ldmap_region
+#' @method distance.ldmap_snp ldmap_region
+#' @export
+distance.ldmap_snp.ldmap_region <- function(query, target) {
+    .Call('_ldmap_distance_ldmap_snp_ldmap_region', PACKAGE = 'ldmap', query, target)
+}
+
+#' Quickly calculate distance between to ldmap_regions
+#'
+#' @param query vector of query ldmap_snps
+#' @param target vector of target ldmap_regions (must be sorted)
+#' @return a vector of integers with the length between the two ranges
+#' @export distance.ldmap_snp.ldmap_snp
+#' @method distance.ldmap_snp ldmap_snp
+#' @export
+distance.ldmap_snp.ldmap_snp <- function(query, target) {
+    .Call('_ldmap_distance_ldmap_snp_ldmap_snp', PACKAGE = 'ldmap', query, target)
 }
 
 #' Assign ranges to nearest ranges
 #'
 #' @param query vector of query ldmap_snps
-#' @param target vector of target ldmap_ranges (must be sorted)
+#' @param target vector of target ldmap_regions (must be sorted)
 #' @param use_begin logical scalar indicating whether to use the start of the target range(TRUE), the end(FALSE), or them min distance of the two (NA_LOGICAL)
-#' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target` (or NA_INTEGER if there is no overlap in the set of chromosomes)
+#' @return a vector of integers of length `length(ldmap_region_query)` with the index of the `ldmap_region_target` (or NA_INTEGER if there is no overlap in the set of chromosomes)
 #' @export
-nearest_snp_range <- function(query, target) {
-    .Call('_ldmap_nearest_snp_range', PACKAGE = 'ldmap', query, target)
+nearest_snp_region <- function(query, target) {
+    .Call('_ldmap_nearest_snp_region', PACKAGE = 'ldmap', query, target)
 }
 
 #' Assign ranges to ranges
 #'
-#' @param ldmap_range_query vector of ldmap_ranges
-#' @param ldmap_range_target vector of *non-overlapping* ldmap_ranges (must be sorted)
+#' @param ldmap_region_query vector of ldmap_regions
+#' @param ldmap_region_target vector of *non-overlapping* ldmap_regions (must be sorted)
 #' @param allow_overlap is it alright if a query is only partially inside the target?
-#' @return a vector of integers of length `length(ldmap_range_query)` with the index of the `ldmap_range_target`
+#' @return a vector of integers of length `length(ldmap_region_query)` with the index of the `ldmap_region_target`
 #' @export
-range_in_range <- function(ldmap_range_query, ldmap_range_target, allow_overlap = FALSE) {
-    .Call('_ldmap_range_in_range', PACKAGE = 'ldmap', ldmap_range_query, ldmap_range_target, allow_overlap)
+region_in_region <- function(ldmap_region_query, ldmap_region_target, allow_overlap = FALSE) {
+    .Call('_ldmap_region_in_region', PACKAGE = 'ldmap', ldmap_region_query, ldmap_region_target, allow_overlap)
 }
 
 #' Assign SNPs to ranges
 #'
 #' @param ldmap_snp vector of ldmap_snps (must be sorted)
-#' @param ldmap_range vector of non-overlapping ldmap_ranges (must be sorted)
-#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_range`
+#' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
+#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
 #' @export
-snp_in_range <- function(ldmap_snp, ldmap_range) {
-    .Call('_ldmap_snp_in_range', PACKAGE = 'ldmap', ldmap_snp, ldmap_range)
+snp_in_region <- function(ldmap_snp, ldmap_region) {
+    .Call('_ldmap_snp_in_region', PACKAGE = 'ldmap', ldmap_snp, ldmap_region)
+}
+
+#' Assign SNPs to ranges
+#'
+#' @param x vector of query ldmap_snps
+#' @param y vector of target ldmap_snps
+#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
+#' @export
+snp_overlap_snp <- function(x, y) {
+    .Call('_ldmap_snp_overlap_snp', PACKAGE = 'ldmap', x, y)
 }
 
 #' Assign SNPs to ranges
 #'
 #' @param ldmap_snp vector of ldmap_snps (must be sorted)
-#' @param ldmap_range vector of non-overlapping ldmap_ranges (must be sorted)
-#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_range`
+#' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
+#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
 #' @export
-snp_in_ranges <- function(ldmap_snp, ldmap_ranges) {
-    .Call('_ldmap_snp_in_ranges', PACKAGE = 'ldmap', ldmap_snp, ldmap_ranges)
-}
-
-#' formatting of ldmap_ranges
-#'
-#' @param x an ldmap_range
-#' @export
-format_ldmap_range <- function(x) {
-    .Call('_ldmap_format_ldmap_range', PACKAGE = 'ldmap', x)
+region_overlap_snp <- function(ldmap_region, ldmap_snp) {
+    .Call('_ldmap_region_overlap_snp', PACKAGE = 'ldmap', ldmap_region, ldmap_snp)
 }
 
 #' Assign SNPs to ranges
 #'
 #' @param ldmap_snp vector of ldmap_snps (must be sorted)
-#' @param ldmap_range vector of potentially overlapping ldmap_ranges (must be sorted)
+#' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
+#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
+#' @export
+snp_in_regions <- function(ldmap_snp, ldmap_regions) {
+    .Call('_ldmap_snp_in_regions', PACKAGE = 'ldmap', ldmap_snp, ldmap_regions)
+}
+
+#' formatting of ldmap_regions
+#'
+#' @param x an ldmap_region
+#' @export
+format_ldmap_region <- function(x) {
+    .Call('_ldmap_format_ldmap_region', PACKAGE = 'ldmap', x)
+}
+
+#' Assign SNPs to ranges
+#'
+#' @param ldmap_snp vector of ldmap_snps (must be sorted)
+#' @param ldmap_region vector of potentially overlapping ldmap_regions (must be sorted)
 #' @return a list of integer vectors giving the ranges to which each SNP belongs
 #' @export
-match_ranges_snps <- function(df, ldmap_range, snp_col = "snp_struct") {
-    .Call('_ldmap_match_ranges_snps', PACKAGE = 'ldmap', df, ldmap_range, snp_col)
+match_regions_snps <- function(df, ldmap_region, snp_col = "snp_struct") {
+    .Call('_ldmap_match_regions_snps', PACKAGE = 'ldmap', df, ldmap_region, snp_col)
 }
 
 #' Create overlapping regions based on monotonic, point-level annotation
@@ -108,41 +166,41 @@ match_ranges_snps <- function(df, ldmap_range, snp_col = "snp_struct") {
 #' @param cm a numeric vector of (length `p`) per-snp annotations (e.g cumulative recombination rate)
 #' @param window the window width.
 #'
-#' @return a vector of `ldmap_range`s of length `p` giving the window for each SNP.  The width of the window
+#' @return a vector of `ldmap_region`s of length `p` giving the window for each SNP.  The width of the window
 #' is defined for a target snp `ldmap_snp[i]`, as having the chromosome
 #' from `ldmap_snp[i]` and including the position of all `ldmap_snp[j]` snps such that `abs(cm[i]-cm[j])<window` for all values of `j`
 #' @export
-window_ldmap_range <- function(ldmap_snp, cm, window = 1.0) {
-    .Call('_ldmap_window_ldmap_range', PACKAGE = 'ldmap', ldmap_snp, cm, window)
+window_ldmap_region <- function(ldmap_snp, cm, window = 1.0) {
+    .Call('_ldmap_window_ldmap_region', PACKAGE = 'ldmap', ldmap_snp, cm, window)
 }
 
-#' Take a vector of (preferably) sorted and (possibly) overlapping ldmap_ranges and create a new range of (sorted) non-overlapping ldmap_ranges
+#' Take a vector of (preferably) sorted and (possibly) overlapping ldmap_regions and create a new range of (sorted) non-overlapping ldmap_regions
 #'
-#' @param x a (preferably sorted) ldmap_range vector (`length(x)` is referred to  as  `p`)
+#' @param x a (preferably sorted) ldmap_region vector (`length(x)` is referred to  as  `p`)
 #'
 #' @export
-#' @return a sorted vector ldmap_ranges of length at least `p` and at most `2p`(?) representing the same intervals
-split_ldmap_range_overlap <- function(x) {
-    .Call('_ldmap_split_ldmap_range_overlap', PACKAGE = 'ldmap', x)
+#' @return a sorted vector ldmap_regions of length at least `p` and at most `2p`(?) representing the same intervals
+split_ldmap_region_overlap <- function(x) {
+    .Call('_ldmap_split_ldmap_region_overlap', PACKAGE = 'ldmap', x)
 }
 
-#' Merge two ldmap_range vectors
+#' Merge two ldmap_region vectors
 #'
-#' @param x a (preferably sorted) ldmap_range vector (`length(x)` is referred to  as  `p`)
-#' @param y a (preferably sorted) ldmap_range vector (`length(y)` is referred to  as  `q`)
+#' @param x a (preferably sorted) ldmap_region vector (`length(x)` is referred to  as  `p`)
+#' @param y a (preferably sorted) ldmap_region vector (`length(y)` is referred to  as  `q`)
 #'
-#' @return a sorted vector ldmap_ranges of length at most `p+q` and at least `max(p,q)` representing the union of the two sets of ranges
+#' @return a sorted vector ldmap_regions of length at most `p+q` and at least `max(p,q)` representing the union of the two sets of ranges
 #' @export
-merge_ldmap_ranges <- function(x, y) {
-    .Call('_ldmap_merge_ldmap_ranges', PACKAGE = 'ldmap', x, y)
+merge_ldmap_regions <- function(x, y) {
+    .Call('_ldmap_merge_ldmap_regions', PACKAGE = 'ldmap', x, y)
 }
 
-#' convert ldmap_range to dataframe
+#' convert ldmap_region to dataframe
 #'
-#' @param ldmap_range an ldmap_range
+#' @param ldmap_region an ldmap_region
 #' @export
-ldmap_range_2_data_frame <- function(ldmap_range) {
-    .Call('_ldmap_ldmap_range_2_data_frame', PACKAGE = 'ldmap', ldmap_range)
+ldmap_region_2_data_frame <- function(ldmap_region) {
+    .Call('_ldmap_ldmap_region_2_data_frame', PACKAGE = 'ldmap', ldmap_region)
 }
 
 sample_interval <- function(n, beginv, endv, replace = FALSE) {
@@ -204,25 +262,25 @@ rank.ldmap_snp <- function(struct_vec) {
 
 #' get chroms from a ldmap_snp
 #'
-#' @param struct_vec the vector of SNPs (or ldmap_ranges)
+#' @param struct_vec the vector of SNPs (or ldmap_regions)
 #'
 #' @export
 chromosomes <- function(struct_vec) {
     .Call('_ldmap_chromosomes', PACKAGE = 'ldmap', struct_vec)
 }
 
-#' get starting position from a ldmap_range
+#' get starting position from a ldmap_region
 #'
-#' @param ldmap_range the vector of ldmap_ranges
+#' @param ldmap_region the vector of ldmap_regions
 #'
 #' @export
-starts <- function(ldmap_range) {
-    .Call('_ldmap_starts', PACKAGE = 'ldmap', ldmap_range)
+starts <- function(ldmap_region) {
+    .Call('_ldmap_starts', PACKAGE = 'ldmap', ldmap_region)
 }
 
 #' Find convex hull of vector of ranges (or SNPs )
 #'
-#' @param vector of ldmap_range or ldmap_snp of 
+#' @param vector of ldmap_region or ldmap_snp of
 #' @return an ldmap range containg all the ranges (or snps)
 #'
 #' @export
@@ -230,13 +288,13 @@ convex_hull <- function(x) {
     .Call('_ldmap_convex_hull', PACKAGE = 'ldmap', x)
 }
 
-#' get end position from a ldmap_range
+#' get end position from a ldmap_region
 #'
-#' @param ldmap_range the vector of ldmap_ranges
+#' @param ldmap_region the vector of ldmap_regions
 #'
 #' @export
-ends <- function(ldmap_range) {
-    .Call('_ldmap_ends', PACKAGE = 'ldmap', ldmap_range)
+ends <- function(ldmap_region) {
+    .Call('_ldmap_ends', PACKAGE = 'ldmap', ldmap_region)
 }
 
 #' get positions from a ldmap_snp
@@ -276,10 +334,10 @@ as_integer_ldmap_allele <- function(x) {
 
 #' coerce ldmap range to integer(64)
 #'
-#' @param x ldmap_range vec
+#' @param x ldmap_region vec
 #'
-as_integer_ldmap_range <- function(x) {
-    .Call('_ldmap_as_integer_ldmap_range', PACKAGE = 'ldmap', x)
+as_integer_ldmap_region <- function(x) {
+    .Call('_ldmap_as_integer_ldmap_region', PACKAGE = 'ldmap', x)
 }
 
 #' migrate from old representation of ldmap_snp to new representation
@@ -355,6 +413,14 @@ make_ambig <- function(A1, A2) {
 #' @param x a vector of ldmap_snps
 format_ldmap_snp <- function(x) {
     .Call('_ldmap_format_ldmap_snp', PACKAGE = 'ldmap', x)
+}
+
+#' Split a vector ldmap_regions into non-overlapping groups
+#'
+#' @param x a vector of ldmap_snps
+#' @export
+split_by_overlap <- function(x) {
+    .Call('_ldmap_split_by_overlap', PACKAGE = 'ldmap', x)
 }
 
 #' Determine whether 2 alleles are compatible

@@ -74,17 +74,6 @@ testthat::test_that("sorting works",{
 testthat::test_that("matching works like bigsnpstatsr",{
   
 
-  # gwasf <- "/home/nwknoblauch/Dropbox/scratch/ptb_scratch/ptb_gwas.h5"
-  # codf <- EigenH5::read_df_h5(gwasf,"chrom_offset")
-  # 
-  # tdf <- EigenH5::read_df_h5(gwasf,"snp",offset=14379541L,datasize=170459L) %>% dplyr::mutate(
-  #   snp_struct=new_ldmap_snp(chrom,
-  #                            pos,
-  #                            ascii_ref = ref,
-  #                            ascii_alt = alt
-  #                            )) %>% dplyr::select(snp_struct,beta,pval) %>% dplyr::arrange(rank.ldmap_snp(snp_struct))
-  # 
-  # 
   tdf <- readRDS(fs::path_package("test_gwas_df.RDS",package = "ldmap")) %>% tibble::as_tibble()
   
   geno_df <-   readRDS(fs::path_package("test_reference.RDS",package = "ldmap")) %>% 

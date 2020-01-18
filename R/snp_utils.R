@@ -30,23 +30,6 @@ vec_duplicate_id.ldmap_snp <- function(x,...){
 }
 
 
-#' translate a vector of ldmap_ranges by a constant factor
-#'
-#' @param x vector of ldmap_range
-#' @param offset amount to move begin and end (recycled as necessary)
-#'
-#' @return vector of ldmap_ranges
-#' @export
-#'
-#' @examples
-#' # move all regions over by 100 base pairs
-#' ldetect_EUR_100 <- translate_ldmr(ldetect_EUR,100L)
-#' #move first region by 100 and second by 0
-#' ld2 <- translate_ldmr(ldetect_EUR[1:2],c(100L,0L))
-translate_ldmr <- function(x,offset=0L){
-  new_ldmap_range(chromosomes(x),starts(x)+offset,ends(x)+offset)
-}
-
 #'
 #' @method vec_duplicate_id ldmap_snp
 #' @export
@@ -97,6 +80,66 @@ vec_ptype2.ldmap_snp.double <- function(x, y, ...) double()
 #' @export
 vec_ptype2.double.ldmap_snp <- function(x, y, ...) double()
 
+
+
+
+
+
+#' @param from A vector of type ldmap_snp or ldmap_region
+#'
+#' @param to  A vector of type ldmap_snp or ldmap_region
+#' 
+#' @return a vector of length equal to the 
+#' max(length(from),length(to)) 
+#' giving the (signed) distance (in base pairs) from `from` to `to`.
+#' Cooridnates on different chromosomes have the maximum distance
+#' @export
+distance <- function(from, to) {
+  UseMethod("distance",from)
+}
+
+#' @export distance.ldmap_snp
+#' @method distance ldmap_snp
+distance.ldmap_snp <- function(from, to) {
+  UseMethod("distance.ldmap_snp",to)
+}
+
+
+#' Change position of a SNP
+#'
+#' @param x source vector of SNPs
+#' @param to new position value for SNPs
+#'
+#' @return a vector of length equal to `x` with all(positions(x)==to)
+#' @export
+#'
+#' @examples
+#' x <- ldmap_snp(double(10)) %>% set_chromosomes(1:10) %>% set_positions(10)
+#' all(positions(x)==10)
+set_positions <- function(x,to){
+  y <- x
+  positions(y) <- to
+  return(y)
+}
+
+
+#' Change chromosome of a SNP or region
+#'
+#' @param x source vector of SNPs
+#' @param to new chromosome value for SNPs
+#'
+#' @return a vector of length equal to `x` with all(positions(x)==to)
+#' @export
+#'
+#' @examples
+#' #generate random snps and then set chromosmes to 1:10 and all positions to 10
+#' x <- ldmap_snp(double(10)) %>% set_chromosomes(1:10) %>% set_positions(10)
+#' all(positions(x)==10)
+set_chromosomes <- function(x,to){
+  y <- x
+  chromosomes(y) <- to
+  return(y)
+}
 
 
 #' @export vec_cast.ldmap_snp
@@ -156,7 +199,7 @@ match_ref_panel <- function(gwas_df,
     snp_struct <- gwas_df[[snp_struct_col]]
   }
 
-  gwas_df <- dplyr::arrange(gwas_df, rank.ldmap_snp(snp_struct))
+  gwas_df <- dplyr::arregion(gwas_df, rank.ldmap_snp(snp_struct))
   snp_struct <- gwas_df[[snp_struct_col]]
   match_df <- dplyr::bind_cols(gwas_df, join_snp(snp_struct, ref_snp_struct, rsid = rsid))
   match_df <- dplyr::mutate_at(
@@ -187,11 +230,11 @@ vec_cast.double.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
     vctrs::vec_data(x)
 
 
-#' @export vec_cast.integer.ldmap_snp
+#' @export vec_cast.integer64.ldmap_snp
 #' @export
-#' @method vec_cast.integer ldmap_snp
-vec_cast.integer.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
-    as_integer_ldmap_snp(x)
+#' @method vec_cast.integer64 ldmap_snp
+vec_cast.integer64.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
+    structure(unclass(x),class="integer64")
 
 
 #' @export vec_cast.character.ldmap_snp
@@ -225,20 +268,6 @@ vec_proxy_compare.ldmap_snp <- function(x, ...) {
 }
 
 
-
-
-##' Return the column(s) containing ldmap_ranges
-##'
-##' @param df a dataframe
-##' @return a character vector with the names `ldmap_range` columns
-##' @author Nicholas Knoblauch
-range_cols <- function(df) {
-    stopifnot(is.data.frame(df))
-    colnames(df)[purrr::map_lgl(df, ~ inherits(.x, "ldmap_range"))]
-}
-
-
-
 ##' Return the column(s) containing ldmap_snps
 ##'
 ##' @param df a dataframe
@@ -250,39 +279,6 @@ snp_cols <- function(df) {
 }
 
 
-
-#' convert ldmap_range back in to individual columns
-#'
-#' @param df dataframe with at least one ldmap_snp_struct
-#' @param ldmap_range ldmap_range
-#' @param remove boolean indicating whether `ldmap_range`
-#' column should be removed
-#'
-#' @return dataframe with individual columns
-#' @export
-#'
-#'
-explode_ldmap_range <- function(df,
-                                ldmap_range = range_cols(df),
-                                remove = TRUE) {
-  if (length(ldmap_range) > 1) {
-      warning("Multiple ldmap_range columns detected,\
- and `ldmap_range` was not specified, using the first: ",
- ldmap_range[1])
-      ldmap_range <- ldmap_range[1]
-  }
-  stopifnot(length(ldmap_range) == 1)
-  ldr <- df[[ldmap_range]]
-  if (remove) {
-      df <- df[, colnames(df) != ldmap_range]
-  }
-  return(dplyr::bind_cols(df, ldmap_range_2_data_frame(ldr)))
-}
-
-
-
-
-
 #' convert snp struct back into seperate columns
 #'
 #' @param df dataframe with at least one ldmap_snp_struct
@@ -292,7 +288,7 @@ explode_ldmap_range <- function(df,
 #' @export
 #'
 #' @examples
-#' TODO
+#' #TODO
 #'
 explode_snp_struct <- function(df,
                                ldmap_snp = snp_cols(df),
@@ -311,8 +307,6 @@ explode_snp_struct <- function(df,
   }
   return(dplyr::bind_cols(df, ldmap_snp_2_dataframe(snpc, alleles_to_character)))
 }
-
-
 
 
 #' convert SNP columns of a dataframe into a compact ldmap_snp
@@ -370,12 +364,27 @@ compact_snp_struct <- function(df,
   }else{
     nalt <- alt
   }
-  df[[snp_struct]] <- new_ldmap_snp(
-    chrom = df[[chrom]],
-    pos = df[[pos]],
-    ref = df[[nref]],
-    alt = df[[nalt]]
-  )
+  if(use_ref && use_alt)
+    df[[snp_struct]] <- new_ldmap_snp(
+      chrom = df[[chrom]],
+      pos = df[[pos]],
+      ref = df[[nref]],
+      alt = df[[nalt]]
+    )
+  if(use_ref && !use_alt)
+    df[[snp_struct]] <- new_ldmap_snp(
+      chrom = df[[chrom]],
+      pos = df[[pos]],
+      ref = df[[nref]],
+    )
+  if(!use_ref && !use_alt)
+    df[[snp_struct]] <- new_ldmap_snp(
+      chrom = df[[chrom]],
+      pos = df[[pos]],
+    )
+  if(!use_ref && use_alt)
+    stop("alt without ref is not supported")
+
   if (!remove) {
     return(df)
   }
@@ -383,49 +392,6 @@ compact_snp_struct <- function(df,
   ucols <- ucols[!is.na(ucols)]
   return(dplyr::select(df, -dplyr::one_of(ucols)))
 }
-
-
-#' convert  of a dataframe into a compact ldmap_range
-#'
-#'
-#' @param df dataframe
-#' @param chrom chromosome column
-#' @param start column name for beginning of range
-#' @param end column name for end of range
-#' @param ldmap_range name for new ldmap_range column
-#' @param remove boolean indicating whether or not to remove aforementioned columns
-#' @return copy of original datafame with new column `ldmap_range`
-#' @export
-#'
-compact_ldmap_range <- function(df,
-                                chrom = "chrom",
-                                start = "start",
-                                end = "end",
-                                ldmap_range = "ldmap_range",
-                                remove = TRUE) {
-    stopifnot(all(c(chrom, start, end) %in% colnames(df)))
-
-
-    df[[ldmap_range]] <- new_ldmap_range(
-        chrom = df[[chrom]],
-        start = df[[start]],
-        end =  df[[end]]
-    )
-    if (!remove) {
-        return(df)
-    }
-    ucols <- c(chrom, start, end)
-    ucols <- ucols[!is.na(ucols)]
-    return(dplyr::select(df, -dplyr::one_of(ucols)))
-}
-
-
-
-
-
-
-
-
 
 #' @method vec_ptype2 ldmap_allele
 #' @export
@@ -439,7 +405,6 @@ vec_ptype2.ldmap_allele <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_allel
 vec_ptype2.ldmap_allele.ldmap_allele <- function(x, y, ...)
     new_ldmap_allele()
 
-
 #' @export vec_ptype2.ldmap_allele.character
 #' @method vec_ptype2.ldmap_allele character
 #' @export
@@ -452,7 +417,6 @@ vec_ptype2.ldmap_allele.character <- function(x, y, ...)
 vec_ptype2.character.ldmap_allele <- function(x, y, ...)
     character()
 
-
 #' @export vec_ptype2.ldmap_allele.integer
 #' @method vec_ptype2.ldmap_allele integer
 #' @export
@@ -463,18 +427,12 @@ vec_ptype2.ldmap_allele.integer <- function(x, y, ...) integer()
 #' @export
 vec_ptype2.integer.ldmap_allele <- function(x, y, ...) integer()
 
-
-
-
-
-
 #' @export vec_cast.ldmap_allele
 #' @method vec_cast ldmap_allele
 #' @export
 vec_cast.ldmap_allele <- function(x, to, ...) {
   UseMethod("vec_cast.ldmap_allele")
 }
-
 
 #' @export
 vec_cast.ldmap_allele.default <- function(x, to, ...) {
@@ -521,8 +479,6 @@ vec_cast.integer.ldmap_allele <- function(x, to, ...) {
   as_integer_ldmap_allele(x)
 }
 
-
-
 #' Formatting method for ldmap allele
 #'
 #' @param x ldmap_snp
@@ -533,24 +489,6 @@ vec_cast.integer.ldmap_allele <- function(x, to, ...) {
 #' @method format ldmap_allele
 format.ldmap_allele <- function(x, ...) {
   format_ldmap_allele(x)
-}
-
-
-
-#' Whether or not your vector is a ldmap_range
-#'
-#' @param x vector
-#'
-#' @return length one boolean
-#' @export
-#'
-#' @examples
-#' #FALSE
-#' is_ldmap_range(letters)
-#' #TRUE
-#' is_ldmap_range(new_ldmap_range(1:22,1:100,200:300))
-is_ldmap_range <- function(x) {
-  inherits(x, "ldmap_range")
 }
 
 
@@ -566,143 +504,10 @@ is_ldmap_range <- function(x) {
 #' is_ldmap_snp(letters)
 #' #TRUE
 #' is_ldmap_snp(new_ldmap_snp(1:22,1:100))
-is_ldmap_range <- function(x) {
+is_ldmap_snp <- function(x) {
   inherits(x, "ldmap_snp")
 }
 
-
-
-#' Width of ranges
-#'
-#' @param x an ldmap_range
-#'
-#' @return width of the vector
-#' @export
-widths <- function(x){
-  stopifnot(inherits(x,"ldmap_range"))
-  return(ends(x)-starts(x))
-}
-
-
-
-#' Midpoints of ranges
-#'
-#' @param x an ldmap_range
-#'
-#' @return midpoint of the vector
-#' @export
-midpoints <- function(x){
-  stopifnot(inherits(x,"ldmap_range"))
-  return(starts(x)+round((ends(x)-starts(x))/2))
-}
-
-
-
-#' @export
-as_ldmap_range <- function(x) {
-  vec_cast(x, new_ldmap_range())
-}
-
-
-
-#' @export vec_cast.ldmap_range
-#' @method vec_cast ldmap_range
-#' @export
-vec_cast.ldmap_range <- function(x, to, ...) {
-  UseMethod("vec_cast.ldmap_range")
-}
-
-
-#' @export vec_cast.ldmap_range.default
-#' @method vec_cast.ldmap_range default
-#' @export
-vec_cast.ldmap_range.default <- function(x, to, ...) {
-  vec_default_cast(x, to)
-}
-
-#' @export vec_cast.ldmap_range.ldmap_snp
-#' @export
-#' @method vec_cast.ldmap_range ldmap_snp
-vec_cast.ldmap_range.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
-    new_ldmap_range(chrom = chromosomes(x),start = positions(x),end = positions(x)+1)
-
-
-
-#' @export vec_cast.double.ldmap_range
-#' @export
-#' @method vec_cast.double ldmap_range
-vec_cast.double.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
-    vctrs::vec_data(x)
-
-
-#' @export vec_cast.integer.ldmap_range
-#' @export
-#' @method vec_cast.integer ldmap_range
-vec_cast.integer.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
-    as_integer_ldmap_range(x)
-
-
-#' @export vec_cast.ldmap_range.ldmap_range
-#' @export
-#' @method vec_cast.ldmap_range ldmap_range
-vec_cast.ldmap_range.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
-  x
-
-
-
-
-#' @export vec_cast.character.ldmap_range
-#' @export
-#' @method vec_cast.character ldmap_range
-vec_cast.character.ldmap_range <- function(x, to, ..., x_arg = "", to_arg = "")
-    format_ldmap_range(x)
-
-
-#' @export vec_cast.ldmap_range.character
-#' @export
-#' @method vec_cast.ldmap_range character
-vec_cast.ldmap_range.character <- function(x, to, ..., x_arg = "", to_arg = "")
-    parse_ldmap_range(x)
-
-
-#' @export vec_cast.ldmap_range.double
-#' @export
-#' @method vec_cast.ldmap_range double
-vec_cast.ldmap_range.double <- function(x, to, ..., x_arg = "", to_arg = "")
-    structure(vctrs::vec_data(x), class = c("ldmap_range", "vctrs_vctr"))
-
-
-
-#' Formatting method for ldmap ranges
-#'
-#' @param x ldmap_range
-#' @param ...
-#'
-#' @return
-#' @export
-#' @export format.ldmap_range
-#' @method format ldmap_range
-format.ldmap_range <- function(x, ...) {
-  format_ldmap_range(x)
-}
-
-
-
-
-
-#' @method vec_ptype2.ldmap_range default
-#' @export
-#' @export vec_ptype2.ldmap_range.default
-vec_ptype2.ldmap_range.default <- function(x, y, ..., x_arg = "x", y_arg = "y") {
-  vec_default_ptype2(x, y, x_arg = x_arg, y_arg = y_arg)
-}
-
-
-
-#' @method vec_ptype2 ldmap_range
-#' @export
-#' @export vec_ptype2.ldmap_range
-vec_ptype2.ldmap_range <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_range", y)
 
 
 #' New ldmap_snp
@@ -719,142 +524,44 @@ ldmap_snp <- function(x=double()){
 
 
 
-#' New ldmap_range
+
+
+
+
+
+#' Change chromosome value for a region or SNP
 #'
-#' @param x vector
-#'
-#' @return ldmap_range
-#' @export
-#'
-#' @examples
-#' #under the hood the data is a double
-#' as.numeric(ldetect_EUR[1])
-#' #which means we can convert it back
-#' ldmap_range(as.numeric(ldetect_EUR[1]))
-ldmap_range <- function(x=double()){
-  as_ldmap_range(x)
-}
-
-
-#' @method vec_ptype2.ldmap_range ldmap_range
-#' @export 
-#' @export vec_ptype2.ldmap_range.ldmap_range
-vec_ptype2.ldmap_range.ldmap_range <- function(x, y, ...) new_ldmap_range()
-
-#' @method vec_ptype2.ldmap_range double
-#' @export
-#' @export vec_ptype2.ldmap_range.double
-vec_ptype2.ldmap_range.double <- function(x, y, ...) double()
-
-
-
-#' @method vec_ptype2.ldmap_range ldmap_snp
-#' @export
-#' @export vec_ptype2.ldmap_range.ldmap_snp
-vec_ptype2.ldmap_range.ldmap_snp <- function(x, y, ...) ldmap_range()
-
-
-#' @method vec_ptype2.ldmap_snp ldmap_range
-#' @export
-#' @export vec_ptype2.ldmap_snp.ldmap_range
-vec_ptype2.ldmap_snp.ldmap_range <- function(x, y, ...) ldmap_range()
-
-
-
-
-
-#' @method vec_ptype2.double ldmap_range
-#' @export
-#' @export vec_ptype2.double.ldmap_range
-vec_ptype2.double.ldmap_range <- function(x, y, ...) double()
-
-
-
-#' Change chromosome value for a range or SNP
-#'
-#' @param x ldmap_range or ldmap_snp
+#' @param x ldmap_region or ldmap_snp
 #' @param value new chromosome value
 #'
-#' @return an ldmap_range or ldmap_snp with the appropriate chromsome
+#' @return an ldmap_region or ldmap_snp with the appropriate chromsome
 #' @export
 #'
 `chromosomes<-` <- function(x, value) {
   if(inherits(x,"ldmap_snp")){
     return(new_ldmap_snp(chrom = rep(value,len=length(x)),pos = positions(x),ref = ref_alleles(x),alt_alleles(x))    )
   }
-  if(inherits(x,"ldmap_range")){
-    return(new_ldmap_range(chrom = rep(value,len=length(x)),start = starts(x),end = ends(x)))
+  if(inherits(x,"ldmap_region")){
+    return(new_ldmap_region(chrom = rep(value,len=length(x)),start = starts(x),end = ends(x)))
   }
-  stop("x must be type ldmap_snp or ldmap_range")
+  stop("x must be type ldmap_snp or ldmap_region")
 }
 
 
 
-#' Change start value for ldmap_range
-#'
-#' @param x ldmap_range 
-#' @param value new  start
-#'
-#' @return an ldmap_range with all starts at `value`
-#' @export
-#'
-`starts<-` <- function(x, value) {
-  if(inherits(x,"ldmap_range")){
-    return(new_ldmap_range(chrom = chromosomes(x),start = rep(value,len=length(x)),end = ends(x)))
-  }
-  stop("x must be type ldmap_range")
-}
-
-
-
-
-#' Change end value for ldmap_range
-#'
-#' @param x ldmap_range 
-#' @param value new end
-#'
-#' @return an ldmap_range with all starts at `value`
-#' @export
-#'
-`ends<-` <- function(x, value) {
-  if(inherits(x,"ldmap_range")){
-    return(new_ldmap_range(chrom = chromosomes(x),start = starts(x),end =rep(value,len=length(x))))
-  }
-  stop("x must be type ldmap_range")
-}
-
-
-#' Check for membership of a SNP in a region/range
+#' Check for membership of a SNP in a region/region
 #'
 #' @param ldmap_snp vector of ldmap_snps
-#' @param ldmap_range vector of ldmap_ranges
+#' @param ldmap_region vector of ldmap_regions
 #'
 #' @return boolean vector of length(length(ldmap_snp))
 #' @export
-is_snp_in_range <- function(ldmap_snp,ldmap_range){
+is_snp_in_region <- function(ldmap_snp,ldmap_region){
   
   stopifnot(inherits(ldmap_snp,"ldmap_snp"),
-            inherits(ldmap_range,"ldmap_range"))
-  return(!is.na(snp_in_range(ldmap_snp,ldmap_range)))
+            inherits(ldmap_region,"ldmap_region"))
+  return(!is.na(snp_in_region(ldmap_snp,ldmap_region)))
 }
-
-
-
-#' Check for membership of a range in another range
-#'
-#' @param query vector of ldmap_ranges
-#' @param target vector of ldmap_ranges
-#' @param allow_overlap whether partial overlap counts as membership
-#'
-#' @return boolean vector of length(query)
-#' @export
-is_range_in_range <- function(query,target,allow_overlap=FALSE){
-  
-  stopifnot(inherits(query,"ldmap_range"),
-            inherits(target,"ldmap_range"))
-  return(!is.na(range_in_range(query,target,allow_overlap)))
-}
-
 
 
 #' Change position for a vector of ldmap_snps
@@ -867,7 +574,7 @@ is_range_in_range <- function(query,target,allow_overlap=FALSE){
 #'
 `positions<-` <- function(x, value) {
   if(inherits(x,"ldmap_snp")){
-    return(new_ldmap_snp(chrom = chromosomes(x),pos = rep(value,len=length(x)),ref = ref_alleles(x),alt = alt_alleles(alt)))
+    return(new_ldmap_snp(chrom = chromosomes(x),pos = rep(value,len=length(x)),ref = ref_alleles(x),alt = alt_alleles(x)))
   }
   stop("x must be type ldmap_snp")
 }
@@ -891,8 +598,6 @@ is_range_in_range <- function(query,target,allow_overlap=FALSE){
 }
 
 
-
-
 #' Change ref_allele for a vector of ldmap_snps
 #'
 #' @param x ldmap_snp
@@ -909,28 +614,16 @@ is_range_in_range <- function(query,target,allow_overlap=FALSE){
 }
 
 
-#' Check for overlap
-#'
-#' @param x vector of ldmap_snp or ldmap_range
-#' @param y vector of ldmap_snp or ldmap_range
-#'
-#' @return boolean vector
-#' @export
-#'
-overlaps <- function(x,y){
-  dplyr::if_else(chromosomes(x)==chromosomes(y),starts(x)<= ends(y) & starts(y) <= ends(x),FALSE)
-}
-
 
 #' Overlapping interval
 #'
-#' @param x vector of ldmap_snp or ldmap_range
-#' @param y vector of ldmap_snp or ldmap_range
+#' @param x vector of ldmap_snp or ldmap_region
+#' @param y vector of ldmap_snp or ldmap_region
 #'
-#' @return vector of ldmap_range with overlap between x and y
+#' @return vector of ldmap_region with overlap between x and y
 #' @export
 #'
-common_range <- function(x,y){
-  dplyr::if_else(chromosomes(x)==chromosomes(y),new_ldmap_range(chromosomes(x),pmax(starts(x),starts(y)),pmin(ends(x),ends(y))),new_ldmap_range(NA_integer_,NA_integer_,NA_integer_))
+common_region <- function(x,y){
+  dplyr::if_else(chromosomes(x)==chromosomes(y),new_ldmap_region(chromosomes(x),pmax(starts(x),starts(y)),pmin(ends(x),ends(y))),new_ldmap_region(NA_integer_,NA_integer_,NA_integer_))
 }
 

@@ -11,7 +11,10 @@
 #include <range/v3/utility/static_const.hpp>
 #include <range/v3/view/subrange.hpp>
 #include <range/v3/view/iota.hpp>
+#include <range/v3/view/cycle.hpp>
+#include <range/v3/view/take.hpp>
 #include <range/v3/view/zip_with.hpp>
+#include <range/v3/view/common.hpp>
 #include <range/v3/view/drop.hpp>
 #include <range/v3/view/enumerate.hpp>
 #include <range/v3/algorithm/is_sorted.hpp>
@@ -20,10 +23,12 @@
 #include <range/v3/algorithm/transform.hpp>
 #include <range/v3/algorithm/for_each.hpp> // specific includes
 #include <range/v3/view/transform.hpp>
+#include <range/v3/view/adaptor.hpp>
+#include <range/v3/utility/semiregular_box.hpp>
 #include <Rcpp.h>
 
 template<typename T>
-inline int range_within_range(Region x, T target){
+inline int region_within_region(Region x, T target){
   using namespace ranges;
   SNP sx=x.start_SNP();
   SNP esx=x.last_SNP();
@@ -61,7 +66,7 @@ inline int range_within_range(Region x, T target){
 
 
 template<typename T>
-inline int range_overlap_range(const Region x, T target){
+inline int region_overlap_region(const Region x, T target){
 
   using namespace ranges;
   const size_t target_size = size(target);
@@ -70,8 +75,8 @@ inline int range_overlap_range(const Region x, T target){
     return rt.overlap(x) ? 1 : NA_INTEGER;
   }
 
-  auto bc = [](Region range_a, Region range_b){
-              return(range_a<range_b);
+  auto bc = [](Region region_a, Region region_b){
+              return(region_a<region_b);
             };
 
   auto xb=lower_bound(target,x,bc);
@@ -120,6 +125,14 @@ inline int nearest_snp(const SNP x, double* target_begin,double* target_end){
     return idx;
   return dl_l1==std::numeric_limits<int>::max() ? NA_INTEGER : idx+1;
 }
+
+
+
+template<typename A>
+auto cycle_n(A rng,const size_t n){
+  return ranges::views::common(ranges::views::take_exactly(ranges::views::cycle(rng),n));
+}
+
 
 
 

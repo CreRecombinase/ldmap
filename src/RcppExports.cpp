@@ -20,14 +20,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// parse_ldmap_range
-Rcpp::NumericVector parse_ldmap_range(Rcpp::StringVector input);
-RcppExport SEXP _ldmap_parse_ldmap_range(SEXP inputSEXP) {
+// parse_ldmap_region
+Rcpp::NumericVector parse_ldmap_region(Rcpp::StringVector input);
+RcppExport SEXP _ldmap_parse_ldmap_region(SEXP inputSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::StringVector >::type input(inputSEXP);
-    rcpp_result_gen = Rcpp::wrap(parse_ldmap_range(input));
+    rcpp_result_gen = Rcpp::wrap(parse_ldmap_region(input));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -42,148 +42,208 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// new_ldmap_range
-Rcpp::NumericVector new_ldmap_range(Rcpp::IntegerVector chrom, Rcpp::IntegerVector start, Rcpp::IntegerVector end);
-RcppExport SEXP _ldmap_new_ldmap_range(SEXP chromSEXP, SEXP startSEXP, SEXP endSEXP) {
+// nldmap_region
+Rcpp::NumericVector nldmap_region(Rcpp::IntegerVector chrom, Rcpp::IntegerVector start, Rcpp::IntegerVector end);
+RcppExport SEXP _ldmap_nldmap_region(SEXP chromSEXP, SEXP startSEXP, SEXP endSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type chrom(chromSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type start(startSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type end(endSEXP);
-    rcpp_result_gen = Rcpp::wrap(new_ldmap_range(chrom, start, end));
+    rcpp_result_gen = Rcpp::wrap(nldmap_region(chrom, start, end));
     return rcpp_result_gen;
 END_RCPP
 }
-// distance_rr
-Rcpp::IntegerVector distance_rr(Rcpp::NumericVector query, Rcpp::NumericVector target);
-RcppExport SEXP _ldmap_distance_rr(SEXP querySEXP, SEXP targetSEXP) {
+// distance_ldmap_region_ldmap_region
+Rcpp::IntegerVector distance_ldmap_region_ldmap_region(Rcpp::NumericVector query, Rcpp::NumericVector target);
+RcppExport SEXP _ldmap_distance_ldmap_region_ldmap_region(SEXP querySEXP, SEXP targetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type target(targetSEXP);
-    rcpp_result_gen = Rcpp::wrap(distance_rr(query, target));
+    rcpp_result_gen = Rcpp::wrap(distance_ldmap_region_ldmap_region(query, target));
     return rcpp_result_gen;
 END_RCPP
 }
-// nearest_snp_range
-Rcpp::IntegerVector nearest_snp_range(Rcpp::NumericVector query, Rcpp::NumericVector target);
-RcppExport SEXP _ldmap_nearest_snp_range(SEXP querySEXP, SEXP targetSEXP) {
+// distance_ldmap_region_ldmap_snp
+Rcpp::IntegerVector distance_ldmap_region_ldmap_snp(Rcpp::NumericVector query, Rcpp::NumericVector target);
+RcppExport SEXP _ldmap_distance_ldmap_region_ldmap_snp(SEXP querySEXP, SEXP targetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type target(targetSEXP);
-    rcpp_result_gen = Rcpp::wrap(nearest_snp_range(query, target));
+    rcpp_result_gen = Rcpp::wrap(distance_ldmap_region_ldmap_snp(query, target));
     return rcpp_result_gen;
 END_RCPP
 }
-// range_in_range
-Rcpp::IntegerVector range_in_range(Rcpp::NumericVector ldmap_range_query, Rcpp::NumericVector ldmap_range_target, bool allow_overlap);
-RcppExport SEXP _ldmap_range_in_range(SEXP ldmap_range_querySEXP, SEXP ldmap_range_targetSEXP, SEXP allow_overlapSEXP) {
+// distance_ldmap_snp_ldmap_region
+Rcpp::IntegerVector distance_ldmap_snp_ldmap_region(Rcpp::NumericVector query, Rcpp::NumericVector target);
+RcppExport SEXP _ldmap_distance_ldmap_snp_ldmap_region(SEXP querySEXP, SEXP targetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range_query(ldmap_range_querySEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range_target(ldmap_range_targetSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(distance_ldmap_snp_ldmap_region(query, target));
+    return rcpp_result_gen;
+END_RCPP
+}
+// distance_ldmap_snp_ldmap_snp
+Rcpp::IntegerVector distance_ldmap_snp_ldmap_snp(Rcpp::NumericVector query, Rcpp::NumericVector target);
+RcppExport SEXP _ldmap_distance_ldmap_snp_ldmap_snp(SEXP querySEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(distance_ldmap_snp_ldmap_snp(query, target));
+    return rcpp_result_gen;
+END_RCPP
+}
+// nearest_snp_region
+Rcpp::IntegerVector nearest_snp_region(Rcpp::NumericVector query, Rcpp::NumericVector target);
+RcppExport SEXP _ldmap_nearest_snp_region(SEXP querySEXP, SEXP targetSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type target(targetSEXP);
+    rcpp_result_gen = Rcpp::wrap(nearest_snp_region(query, target));
+    return rcpp_result_gen;
+END_RCPP
+}
+// region_in_region
+Rcpp::IntegerVector region_in_region(Rcpp::NumericVector ldmap_region_query, Rcpp::NumericVector ldmap_region_target, bool allow_overlap);
+RcppExport SEXP _ldmap_region_in_region(SEXP ldmap_region_querySEXP, SEXP ldmap_region_targetSEXP, SEXP allow_overlapSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region_query(ldmap_region_querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region_target(ldmap_region_targetSEXP);
     Rcpp::traits::input_parameter< bool >::type allow_overlap(allow_overlapSEXP);
-    rcpp_result_gen = Rcpp::wrap(range_in_range(ldmap_range_query, ldmap_range_target, allow_overlap));
+    rcpp_result_gen = Rcpp::wrap(region_in_region(ldmap_region_query, ldmap_region_target, allow_overlap));
     return rcpp_result_gen;
 END_RCPP
 }
-// snp_in_range
-Rcpp::IntegerVector snp_in_range(Rcpp::NumericVector ldmap_snp, Rcpp::NumericVector ldmap_range);
-RcppExport SEXP _ldmap_snp_in_range(SEXP ldmap_snpSEXP, SEXP ldmap_rangeSEXP) {
+// snp_in_region
+Rcpp::IntegerVector snp_in_region(Rcpp::NumericVector ldmap_snp, Rcpp::NumericVector ldmap_region);
+RcppExport SEXP _ldmap_snp_in_region(SEXP ldmap_snpSEXP, SEXP ldmap_regionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_snp(ldmap_snpSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range(ldmap_rangeSEXP);
-    rcpp_result_gen = Rcpp::wrap(snp_in_range(ldmap_snp, ldmap_range));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region(ldmap_regionSEXP);
+    rcpp_result_gen = Rcpp::wrap(snp_in_region(ldmap_snp, ldmap_region));
     return rcpp_result_gen;
 END_RCPP
 }
-// snp_in_ranges
-Rcpp::List snp_in_ranges(Rcpp::NumericVector ldmap_snp, Rcpp::ListOf<Rcpp::NumericVector> ldmap_ranges);
-RcppExport SEXP _ldmap_snp_in_ranges(SEXP ldmap_snpSEXP, SEXP ldmap_rangesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_snp(ldmap_snpSEXP);
-    Rcpp::traits::input_parameter< Rcpp::ListOf<Rcpp::NumericVector> >::type ldmap_ranges(ldmap_rangesSEXP);
-    rcpp_result_gen = Rcpp::wrap(snp_in_ranges(ldmap_snp, ldmap_ranges));
-    return rcpp_result_gen;
-END_RCPP
-}
-// format_ldmap_range
-Rcpp::StringVector format_ldmap_range(Rcpp::NumericVector x);
-RcppExport SEXP _ldmap_format_ldmap_range(SEXP xSEXP) {
+// snp_overlap_snp
+Rcpp::IntegerVector snp_overlap_snp(Rcpp::NumericVector x, Rcpp::NumericVector y);
+RcppExport SEXP _ldmap_snp_overlap_snp(SEXP xSEXP, SEXP ySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(format_ldmap_range(x));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(snp_overlap_snp(x, y));
     return rcpp_result_gen;
 END_RCPP
 }
-// match_ranges_snps
-Rcpp::List match_ranges_snps(Rcpp::DataFrame df, Rcpp::NumericVector ldmap_range, const std::string snp_col);
-RcppExport SEXP _ldmap_match_ranges_snps(SEXP dfSEXP, SEXP ldmap_rangeSEXP, SEXP snp_colSEXP) {
+// region_overlap_snp
+Rcpp::IntegerVector region_overlap_snp(Rcpp::NumericVector ldmap_region, Rcpp::NumericVector ldmap_snp);
+RcppExport SEXP _ldmap_region_overlap_snp(SEXP ldmap_regionSEXP, SEXP ldmap_snpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region(ldmap_regionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_snp(ldmap_snpSEXP);
+    rcpp_result_gen = Rcpp::wrap(region_overlap_snp(ldmap_region, ldmap_snp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// snp_in_regions
+Rcpp::List snp_in_regions(Rcpp::NumericVector ldmap_snp, Rcpp::ListOf<Rcpp::NumericVector> ldmap_regions);
+RcppExport SEXP _ldmap_snp_in_regions(SEXP ldmap_snpSEXP, SEXP ldmap_regionsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_snp(ldmap_snpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::ListOf<Rcpp::NumericVector> >::type ldmap_regions(ldmap_regionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(snp_in_regions(ldmap_snp, ldmap_regions));
+    return rcpp_result_gen;
+END_RCPP
+}
+// format_ldmap_region
+Rcpp::StringVector format_ldmap_region(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_format_ldmap_region(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(format_ldmap_region(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// match_regions_snps
+Rcpp::List match_regions_snps(Rcpp::DataFrame df, Rcpp::NumericVector ldmap_region, const std::string snp_col);
+RcppExport SEXP _ldmap_match_regions_snps(SEXP dfSEXP, SEXP ldmap_regionSEXP, SEXP snp_colSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type df(dfSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range(ldmap_rangeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region(ldmap_regionSEXP);
     Rcpp::traits::input_parameter< const std::string >::type snp_col(snp_colSEXP);
-    rcpp_result_gen = Rcpp::wrap(match_ranges_snps(df, ldmap_range, snp_col));
+    rcpp_result_gen = Rcpp::wrap(match_regions_snps(df, ldmap_region, snp_col));
     return rcpp_result_gen;
 END_RCPP
 }
-// window_ldmap_range
-Rcpp::NumericVector window_ldmap_range(Rcpp::NumericVector ldmap_snp, Rcpp::NumericVector cm, const double window);
-RcppExport SEXP _ldmap_window_ldmap_range(SEXP ldmap_snpSEXP, SEXP cmSEXP, SEXP windowSEXP) {
+// window_ldmap_region
+Rcpp::NumericVector window_ldmap_region(Rcpp::NumericVector ldmap_snp, Rcpp::NumericVector cm, const double window);
+RcppExport SEXP _ldmap_window_ldmap_region(SEXP ldmap_snpSEXP, SEXP cmSEXP, SEXP windowSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_snp(ldmap_snpSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type cm(cmSEXP);
     Rcpp::traits::input_parameter< const double >::type window(windowSEXP);
-    rcpp_result_gen = Rcpp::wrap(window_ldmap_range(ldmap_snp, cm, window));
+    rcpp_result_gen = Rcpp::wrap(window_ldmap_region(ldmap_snp, cm, window));
     return rcpp_result_gen;
 END_RCPP
 }
-// split_ldmap_range_overlap
-Rcpp::NumericVector split_ldmap_range_overlap(Rcpp::NumericVector x);
-RcppExport SEXP _ldmap_split_ldmap_range_overlap(SEXP xSEXP) {
+// split_ldmap_region_overlap
+Rcpp::NumericVector split_ldmap_region_overlap(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_split_ldmap_region_overlap(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(split_ldmap_range_overlap(x));
+    rcpp_result_gen = Rcpp::wrap(split_ldmap_region_overlap(x));
     return rcpp_result_gen;
 END_RCPP
 }
-// merge_ldmap_ranges
-Rcpp::NumericVector merge_ldmap_ranges(Rcpp::NumericVector x, Rcpp::NumericVector y);
-RcppExport SEXP _ldmap_merge_ldmap_ranges(SEXP xSEXP, SEXP ySEXP) {
+// merge_ldmap_regions
+Rcpp::NumericVector merge_ldmap_regions(Rcpp::NumericVector x, Rcpp::NumericVector y);
+RcppExport SEXP _ldmap_merge_ldmap_regions(SEXP xSEXP, SEXP ySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
-    rcpp_result_gen = Rcpp::wrap(merge_ldmap_ranges(x, y));
+    rcpp_result_gen = Rcpp::wrap(merge_ldmap_regions(x, y));
     return rcpp_result_gen;
 END_RCPP
 }
-// ldmap_range_2_data_frame
-SEXP ldmap_range_2_data_frame(Rcpp::NumericVector ldmap_range);
-RcppExport SEXP _ldmap_ldmap_range_2_data_frame(SEXP ldmap_rangeSEXP) {
+// ldmap_region_2_data_frame
+SEXP ldmap_region_2_data_frame(Rcpp::NumericVector ldmap_region);
+RcppExport SEXP _ldmap_ldmap_region_2_data_frame(SEXP ldmap_regionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range(ldmap_rangeSEXP);
-    rcpp_result_gen = Rcpp::wrap(ldmap_range_2_data_frame(ldmap_range));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region(ldmap_regionSEXP);
+    rcpp_result_gen = Rcpp::wrap(ldmap_region_2_data_frame(ldmap_region));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -272,13 +332,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // starts
-Rcpp::IntegerVector starts(Rcpp::NumericVector ldmap_range);
-RcppExport SEXP _ldmap_starts(SEXP ldmap_rangeSEXP) {
+Rcpp::IntegerVector starts(Rcpp::NumericVector ldmap_region);
+RcppExport SEXP _ldmap_starts(SEXP ldmap_regionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range(ldmap_rangeSEXP);
-    rcpp_result_gen = Rcpp::wrap(starts(ldmap_range));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region(ldmap_regionSEXP);
+    rcpp_result_gen = Rcpp::wrap(starts(ldmap_region));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -294,13 +354,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // ends
-Rcpp::IntegerVector ends(Rcpp::NumericVector ldmap_range);
-RcppExport SEXP _ldmap_ends(SEXP ldmap_rangeSEXP) {
+Rcpp::IntegerVector ends(Rcpp::NumericVector ldmap_region);
+RcppExport SEXP _ldmap_ends(SEXP ldmap_regionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_range(ldmap_rangeSEXP);
-    rcpp_result_gen = Rcpp::wrap(ends(ldmap_range));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region(ldmap_regionSEXP);
+    rcpp_result_gen = Rcpp::wrap(ends(ldmap_region));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -349,14 +409,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// as_integer_ldmap_range
-Rcpp::NumericVector as_integer_ldmap_range(Rcpp::NumericVector x);
-RcppExport SEXP _ldmap_as_integer_ldmap_range(SEXP xSEXP) {
+// as_integer_ldmap_region
+Rcpp::NumericVector as_integer_ldmap_region(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_as_integer_ldmap_region(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(as_integer_ldmap_range(x));
+    rcpp_result_gen = Rcpp::wrap(as_integer_ldmap_region(x));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -468,6 +528,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// split_by_overlap
+SEXP split_by_overlap(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_split_by_overlap(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(split_by_overlap(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // snp2raw
 Rcpp::RawMatrix snp2raw(Rcpp::IntegerMatrix input_matrix);
 RcppExport SEXP _ldmap_snp2raw(SEXP input_matrixSEXP) {
@@ -546,20 +617,25 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
-    {"_ldmap_parse_ldmap_range", (DL_FUNC) &_ldmap_parse_ldmap_range, 1},
+    {"_ldmap_parse_ldmap_region", (DL_FUNC) &_ldmap_parse_ldmap_region, 1},
     {"_ldmap_parse_ldmap_SNP", (DL_FUNC) &_ldmap_parse_ldmap_SNP, 1},
-    {"_ldmap_new_ldmap_range", (DL_FUNC) &_ldmap_new_ldmap_range, 3},
-    {"_ldmap_distance_rr", (DL_FUNC) &_ldmap_distance_rr, 2},
-    {"_ldmap_nearest_snp_range", (DL_FUNC) &_ldmap_nearest_snp_range, 2},
-    {"_ldmap_range_in_range", (DL_FUNC) &_ldmap_range_in_range, 3},
-    {"_ldmap_snp_in_range", (DL_FUNC) &_ldmap_snp_in_range, 2},
-    {"_ldmap_snp_in_ranges", (DL_FUNC) &_ldmap_snp_in_ranges, 2},
-    {"_ldmap_format_ldmap_range", (DL_FUNC) &_ldmap_format_ldmap_range, 1},
-    {"_ldmap_match_ranges_snps", (DL_FUNC) &_ldmap_match_ranges_snps, 3},
-    {"_ldmap_window_ldmap_range", (DL_FUNC) &_ldmap_window_ldmap_range, 3},
-    {"_ldmap_split_ldmap_range_overlap", (DL_FUNC) &_ldmap_split_ldmap_range_overlap, 1},
-    {"_ldmap_merge_ldmap_ranges", (DL_FUNC) &_ldmap_merge_ldmap_ranges, 2},
-    {"_ldmap_ldmap_range_2_data_frame", (DL_FUNC) &_ldmap_ldmap_range_2_data_frame, 1},
+    {"_ldmap_nldmap_region", (DL_FUNC) &_ldmap_nldmap_region, 3},
+    {"_ldmap_distance_ldmap_region_ldmap_region", (DL_FUNC) &_ldmap_distance_ldmap_region_ldmap_region, 2},
+    {"_ldmap_distance_ldmap_region_ldmap_snp", (DL_FUNC) &_ldmap_distance_ldmap_region_ldmap_snp, 2},
+    {"_ldmap_distance_ldmap_snp_ldmap_region", (DL_FUNC) &_ldmap_distance_ldmap_snp_ldmap_region, 2},
+    {"_ldmap_distance_ldmap_snp_ldmap_snp", (DL_FUNC) &_ldmap_distance_ldmap_snp_ldmap_snp, 2},
+    {"_ldmap_nearest_snp_region", (DL_FUNC) &_ldmap_nearest_snp_region, 2},
+    {"_ldmap_region_in_region", (DL_FUNC) &_ldmap_region_in_region, 3},
+    {"_ldmap_snp_in_region", (DL_FUNC) &_ldmap_snp_in_region, 2},
+    {"_ldmap_snp_overlap_snp", (DL_FUNC) &_ldmap_snp_overlap_snp, 2},
+    {"_ldmap_region_overlap_snp", (DL_FUNC) &_ldmap_region_overlap_snp, 2},
+    {"_ldmap_snp_in_regions", (DL_FUNC) &_ldmap_snp_in_regions, 2},
+    {"_ldmap_format_ldmap_region", (DL_FUNC) &_ldmap_format_ldmap_region, 1},
+    {"_ldmap_match_regions_snps", (DL_FUNC) &_ldmap_match_regions_snps, 3},
+    {"_ldmap_window_ldmap_region", (DL_FUNC) &_ldmap_window_ldmap_region, 3},
+    {"_ldmap_split_ldmap_region_overlap", (DL_FUNC) &_ldmap_split_ldmap_region_overlap, 1},
+    {"_ldmap_merge_ldmap_regions", (DL_FUNC) &_ldmap_merge_ldmap_regions, 2},
+    {"_ldmap_ldmap_region_2_data_frame", (DL_FUNC) &_ldmap_ldmap_region_2_data_frame, 1},
     {"_ldmap_sample_interval", (DL_FUNC) &_ldmap_sample_interval, 4},
     {"_ldmap_new_ldmap_snp", (DL_FUNC) &_ldmap_new_ldmap_snp, 5},
     {"_ldmap_is_strand_ambiguous", (DL_FUNC) &_ldmap_is_strand_ambiguous, 1},
@@ -574,7 +650,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_ref_alleles", (DL_FUNC) &_ldmap_ref_alleles, 2},
     {"_ldmap_format_ldmap_allele", (DL_FUNC) &_ldmap_format_ldmap_allele, 1},
     {"_ldmap_as_integer_ldmap_allele", (DL_FUNC) &_ldmap_as_integer_ldmap_allele, 1},
-    {"_ldmap_as_integer_ldmap_range", (DL_FUNC) &_ldmap_as_integer_ldmap_range, 1},
+    {"_ldmap_as_integer_ldmap_region", (DL_FUNC) &_ldmap_as_integer_ldmap_region, 1},
     {"_ldmap_migrate_ldmap_snp", (DL_FUNC) &_ldmap_migrate_ldmap_snp, 1},
     {"_ldmap_old_ldmap_snp", (DL_FUNC) &_ldmap_old_ldmap_snp, 1},
     {"_ldmap_alt_alleles", (DL_FUNC) &_ldmap_alt_alleles, 2},
@@ -584,6 +660,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_fast_str2int", (DL_FUNC) &_ldmap_fast_str2int, 4},
     {"_ldmap_make_ambig", (DL_FUNC) &_ldmap_make_ambig, 2},
     {"_ldmap_format_ldmap_snp", (DL_FUNC) &_ldmap_format_ldmap_snp, 1},
+    {"_ldmap_split_by_overlap", (DL_FUNC) &_ldmap_split_by_overlap, 1},
     {"_ldmap_snp2raw", (DL_FUNC) &_ldmap_snp2raw, 1},
     {"_ldmap_popcnt_v", (DL_FUNC) &_ldmap_popcnt_v, 2},
     {"_ldmap_covbin", (DL_FUNC) &_ldmap_covbin, 2},

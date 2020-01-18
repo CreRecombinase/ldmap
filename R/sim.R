@@ -4,7 +4,7 @@
 #' @param chroms chromosomes from which to sample
 #' @param sort whether to sort the output
 #'
-#' @return a vector of length `n` of (optionally sorted ldmap_ranges) 
+#' @return a vector of length `n` of (optionally sorted ldmap_regions)
 #' @export
 #'
 #' @examples
@@ -12,8 +12,12 @@
 #' head(rregion(100,chroms=1L))
 rregion <- function(n,chroms=1L:23L,sort=TRUE){
   stopifnot(all(chroms %in% 1L:23L))
-  hg19_df <- ldmap_range_2_data_frame(hg19_sizes)
-  chrom <- sample(chroms,n,replace=T)
+  hg19_df <- ldmap_region_2_data_frame(hg19_sizes)
+  if(length(chroms)==1){
+    chrom <- rep(chroms,n)
+  }else{
+    chrom <- sample(chroms,n,replace=T)
+  }
   
   tdf <- dplyr::mutate(tibble::tibble(chrom=chrom),
                          start=as.integer(runif(n=dplyr::n(),min=1,max=hg19_df$end[chrom])),
@@ -22,7 +26,7 @@ rregion <- function(n,chroms=1L:23L,sort=TRUE){
     tdf <- dplyr::arrange(tdf,chrom,start,end)
   
   stopifnot(all(tdf$end>tdf$start))
-  return(new_ldmap_range(tdf$chrom,tdf$start,tdf$end))
+  return(new_ldmap_region(tdf$chrom,tdf$start,tdf$end))
 }
 ##' Draw SNPs from random positions in the genome
 ##'
@@ -35,7 +39,7 @@ rregion <- function(n,chroms=1L:23L,sort=TRUE){
 ##' @author Nicholas Knoblauch
 rsnp <- function(n, chroms = 1L:23L, sort = TRUE,replace=FALSE, ...){
   stopifnot(all(chroms %in% 1L:23L))
-  hg19_df <- ldmap_range_2_data_frame(hg19_sizes)
+  hg19_df <- ldmap_region_2_data_frame(hg19_sizes)
   hg19_df$end  <-  as.integer(hg19_df$end - 1)
   chrom <- sample(chroms, n, replace = T)
   
@@ -72,7 +76,9 @@ rsnp_region <- function(ldmap_region, n, sort = TRUE,replace=FALSE){
   stopifnot(length(n)<=length(ldmap_region))
     n <- as.integer(n[(seq_along(ldmap_region) %% length(n))+1])
     chrom <- rep(chromosomes(ldmap_region),n)
-    pos <- sample_interval(n=n,begin=starts(ldmap_region),end=ends(ldmap_region),replace=replace)
+    pos <- purrr::flatten_int(purrr::map2(ldmap_region,n,function(x,y){
+      sample(as.integer(starts(x)):as.integer(ends(x)),y,replace=replace)
+    }))
     rets <- new_ldmap_snp(chrom,pos,NA2N=TRUE)
     if(sort){
       return(sort(rets))

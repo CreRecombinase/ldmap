@@ -246,15 +246,15 @@ constexpr const char* Nuc2string(Nuc l){
   }
 }
 
-struct bit_range{
+struct bit_region{
   uint64_t end :29;
   uint64_t start :29;
   unsigned char chrom : 6;
 } __attribute__((packed));
 
 
-union bed_range{
-  bit_range str;
+union bed_region{
+  bit_region str;
   uint64_t dat;
   double flt;
 };
@@ -532,14 +532,19 @@ class Region;
 class SNP{
 public:
   uint64_t snp;
-  static constexpr SNP  make_snp(const uint64_t &x) noexcept{
-    return SNP{.snp=x};
+  static constexpr SNP  make_SNP(const uint64_t &x) noexcept{
+    return SNP(x);
   }
-  static constexpr SNP  make_snp(const float &x) = delete;
-  static  SNP  make_snp(const double &x) noexcept {
-    return make_snp(bit_cast<uint64_t>(x));
+  static constexpr SNP  make_SNP(const float &x) = delete;
+
+  constexpr SNP(uint64_t x) noexcept :snp(x){};
+  SNP(double x) noexcept :snp(bit_cast<uint64_t>(x)){};
+  SNP() noexcept{};
+
+  static  SNP  make_SNP(const double &x) noexcept {
+    return make_SNP(bit_cast<uint64_t>(x));
   }
-  static constexpr SNP  make_snp(const long double &x) = delete;
+  static constexpr SNP  make_SNP(const long double &x) = delete;
 
 
   constexpr unsigned char chrom() const noexcept{
@@ -566,8 +571,8 @@ public:
   }
 
   template<bool NA2N>
-  static constexpr SNP  make_snp(const unsigned char chrom, const uint64_t pos, const Nuc ref, const Nuc alt) noexcept{
-    SNP snp{.snp=make_ldmap_snp(chrom,pos,ref.let,alt.let)};
+  static constexpr SNP  make_SNP(const unsigned char chrom, const uint64_t pos, const Nuc ref, const Nuc alt) noexcept{
+    SNP snp(make_ldmap_snp(chrom,pos,ref.let,alt.let));
     if constexpr(NA2N){
       if(ref.is_NA()){
         snp.snp=set_ref(snp.snp,Nuc{'N'_N}.let);
@@ -576,13 +581,13 @@ public:
         snp.snp=set_alt(snp.snp,Nuc{'N'_N}.let);
       }
     }
-    return(SNP{.snp=snp.snp});
+    return(SNP(snp.snp));
   }
 
 
   template<bool NA2N>
-  static constexpr SNP  make_snp(const unsigned char chrom, const uint64_t pos, const Nuc ref) noexcept{
-    SNP tsnp{.snp=make_ldmap_snp(chrom,pos,ref.let,'\0')};
+  static constexpr SNP  make_SNP(const unsigned char chrom, const uint64_t pos, const Nuc ref) noexcept{
+    SNP tsnp(make_ldmap_snp(chrom,pos,ref.let,'\0'));
     if constexpr(NA2N){
       if(ref.is_NA()){
         tsnp.snp=set_ref(tsnp.snp,'N'_N.let);
@@ -591,17 +596,17 @@ public:
         tsnp.snp = set_alt(tsnp.snp,'N'_N.let);
       }
     }
-    return(SNP{.snp = tsnp.snp});
+    return(tsnp);
   }
 
 
   template<bool NA2N>
-  static constexpr  SNP  make_snp(const unsigned char chrom, const uint64_t pos) noexcept{
-    SNP snp{.snp=make_ldmap_snp(chrom,pos,'\0','\0')};
+  static constexpr  SNP  make_SNP(const unsigned char chrom, const uint64_t pos) noexcept{
+    SNP snp(make_ldmap_snp(chrom,pos,'\0','\0'));
     if constexpr(NA2N){
       snp.snp=set_alt(set_ref(snp.snp,'N'_N.let),'N'_N.let);
     }
-    return(SNP{.snp=snp.snp});
+    return(SNP(snp));
   }
 
   constexpr bool operator!=(const SNP &other) const noexcept{
@@ -631,12 +636,16 @@ public:
     return pos()-other.pos();
   }
 
-  constexpr int distance(const Region &other) const;
+  constexpr bool overlap(const SNP &other) const noexcept{
+    return clear_alleles(snp)==clear_alleles(other.snp);
+  }
+  constexpr int distance(const Region &other) const noexcept;
+  constexpr bool overlap(const Region &other) const noexcept;
 
-  constexpr bool operator<(const Region &other) const;
-  constexpr bool operator>(const Region &other) const;
-  constexpr bool operator==(const Region &other) const;
-  constexpr bool operator!=(const Region &other) const;
+  constexpr bool operator<(const Region &other) const noexcept;
+  constexpr bool operator>(const Region &other) const noexcept;
+  constexpr bool operator==(const Region &other) const noexcept;
+  constexpr bool operator!=(const Region &other) const noexcept;
 
 
 
@@ -708,20 +717,29 @@ class Region{
 
   template<typename C,typename S>
   static constexpr Region make_Region(const C chrom,const S start, const S end) noexcept{
-    return Region{.br=make_ldmap_region(chrom,start,end)};
+    return Region(make_ldmap_region(chrom,start,end));
   }
-
   static constexpr Region make_Region(const uint64_t x) noexcept{
-    return Region{.br=x};
+    return Region(x);
   }
   static Region make_Region(const double x){
-    return Region{.br=bit_cast<uint64_t>(x)};
+    return Region(bit_cast<uint64_t>(x));
   }
+  constexpr Region(uint64_t x) noexcept :br(x){}
+  Region() noexcept {}
+  Region(double x) noexcept :br(bit_cast<uint64_t,double>(x)){}
+  Region(int x) = delete;
+  Region(float x) = delete;
+  Region(long double x) = delete;
+
 
   static Region make_Region(const long double x) = delete;
   static Region make_Region(const float x) = delete;
   static Region make_Region(const int x) = delete;
 
+  double to_double() const{
+    return bit_cast<double>(br);
+  }
   static constexpr Region make_Region(const SNP& a,const SNP& b) noexcept{
     if( a.chrom()!=b.chrom())
       return make_Region(0ul);
@@ -731,13 +749,13 @@ class Region{
     return make_Region<unsigned char,int>(a.chrom(),pa,pb+1);
   }
   constexpr SNP start_SNP() const noexcept{
-    return SNP::make_snp<true>(chrom(),start());
+    return SNP::make_SNP<true>(chrom(),start());
   }
   constexpr SNP end_SNP() const noexcept{
-    return SNP::make_snp<true>(chrom(),end());
+    return SNP::make_SNP<true>(chrom(),end());
   }
   constexpr SNP last_SNP() const noexcept{
-    return SNP::make_snp<true>(chrom(),end()-1);
+    return SNP::make_SNP<true>(chrom(),end()-1);
   }
   constexpr bool operator ==(const Region& other)const noexcept{
     return this->br==other.br;
@@ -775,13 +793,13 @@ class Region{
   constexpr Region operator|(const Region &other) const noexcept{
 
     if(get_chrom<unsigned char>(this->br)!=other.chrom()){
-      return Region{.br=0};
+      return Region(0ul);
     }
     auto [sa,sb] = std::minmax(*this,other);
     if( sa.end() < sb.start()){
-      return Region{.br=0};
+      return Region(0ul);
     }
-    return Region{.br=make_ldmap_region(sa.chrom(),sa.start(),sb.end())};
+    return Region(make_ldmap_region(sa.chrom(),sa.start(),sb.end()));
   }
   constexpr Region operator|=(const Region &other) noexcept{
 
@@ -802,7 +820,7 @@ class Region{
 
     if(get_chrom<unsigned char>(this->br)!=other.chrom())
       return false;
-    return start() <= other.end() && other.start() <= end();
+    return start() < other.end() && other.start() < end();
   }
 
   constexpr int distance(const SNP &other) const noexcept{
@@ -868,32 +886,39 @@ class Region{
 };
 
 
-constexpr int SNP::distance(const Region &other) const{
+inline constexpr int SNP::distance(const Region &other) const noexcept{
     if(other.chrom()>chrom())
       return std::numeric_limits<int>::max();
     if(other.chrom()<chrom())
       return std::numeric_limits<int>::min();
+    if(overlap(other))
+      return 0;
     if(abs(pos()-other.start())>abs(pos()-other.end()))
       return pos()-other.end();
     return pos()-other.start();
 }
 
+inline constexpr bool SNP::overlap(const Region &other) const noexcept {
+  if(chrom()!=other.chrom())
+    return false;
+  return (other.start() <= pos() && pos() < other.end());
+}
 
 
 
-inline constexpr bool SNP::operator==(const Region &other) const{
+inline constexpr bool SNP::operator==(const Region &other) const noexcept{
   return (other.chrom()==this->chrom()) and (other.start() <= this->pos()) and (other.end() > this->pos());
 }
 // inline constexpr bool SNP::operator==(const  &other) const{
 //   return (other.chrom()==this->chrom()) and (other.start() <= this->pos()) and (other.end() > this->pos());
 // }
-inline constexpr bool SNP::operator!=(const Region &other) const{
+inline constexpr bool SNP::operator!=(const Region &other) const noexcept{
   return !(*this==other);
 }
-inline constexpr bool SNP::operator<(const Region &other) const{
+inline constexpr bool SNP::operator<(const Region &other) const noexcept{
   return (other.chrom()==this->chrom()) and (this->pos() < other.start());
 }
-inline constexpr bool SNP::operator>(const Region &other) const{
+inline constexpr bool SNP::operator>(const Region &other) const noexcept{
   return (other.chrom()==this->chrom()) and (this->pos() >= other.end());
 }
 
@@ -918,19 +943,75 @@ inline Snp complement_snp(Snp a ){
 }
 
 
-static_assert(Region::make_Region(SNP::make_snp<true>(1,50),SNP::make_snp<true>(1,55)).start_SNP()==SNP::make_snp<true>(1,50));
+
+class RegionSet{
+  Region convex_hull;
+  std::vector<Region> regions;
+public:
+  RegionSet() noexcept: convex_hull(0ul),regions(){};
+  RegionSet(Region reg) noexcept: convex_hull(reg),regions{reg}{};
+  std::optional<Region> insert(const Region reg){
+    if(!convex_hull.overlap(reg))
+      return std::nullopt;
+    regions.push_back(reg);
+    convex_hull=Region::make_Region(convex_hull.chrom(),std::min(convex_hull.start(),reg.start()),std::max(convex_hull.end(),reg.end()));
+    return convex_hull;
+  }
+  const std::vector<Region>& get_regions() const{
+    return regions;
+  }
+  const Region& get_region() const {
+    return convex_hull;
+  }
+};
+
+class RegionSets{
+  std::vector<RegionSet> rsets;
+  size_t count;
+public:
+  RegionSets():count(0),rsets(){};
+  size_t insert_region(Region r){
+    for(auto trs =rsets.rbegin(); trs!=rsets.rend(); trs++){
+      if(auto newreg = trs->insert(r))
+        return count;
+    }
+    rsets.emplace_back(r);
+    return count++;
+  }
+  size_t get_count() const {
+    return count;
+  }
+  const std::vector<RegionSet>& get_set() const{
+    return rsets;
+  }
+
+};
+
+// constexpr bool do_tests(){
+//   const auto a= Region::make_Region(1,1,1892607);
+//   const auto b=Region::make_Region(1,1892607,3582736);
+
+//   static_assert(Region::make_Region(1,1892607,3582736).chrom()==Region::make_Region(1,1,1892607).chrom());
+//   return a==b;
+// }
+
+static_assert(!Region::make_Region(1,1,1892607).overlap(Region::make_Region(1,1892607,3582736)));
+
+static_assert(Region::make_Region(SNP::make_SNP<true>(1,50),SNP::make_SNP<true>(1,55)).start_SNP()==SNP::make_SNP<true>(1,50));
 
 static_assert(make_ldmap_region(24, 536870911, 3456) <
               make_ldmap_region(25, 120, 3457));
 static_assert(120 - 100 == 20);
+
+
 static_assert(Region::make_Region(23, 100, 200)
-                  .distance(SNP{.snp = make_ldmap_snp(23, 120)}) == 0);
+              .distance(SNP(make_ldmap_snp(23, 120))) == 0);
 static_assert(Region::make_Region(23, 100, 200)
-                  .distance(SNP{.snp = make_ldmap_snp(23, 220)}) == 20);
+                  .distance(SNP(make_ldmap_snp(23, 220))) == 20);
 static_assert(Region::make_Region(23, 100, 200)
-                  .distance(SNP{.snp = make_ldmap_snp(23, 90)}) == -10);
+                  .distance(SNP(make_ldmap_snp(23, 90))) == -10);
 static_assert(Region::make_Region(23, 100, 200)
-                  .distance(SNP{.snp = make_ldmap_snp(23, 90)}) == -10);
+                  .distance(SNP(make_ldmap_snp(23, 90))) == -10);
 
 static_assert(Region::make_Region(23, 100, 200)
                   .distance(Region::make_Region(23, 100, 200)) == 0);
