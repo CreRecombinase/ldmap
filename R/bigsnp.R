@@ -10,13 +10,6 @@
 ##' @return correlation matrix
 ##' @author Nicholas Knoblauch
 reference_panel_ld <- function(gwas_df, reference_file, LDshrink = TRUE, drop_missing = TRUE) {
-    ## library(ldmap)
-    ## data(ldetect_EUR)
-    ## reference_file <- example_bigsnp()
-    ## drop_missing <- TRUE
-    ## LDshrink <- TRUE
-    ## gwas_df <- readRDS(system.file("test_gwas_df.RDS",package = "ldmap")) %>% dplyr::mutate(ldmr=snp_in_range(snp_struct,ldetect_EUR)) %>%
-    ##     dplyr::filter(ldmr==unique(ldmr)[3])
 
     stopifnot(is.character(reference_file))
     bs <- bigsnpr::snp_attach(reference_file)
@@ -97,27 +90,10 @@ align_reference <- function(gwas_df, reference_file, remove_missing = TRUE, read
 ##' @export
 subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_fn, filter_geno_fn, write_fn) {
     stopifnot(length(ldmr) == 1)
-
     reference_files <- init_fn(reference_files = reference_files, ldmr = ldmr)
     map <- filter_map_fn(reference_file = reference_files, ldmr = ldmr)
-    ## bsmap <- tibble::as_tibble(bs$map) %>%
-    ##     dplyr::mutate(index = 1:dplyr::n()) %>%
-    ##     dplyr::filter(
-    ##
-    ##     compact_snp_struct(chrom =  "chromosome",
-    ##                        pos =  "physical.pos",
-    ##                        ref = "allele2",
-    ##                        alt = "allele1",
-    ##                        remove = FALSE)
     bsx <- filter_geno_fn(reference_file = reference_files, ldmr = ldmr, map = map)
-    ## bsx <- bs$genotypes
     write_fn(map, bsx, output_file)
-
-    ## rdsfile <- subset.bigSNP2(bs,
-    ##                           ind.row = seq_len(nrow(bsx)),
-    ##                           ind.col = bsmap$index,
-    ##                           backingfile = bigsnpr:::getNewFile(bs, pattern))
-
 }
 
 

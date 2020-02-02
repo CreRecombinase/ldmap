@@ -88,7 +88,7 @@ inline int region_overlap_region(const Region x, T target){
 
 
 
-inline int nearest_snp(const SNP x, double* target_begin,double* target_end){
+inline int nearest_snp(const SNP x, double* target_begin,double* target_end,const int max_dist){
 
   using namespace ranges;
   const size_t target_size = std::distance(target_begin,target_end);
@@ -104,8 +104,6 @@ inline int nearest_snp(const SNP x, double* target_begin,double* target_end){
   // 2a) distance(a,b) < distance(a,b-1)
   // OR
   // 3) b+1==end() AND a.chrom() == b.chrom()
-
-
   //First find b s.t b>=a
   auto candidate_l = std::lower_bound(target_begin,target_end,x,
                                  [](const double &a, const SNP &b) {
@@ -119,6 +117,9 @@ inline int nearest_snp(const SNP x, double* target_begin,double* target_end){
   auto dl_l2 = abs(x.distance(Region::make_Region(*(candidate_l-1))));
   auto dl_l1 = abs(x.distance(Region::make_Region(*(candidate_l))));
   const auto idx=std::distance(target_begin,candidate_l);
+  if(std::min(dl_l1,dl_l2)>=max_dist){
+    return NA_INTEGER;
+  }
   if(dl_l2<dl_l1)
     return idx+1;
   if(dl_l1<dl_l2)

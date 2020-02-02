@@ -1,4 +1,5 @@
 #include <numeric>
+#include "R_ext/Arith.h"
 #include "alleles.hpp"
 #include "ldmap.hpp"
 #include <Rcpp.h>
@@ -143,108 +144,12 @@ SEXP indirect_index_df(const A* ab, const Rcpp::DataFrame df,const A* a_itb, con
   return ret;
 }
 
-template <typename Iterator>
-bool parse_Region(Iterator first, Iterator last, Region &c){
-  using boost::spirit::x3::int_;
-  using boost::spirit::x3::_attr;
-  using boost::spirit::x3::lit;
-  using boost::spirit::x3::char_;
-  using boost::spirit::x3::phrase_parse;
-  using boost::spirit::x3::ascii::space;
-  using boost::spirit::x3::repeat;
-
-  int chrom = 0;
-  int start = 0;
-  int end = 0;
-
-  auto fchrom = [&](auto& ctx){ chrom = _attr(ctx); };
-  auto fstart = [&](auto& ctx){ start = _attr(ctx); };
-  auto fend = [&](auto& ctx){ end = _attr(ctx); };
-
-  bool r = phrase_parse(first, last,
-                       //  Begin grammar
-
-                        repeat(0,1)[lit("chr")] >> int_[fchrom] >>':'>>int_[fstart]>>char_(":_-")>>int_[fend],
-                        space);
-
- if (!r || first != last) // fail if we did not get a full match
-   return false;
- c.br=make_ldmap_region(chrom,start,end);
- return r;
-}
 
 
 
 
-template <typename Iterator>
-bool parse_SNP(Iterator first, Iterator last, SNP &c){
-  using boost::spirit::x3::int_;
-  using boost::spirit::x3::char_;
-  using boost::spirit::x3::_attr;
-  using boost::spirit::x3::lit;
-  using boost::spirit::x3::phrase_parse;
-  using boost::spirit::x3::repeat;
-  using boost::spirit::x3::ascii::space;
-
-  int chrom = 0;
-  int pos  = 0;
-  char ref = '\0';
-  char alt = '\0';
-
-  auto fchrom = [&](auto& ctx){ chrom = _attr(ctx); };
-  auto fpos = [&](auto& ctx){ pos = _attr(ctx); };
-  auto fref = [&](auto& ctx){ ref = _attr(ctx); };
-  auto falt = [&](auto& ctx){ alt = _attr(ctx); };
-
-  bool r = parse(first, last,
-                 repeat(0,1)[lit("chr")] >> int_[fchrom] >>char_(":_")>>int_[fpos]>>char_(":_")>>char_("ACGTMRWSYKVHDBN")[fref]>>char_(":_")>>char_("ACGTMRWSYKVHDBN")[falt]);
-
-  if (!r || first != last) // fail if we did not get a full match
-    return false;
-  c=SNP::make_SNP<false>(static_cast<unsigned char>(chrom),
-                         static_cast<uint64_t>(pos),
-                         Nuc{ascii2Nuc(ref)},
-                         Nuc{ascii2Nuc(alt)});
-  return r;
-}
 
 
-//[[Rcpp::export]]
-Rcpp::NumericVector parse_ldmap_region(Rcpp::StringVector input){
-
-  Region reg;
-  Rcpp::NumericVector ret=Rcpp::NumericVector::import_transform(
-                                                                input.begin(),
-                                                                input.end(),[&reg](SEXP inp){
-                                                                              const size_t p= LENGTH(inp);
-                                                                              const char* charp=CHAR(inp);
-                                                                              std::string_view sv(charp,p);
-                                                                              if(parse_Region(sv.begin(),sv.end(),reg))
-                                                                                return(bit_cast<double>(reg.br));
-                                                                              return NA_REAL;
-                                                                            });
-  ret.attr("class")=Rcpp::StringVector::create("ldmap_region","vctrs_vctr");
-  return ret;
-}
-
-//[[Rcpp::export]]
-Rcpp::NumericVector parse_ldmap_SNP(Rcpp::StringVector input){
-
-  SNP snp;
-
-  Rcpp::NumericVector ret=Rcpp::NumericVector::import_transform(
-                                                                input.begin(),
-                                                                input.end(),[&snp](SEXP inp){
-                                                                              const size_t p= LENGTH(inp);
-                                                                              const char* charp=CHAR(inp);
-                                                                              std::string_view sv(charp,p);
-                                                                              if(parse_SNP(sv.begin(),sv.end(),snp))
-                                                                                return(bit_cast<double>(snp.snp));
-                                                                              return NA_REAL;
-                                                                            });
-  ret.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
-  return ret;
-}
 
 
 //' Creation of new ldmap_regions
@@ -445,12 +350,13 @@ Rcpp::IntegerVector distance_ldmap_snp_ldmap_snp(Rcpp::NumericVector query,Rcpp:
 //' @param query vector of query ldmap_snps
 //' @param target vector of target ldmap_regions (must be sorted)
 //' @param use_begin logical scalar indicating whether to use the start of the target range(TRUE), the end(FALSE), or them min distance of the two (NA_LOGICAL)
+//' @param max_dist integer giving the maximum allowable distance for assignment
 //' @return a vector of integers of length `length(ldmap_region_query)` with the index of the `ldmap_region_target` (or NA_INTEGER if there is no overlap in the set of chromosomes)
 //' @export
 //[[Rcpp::export]]
-Rcpp::IntegerVector nearest_snp_region(Rcpp::NumericVector query,Rcpp::NumericVector target){
+Rcpp::IntegerVector nearest_snp_region(Rcpp::NumericVector query,Rcpp::NumericVector target,int max_dist=NA_INTEGER){
 
-
+  max_dist= Rcpp::IntegerVector::is_na(max_dist) ? std::numeric_limits<int>::max() : max_dist;
   using namespace ranges;
   const size_t p=query.size();
   const size_t target_p=target.size();
@@ -481,7 +387,7 @@ Rcpp::IntegerVector nearest_snp_region(Rcpp::NumericVector query,Rcpp::NumericVe
     Rcpp::stop("target must be sorted");
 
   Rcpp::IntegerVector result =Rcpp::IntegerVector::import_transform(query.begin(),query.end(),[&](double x) -> int{
-    return(nearest_snp(SNP::make_SNP(x),input_region_target.begin(),input_region_target.end()));
+    return(nearest_snp(SNP::make_SNP(x),input_region_target.begin(),input_region_target.end(),max_dist));
   });
   return ret;
 
@@ -1417,7 +1323,7 @@ Rcpp::IntegerVector chromosomes(Rcpp::NumericVector struct_vec){
   if(struct_vec.inherits("ldmap_snp"))
     std::transform(struct_vec.begin(),struct_vec.end(),ret.begin(),[](double x){
                                                                      auto ret = static_cast<int>(SNP::make_SNP(x).chrom());
-                                                                     return(ret==0?NA_INTEGER:ret);
+                                                                     return((ret==0 or ret==31) ?NA_INTEGER:ret);
                                                                    });
   else
     std::transform(struct_vec.begin(),struct_vec.end(),ret.begin(),[](double x){
@@ -1547,9 +1453,9 @@ Rcpp::NumericVector positions(Rcpp::NumericVector ldmap_snp){
     Rcpp::stop("must inherit from 'ldmap_snp'");
   }
 
-  std::transform(ldmap_snp.begin(),ldmap_snp.end(),ret.begin(),[](double x){
-    return(static_cast<double>(SNP::make_SNP(x).pos()));
-  });
+  std::transform(ldmap_snp.begin(),ldmap_snp.end(),ret.begin(),[](SNP x){
+                                                                 return static_cast<double>(x.pos() ==0 ? NA_REAL : x.pos());
+                                                               });
   return ret;
 }
 
@@ -1844,6 +1750,50 @@ SEXP ldmap_snp_2_dataframe(Rcpp::NumericVector ldmap_snp,bool alleles_to_charact
 
 
 
+//' For SNPs with equal chromosome and position, do the alleles match?
+//'
+//' @param query a vector of (sorted) ldmap_snps SNPs
+//' @param reference a vector of (sorted) ldmap_snps SNPs
+//'
+//' @export
+//[[Rcpp::export]]
+Rcpp::IntegerVector allele_match(Rcpp::NumericVector query,Rcpp::NumericVector reference){
+
+  const size_t q=query.size();
+  if(reference.size()!=q)
+    Rcpp::stop("query and reference are not the same size, please use `join_snp` instead");
+
+  RcppParallel::RVector<double> input_a(query);
+  RcppParallel::RVector<double> input_b(reference);
+
+  Rcpp::IntegerVector ret_match= Rcpp::no_init(q);
+  RcppParallel::RVector<int> ret(ret_match);
+  using namespace ranges;
+  std::transform(input_a.begin(),
+                 input_a.end(),
+                 input_b.begin(),
+                 ret.begin(),
+                 [](const double &a, const double &b){
+                   const auto r_el = SNP(a).allele_match(SNP(b));
+                   if(r_el)
+                     return(static_cast<int>(*r_el));
+                   else
+                     return NA_INTEGER;
+                 });
+  std::vector<std::string> levs({"perfect_match",
+                                 "reverse_match",                  // match -> reverse
+                                 "complement_match",               // match -> complement
+                                 "reverse_complement_match",       // match -> reverse
+                                 "ambig_match",                    // match on ref and alt
+                                 "reverse_ambig_match",            // match on ref and alt (ambig)
+                                 "complement_ambig_match",         // match on ref and alt (ambig)
+                                 "reverse_complement_ambig_match"});
+  ret_match.attr("levels") =Rcpp::wrap(levs);
+  ret_match.attr("class") = Rcpp::StringVector::create("factor");
+  return ret_match;
+
+
+}
 
 
 //' Find SNPs that match (and find out what to do with them)
@@ -1861,7 +1811,15 @@ Rcpp::List join_snp(Rcpp::NumericVector query,Rcpp::NumericVector reference,Rcpp
   //   Rcpp::Rcerr<<"Assuming query is sorted (attribute 'sorted' not detected in `reference`)"<<std::endl;
   // }
   RcppParallel::RVector<double> input_a(query);
+
+
   RcppParallel::RVector<double> input_b(reference);
+
+  if(!std::is_sorted(input_a.begin(),input_a.end(),[](SNP a, SNP b){
+                                            return a < b;
+                                                   })){
+    Rcpp::stop("reference alleles must be sorted for 'join_snp'");
+  }
 
   const size_t q_size =query.size();
   Rcpp::IntegerVector ret_index(q_size,NA_INTEGER);

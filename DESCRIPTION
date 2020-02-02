@@ -15,7 +15,7 @@ URL: https://github.com/CreRecombinase/ldmap
 BugReports: https://github.com/CreRecombinase/ldmap/issues
 Imports: 
     methods,
-    rlang,
+    rlang (>= 0.1.2),
     vctrs,
     magrittr,
     fs,
@@ -25,8 +25,10 @@ LinkingTo:
     BH,     
     RcppProgress,
     RcppParallel,
+    zlibbioc,
     Rcpp
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.2
 Suggests: 
-    testthat
+    testthat,
+    roxygen2

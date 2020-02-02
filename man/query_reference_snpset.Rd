@@ -42,10 +42,10 @@ Query a a reference panel for a set of SNPs and see if any of them need a sign f
 }
 \examples{
 
-#read in the example data
-example_bim <- fs::path_package(package = "ldshrink","test_data/reference_genotype.bim")
-panel_df <- read.table(example_bim,sep="\t",col.names=c("chr","snp","map","pos","ref","alt"))
-#create "allele" column
-panel_allele <- paste0(panel_df$ref,",",panel_df$alt)
-stopifnot(all(nchar(panel_allele)==3))
+# read in the example data
+example_bim <- fs::path_package(package = "ldshrink", "test_data/reference_genotype.bim")
+panel_df <- read.table(example_bim, sep = "	", col.names = c("chr", "snp", "map", "pos", "ref", "alt"))
+# create "allele" column
+panel_allele <- paste0(panel_df$ref, ",", panel_df$alt)
+stopifnot(all(nchar(panel_allele) == 3))
 }

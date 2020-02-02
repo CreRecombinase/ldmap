@@ -103,3 +103,59 @@ read_bed <- function(file, compact = TRUE, cols = bed_region_cols(),read_fun=rea
         return(compact_ldmap_region(ret_df, chrom = bcn[1], start = bcn[2], end = bcn[3]))
     return(ret_df)
 }
+
+
+#' Read HDF5 file with snp info
+#'
+#' @param h5file 
+#' @param ldmr ldmap_region scalar or vector
+#' @param datapath datapath contain snp dataframe
+#' @param ... other arguments passed to read_df_h5
+#' 
+#' Requires `EigenH5`
+#'
+#' @return a dataframe with only SNPs from inside `ldmr`
+#' @export
+read_snp_region_h5 <- function(h5file,ldmr,datapath="snp",...){
+    if(!requireNamespace("EigenH5", quietly = TRUE)){
+        stop("Package \"EigenH5\" needed for this function to work, please install it `(remotes::install_github(\"CreRecombinase/EigenH5\")`)",call.=FALSE)
+    }
+    argl <- rlang::list2(...)
+    if("chrom_offset" %in% EigenH5::ls_h5(h5file)){
+        chroms <- unique(chromosomes(ldmr))
+        co_df <- read_df_h5(h5file,"chrom_offset",subset=chroms)
+        if(nrow(co_df)==1){
+            ss=seq(from=co_df$offset,length.out = co_df$datasize)
+            snp_df <- rlang::exec(EigenH5::read_df_h5,filename=h5file,datapath = datapath,subset=ss,!!!argl) 
+            sc <- snp_df[[snp_cols(snp_df)]]
+            return(dplyr::filter(snp_df,sc %overlaps%ldmr))
+        }
+        else{
+            return(purrr::pmap_dfr(co_df,function(offset,datasize,...){
+                ss=seq(from=offset,length.out = datasize)
+                snp_df <- rlang::exec(EigenH5::read_df_h5,filename=h5file,datapath = datapath,subset=ss,!!!argl)
+                sc <- snp_df[[snp_cols(snp_df)]]
+                return(dplyr::filter(snp_df,sc %overlaps%ldmr))
+            }))
+        }
+    }
+    sinfo <- EigenH5::info_h5(h5file,datapaths = EigenH5::ls_h5(h5file,datapath,full_names = TRUE),attr = TRUE)
+    snp_col <- dplyr::filter(sinfo,lengths(attributes)==1) %>% 
+        dplyr::filter(purrr::map_lgl(attributes,function(x){
+        xc <- x[["class"]]
+        if(is.null(xc)){
+            return(FALSE)
+        }
+        return("ldmap_snp"%in% xc)
+        })) %>% 
+        dplyr::pull(name)
+    stopifnot(length(snp_col)==1)
+    srv <- EigenH5::read_vector_h5(h5file,snp_col)
+    sro <- srv %overlaps% sort(ldmr)
+    snp_lgl <- which( sro)
+    argl$subset <- snp_lgl
+    retdf <-    rlang::exec(EigenH5::read_df_h5,filename=h5file,datapath=datapath,!!!argl)
+    return(retdf)
+
+}
+

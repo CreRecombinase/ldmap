@@ -4,12 +4,14 @@
 \alias{nearest_snp_region}
 \title{Assign ranges to nearest ranges}
 \usage{
-nearest_snp_region(query, target)
+nearest_snp_region(query, target, max_dist = NA_integer_)
 }
 \arguments{
 \item{query}{vector of query ldmap_snps}
 
 \item{target}{vector of target ldmap_regions (must be sorted)}
+
+\item{max_dist}{integer giving the maximum allowable distance for assignment}
 
 \item{use_begin}{logical scalar indicating whether to use the start of the target range(TRUE), the end(FALSE), or them min distance of the two (NA_LOGICAL)}
 }

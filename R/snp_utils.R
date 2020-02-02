@@ -5,7 +5,7 @@
 #' @export
 #' @export is.na.ldmap_snp
 is.na.ldmap_snp <- function(x,...){
-  is.na(vctrs::vec_data(x))
+  is.na(chromosomes(x)) | positions(x)==0
 }
 
 
@@ -142,6 +142,9 @@ set_chromosomes <- function(x,to){
 }
 
 
+
+
+
 #' @export vec_cast.ldmap_snp
 #' @method vec_cast ldmap_snp
 #' @export
@@ -174,42 +177,6 @@ format.ldmap_snp <- function(x, ...) {
 
 
 
-#' Match Summary Statistics with an external reference panel
-#'
-#' @param gwas_df gwas dataframe
-#' @param ref_snp_struct ldmap_snp vector of SNP coordinates for the reference panel
-#' @param rsid optional vector with (integer coded)
-#' @param remove_ambig whether to remove strand ambiguous query SNPs prior to trying to match target
-#' @param snp_struct_col column name of ldmap_snp in `gwas_df`
-#' @param flip_sign_col columns that should be flipped when the query SNP is flipped against the target
-#'
-#' @return
-#' @export
-#'
-match_ref_panel <- function(gwas_df,
-                            ref_snp_struct,
-                            rsid = integer(),
-                            remove_ambig = FALSE,
-                            snp_struct_col = snp_cols(gwas_df),
-                            flip_sign_col = c("beta")) {
-  snp_struct <- gwas_df[[snp_struct_col]]
-  stopifnot(!is.null(snp_struct), inherits(snp_struct, "ldmap_snp"))
-  if (remove_ambig) {
-    gwas_df <- dplyr::filter(gwas_df, !is_strand_ambiguous(snp_struct))
-    snp_struct <- gwas_df[[snp_struct_col]]
-  }
-
-  gwas_df <- dplyr::arregion(gwas_df, rank.ldmap_snp(snp_struct))
-  snp_struct <- gwas_df[[snp_struct_col]]
-  match_df <- dplyr::bind_cols(gwas_df, join_snp(snp_struct, ref_snp_struct, rsid = rsid))
-  match_df <- dplyr::mutate_at(
-                         match_df,
-                         dplyr::vars(flip_sign_col),
-                         ~ dplyr::if_else(
-                                      match_type %in% c("reverse_match", "reverse_ambig_match"),
-                                      ., -.))
-  return(match_df)
-}
 
 #' @export vec_cast.ldmap_snp.ldmap_snp
 #' @export
@@ -272,6 +239,7 @@ vec_proxy_compare.ldmap_snp <- function(x, ...) {
 ##'
 ##' @param df a dataframe
 ##' @return a character vector with the names `ldmap_snp` columns
+##' @export
 ##' @author Nicholas Knoblauch
 snp_cols <- function(df) {
     stopifnot(is.data.frame(df))
@@ -612,6 +580,21 @@ is_snp_in_region <- function(ldmap_snp,ldmap_region){
   }
   stop("x must be type ldmap_snp")
 }
+
+##' Clear reference and alternate allele for ldmap_snp
+##'
+##' @param x a vector of ldmap_snps
+##' @return a vector of the length of x with chromosome and position set to `N`
+clear_alleles <- function(x){
+    stopifnot(inherits(x, "ldmap_snp"))
+    y <- x
+    ref_alleles(y) <- new_ldmap_allele('N')
+    alt_alleles(y) <- ref_alleles(y)
+    y
+}
+
+
+
 
 
 

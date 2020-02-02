@@ -5,21 +5,6 @@
 
 using namespace Rcpp;
 
-// interpolate_genetic_map
-Rcpp::NumericVector interpolate_genetic_map(const Rcpp::NumericVector& map, const Rcpp::IntegerVector map_pos, const Rcpp::IntegerVector target_pos, const bool strict, const bool progress);
-RcppExport SEXP _ldmap_interpolate_genetic_map(SEXP mapSEXP, SEXP map_posSEXP, SEXP target_posSEXP, SEXP strictSEXP, SEXP progressSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type map(mapSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type map_pos(map_posSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type target_pos(target_posSEXP);
-    Rcpp::traits::input_parameter< const bool >::type strict(strictSEXP);
-    Rcpp::traits::input_parameter< const bool >::type progress(progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(interpolate_genetic_map(map, map_pos, target_pos, strict, progress));
-    return rcpp_result_gen;
-END_RCPP
-}
 // parse_ldmap_region
 Rcpp::NumericVector parse_ldmap_region(Rcpp::StringVector input);
 RcppExport SEXP _ldmap_parse_ldmap_region(SEXP inputSEXP) {
@@ -39,6 +24,21 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::StringVector >::type input(inputSEXP);
     rcpp_result_gen = Rcpp::wrap(parse_ldmap_SNP(input));
+    return rcpp_result_gen;
+END_RCPP
+}
+// interpolate_genetic_map
+Rcpp::NumericVector interpolate_genetic_map(const Rcpp::NumericVector& map, const Rcpp::IntegerVector map_pos, const Rcpp::IntegerVector target_pos, const bool strict, const bool progress);
+RcppExport SEXP _ldmap_interpolate_genetic_map(SEXP mapSEXP, SEXP map_posSEXP, SEXP target_posSEXP, SEXP strictSEXP, SEXP progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type map(mapSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type map_pos(map_posSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type target_pos(target_posSEXP);
+    Rcpp::traits::input_parameter< const bool >::type strict(strictSEXP);
+    Rcpp::traits::input_parameter< const bool >::type progress(progressSEXP);
+    rcpp_result_gen = Rcpp::wrap(interpolate_genetic_map(map, map_pos, target_pos, strict, progress));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -104,14 +104,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // nearest_snp_region
-Rcpp::IntegerVector nearest_snp_region(Rcpp::NumericVector query, Rcpp::NumericVector target);
-RcppExport SEXP _ldmap_nearest_snp_region(SEXP querySEXP, SEXP targetSEXP) {
+Rcpp::IntegerVector nearest_snp_region(Rcpp::NumericVector query, Rcpp::NumericVector target, int max_dist);
+RcppExport SEXP _ldmap_nearest_snp_region(SEXP querySEXP, SEXP targetSEXP, SEXP max_distSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type target(targetSEXP);
-    rcpp_result_gen = Rcpp::wrap(nearest_snp_region(query, target));
+    Rcpp::traits::input_parameter< int >::type max_dist(max_distSEXP);
+    rcpp_result_gen = Rcpp::wrap(nearest_snp_region(query, target, max_dist));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -466,6 +467,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// allele_match
+Rcpp::IntegerVector allele_match(Rcpp::NumericVector query, Rcpp::NumericVector reference);
+RcppExport SEXP _ldmap_allele_match(SEXP querySEXP, SEXP referenceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type reference(referenceSEXP);
+    rcpp_result_gen = Rcpp::wrap(allele_match(query, reference));
+    return rcpp_result_gen;
+END_RCPP
+}
 // join_snp
 Rcpp::List join_snp(Rcpp::NumericVector query, Rcpp::NumericVector reference, Rcpp::IntegerVector rsid);
 RcppExport SEXP _ldmap_join_snp(SEXP querySEXP, SEXP referenceSEXP, SEXP rsidSEXP) {
@@ -616,15 +629,15 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
     {"_ldmap_parse_ldmap_region", (DL_FUNC) &_ldmap_parse_ldmap_region, 1},
     {"_ldmap_parse_ldmap_SNP", (DL_FUNC) &_ldmap_parse_ldmap_SNP, 1},
+    {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
     {"_ldmap_nldmap_region", (DL_FUNC) &_ldmap_nldmap_region, 3},
     {"_ldmap_distance_ldmap_region_ldmap_region", (DL_FUNC) &_ldmap_distance_ldmap_region_ldmap_region, 2},
     {"_ldmap_distance_ldmap_region_ldmap_snp", (DL_FUNC) &_ldmap_distance_ldmap_region_ldmap_snp, 2},
     {"_ldmap_distance_ldmap_snp_ldmap_region", (DL_FUNC) &_ldmap_distance_ldmap_snp_ldmap_region, 2},
     {"_ldmap_distance_ldmap_snp_ldmap_snp", (DL_FUNC) &_ldmap_distance_ldmap_snp_ldmap_snp, 2},
-    {"_ldmap_nearest_snp_region", (DL_FUNC) &_ldmap_nearest_snp_region, 2},
+    {"_ldmap_nearest_snp_region", (DL_FUNC) &_ldmap_nearest_snp_region, 3},
     {"_ldmap_region_in_region", (DL_FUNC) &_ldmap_region_in_region, 3},
     {"_ldmap_snp_in_region", (DL_FUNC) &_ldmap_snp_in_region, 2},
     {"_ldmap_snp_overlap_snp", (DL_FUNC) &_ldmap_snp_overlap_snp, 2},
@@ -655,6 +668,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_old_ldmap_snp", (DL_FUNC) &_ldmap_old_ldmap_snp, 1},
     {"_ldmap_alt_alleles", (DL_FUNC) &_ldmap_alt_alleles, 2},
     {"_ldmap_ldmap_snp_2_dataframe", (DL_FUNC) &_ldmap_ldmap_snp_2_dataframe, 2},
+    {"_ldmap_allele_match", (DL_FUNC) &_ldmap_allele_match, 2},
     {"_ldmap_join_snp", (DL_FUNC) &_ldmap_join_snp, 3},
     {"_ldmap_extract_alt", (DL_FUNC) &_ldmap_extract_alt, 2},
     {"_ldmap_fast_str2int", (DL_FUNC) &_ldmap_fast_str2int, 4},

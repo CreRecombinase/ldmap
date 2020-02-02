@@ -20,6 +20,6 @@ Estimate LD scores from the LD matrix
 \examples{
 data(reference_genotype)
 data(reference_map)
-R <- estimate_LD(reference_panel=reference_genotype,map=reference_map)
-L2 <- estimate_LDscores(R,nrow(reference_genotype))
+R <- estimate_LD(reference_panel = reference_genotype, map = reference_map)
+L2 <- estimate_LDscores(R, nrow(reference_genotype))
 }

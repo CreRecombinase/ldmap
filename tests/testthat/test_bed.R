@@ -2,10 +2,10 @@ context("sets")
 
 
 testthat::test_that("distance works for ranges",{
-  
+
   tsnps_a <- rsnp_region(ldetect_EUR[10],n=100,sort=TRUE)
-  
-  
+
+
   tsnps_b <- set_positions(tsnps_a,positions(tsnps_a)+200L)
   cdist_f <- distance(tsnps_b,tsnps_a)
   cdist_r <- distance(tsnps_a,tsnps_b)
@@ -19,9 +19,29 @@ testthat::test_that("distance works for ranges",{
   tregions <- rregion(n=100,chroms=4L)
   tsnps <- rsnp_region(hg19_sizes[4],n=100)
 
-  
-  
 })
+
+
+
+# 
+# testthat::test_that("distance works for ranges",{
+# 
+#     tsnps_a <- rsnp_region(hg19_sizes[10], n = 100, sort = TRUE)
+# 
+# tdists <- sample(-5:5, 100, replace = TRUE)
+# 
+# tsnps_b <- set_positions(tsnps_a, positions(tsnps_a) + tdists)
+# 
+# tregs_c <- new_ldmap_region(chromosomes(tsnps_a), positions(tsnps_b), positions(tsnps_b) + 2L)
+# 
+# 
+# cdist_f <- distance(tsnps_b,tsnps_a)
+# 
+# cdist_r <- distance(tsnps_a, tregs_c)
+# 
+# 
+
+
 
 
 
