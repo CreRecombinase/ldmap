@@ -25,7 +25,6 @@ LinkingTo:
     BH,     
     RcppProgress,
     RcppParallel,
-    zlibbioc,
     Rcpp
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.2
