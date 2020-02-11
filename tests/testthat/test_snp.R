@@ -33,7 +33,7 @@ testthat::test_that("crazy bit packing works", {
     alt <- sample(letter_to_int, p, replace = T)
     ret <- new_ldmap_snp(chrom, pos, ref, alt)
     so_ret <- sort(ret)
-    cso_ret <- tibble::tibble(snp=ret) %>% dplyr::arrange(snp) %>% pull(snp)
+    cso_ret <- tibble::tibble(snp=ret) %>% dplyr::arrange(snp) %>% dplyr::pull(snp)
     testthat::expect_equal(cso_ret,so_ret)
     cdf <- ldmap::ldmap_snp_2_dataframe(ret)
     testthat::expect_equal(cdf$chrom, chrom)
@@ -59,16 +59,16 @@ testthat::test_that("we can read snp HDF5 files",{
   ret <- new_ldmap_snp(chrom, pos, ref, alt)
   cso_ret <- tibble::tibble(snp=ret,beta=rnorm(p),se=runif(p)) %>% 
     dplyr::arrange(snp) %>%
-    mutate(chrom=chromosomes(snp)) %>% 
+    dplyr::mutate(chrom=chromosomes(snp)) %>% 
     dplyr::group_by(chrom) %>% 
     dplyr::mutate(cvh=convex_hull(snp)) %>% 
-    ungroup() %>% sort_colnames()
+    dplyr::ungroup() %>% sort_colnames()
   ncsor <- colnames(cso_ret)
   
   acvh <- unique(cso_ret$cvh)
   treg <- sample(acvh,1)
   tf <- tempfile()
-  write_df_h5(cso_ret,tf,"snp")
+  EigenH5::write_df_h5(cso_ret,tf,"snp")
   
   rdf <- read_snp_region_h5(tf,ldmr = treg) %>% sort_colnames()
   tret <- dplyr::filter(cso_ret,cvh==treg)
@@ -77,22 +77,21 @@ testthat::test_that("we can read snp HDF5 files",{
 
   srdf <- read_snp_region_h5(tf,ldmr = treg,subcols=c("snp","beta"))
   expect_equal(sort(colnames(srdf)),c("beta","snp"))
-  expect_equal(srdf,dplyr::select(tret,beta,snp))
+  expect_equal(srdf,dplyr::select(tret,snp,beta))
   
   
   
   treg <- sample(acvh,4)
   
-  rdf <- read_snp_region_h5(tf,ldmr = treg) %>% sort_colnames() %>% arrange(snp)
-  tret <- dplyr::filter(cso_ret,cvh %in% treg) %>% arrange(snp)
+  rdf <- read_snp_region_h5(tf,ldmr = treg) %>% sort_colnames() %>% dplyr::arrange(snp)
+  tret <- dplyr::filter(cso_ret,cvh %in% treg) %>% dplyr::arrange(snp)
   expect_equal(rdf,tret)
   
 
   srdf <- read_snp_region_h5(tf,ldmr = treg,subcols=c("snp","beta"))
   expect_equal(sort(colnames(srdf)),c("beta","snp"))
-  expect_equal(srdf,dplyr::select(tret,beta,snp))
-  
-  
+  expect_equal(srdf,dplyr::select(tret,snp,beta))
+
 })
 
 
@@ -123,7 +122,7 @@ testthat::test_that("sorting works", {
 
     ntib <- tibble::tibble(id = ret, chrom, pos, ref, alt) %>%
         dplyr::mutate(order_ret = order.ldmap_snp(id))
-    sort_ntib <- dplyr::arrange(ntib, chrom, pos, ref, alt)
+    sort_ntib <- dplyr::arrange(ntib, chrom, pos, as.character(ref), as.character(alt))
     expect_equal(so_ret, sort_ntib$id)
 })
 

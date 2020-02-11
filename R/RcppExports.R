@@ -128,11 +128,11 @@ snp_in_region <- function(ldmap_snp, ldmap_region) {
     .Call('_ldmap_snp_in_region', PACKAGE = 'ldmap', ldmap_snp, ldmap_region)
 }
 
-#' Assign SNPs to ranges
+#' Check SNPs for positional equality
 #'
 #' @param x vector of query ldmap_snps
 #' @param y vector of target ldmap_snps
-#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
+#' @return a vector of integers of length `x` that indexes into `y`
 #' @export
 snp_overlap_snp <- function(x, y) {
     .Call('_ldmap_snp_overlap_snp', PACKAGE = 'ldmap', x, y)

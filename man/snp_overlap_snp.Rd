@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{snp_overlap_snp}
 \alias{snp_overlap_snp}
-\title{Assign SNPs to ranges}
+\title{Check SNPs for positional equality}
 \usage{
 snp_overlap_snp(x, y)
 }
@@ -12,8 +12,8 @@ snp_overlap_snp(x, y)
 \item{y}{vector of target ldmap_snps}
 }
 \value{
-a vector of integers of length \code{length(ldmap_snp)} with the index of the \code{ldmap_region}
+a vector of integers of length \code{x} that indexes into \code{y}
 }
 \description{
-Assign SNPs to ranges
+Check SNPs for positional equality
 }

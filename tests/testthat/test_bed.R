@@ -23,26 +23,6 @@ testthat::test_that("distance works for ranges",{
 
 
 
-# 
-# testthat::test_that("distance works for ranges",{
-# 
-#     tsnps_a <- rsnp_region(hg19_sizes[10], n = 100, sort = TRUE)
-# 
-# tdists <- sample(-5:5, 100, replace = TRUE)
-# 
-# tsnps_b <- set_positions(tsnps_a, positions(tsnps_a) + tdists)
-# 
-# tregs_c <- new_ldmap_region(chromosomes(tsnps_a), positions(tsnps_b), positions(tsnps_b) + 2L)
-# 
-# 
-# cdist_f <- distance(tsnps_b,tsnps_a)
-# 
-# cdist_r <- distance(tsnps_a, tregs_c)
-# 
-# 
-
-
-
 
 
 # 
@@ -99,7 +79,6 @@ testthat::test_that("we can subset ldmap_regions with ldmap_regions",{
   map_ldetect <- region_in_region(ldetect_EUR,hg19_sizes)
 
   adf <- dplyr::mutate(adf,ldmr=map_ldetect,ldid=1:dplyr::n())
-  cr <- region_in_region(adf$ldmr[250],ldetect_EUR)
   checkr <- chromosomes(ldetect_EUR)
   expect_equal(map_ldetect,checkr)
 })

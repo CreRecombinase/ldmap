@@ -639,8 +639,10 @@ public:
   constexpr bool overlap(const SNP &other) const noexcept{
     return clear_alleles(snp)==clear_alleles(other.snp);
   }
+
   constexpr int distance(const Region &other) const noexcept;
   constexpr bool overlap(const Region &other) const noexcept;
+  constexpr bool contains(const Region &other) const noexcept;
 
   constexpr bool operator<(const Region &other) const noexcept;
   constexpr bool operator>(const Region &other) const noexcept;
@@ -907,6 +909,12 @@ inline constexpr bool SNP::overlap(const Region &other) const noexcept {
   if(chrom()!=other.chrom())
     return false;
   return (other.start() <= pos() && pos() < other.end());
+}
+
+inline constexpr bool SNP::contains(const Region &other) const noexcept {
+  if(chrom()!=other.chrom())
+    return false;
+  return (other.start() == pos());
 }
 
 

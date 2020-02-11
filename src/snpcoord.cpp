@@ -388,40 +388,10 @@ Rcpp::IntegerVector group_regions(Rcpp::NumericVector query){
 //[[Rcpp::export]]
 Rcpp::IntegerVector nearest_snp_region(Rcpp::NumericVector query,Rcpp::NumericVector target,int max_dist=NA_INTEGER){
 
-  max_dist= Rcpp::IntegerVector::is_na(max_dist) ? std::numeric_limits<int>::max() : max_dist;
-  using namespace ranges;
-  const size_t p=query.size();
-  const size_t target_p=target.size();
-  RcppParallel::RVector<double> input_region_query(query);
-  RcppParallel::RVector<double> input_region_target(target);
-  Rcpp::IntegerVector ret = Rcpp::no_init(p);
-  RcppParallel::RVector<int> output_v(ret);
-  int* op = output_v.begin();
-  //  auto output_region = view::all(op);
-  //  CPP_assert(input_or_output_iterator<decltype(begin(output_region))>);
-  double* irtb = target.begin();
-  double* irte = target.end();
+  LDmapSNP ldms(query,false);
+  LDmapRegion ldmr(target);
 
-  double* irqb = query.begin();
-  double* irqe = query.end();
-  auto msfun = [](double x){
-                 return(SNP::make_SNP(x));
-               };
-  auto mrfun = [](double x){
-                 return(Region::make_Region(x));
-               };
-
-  using namespace Rcpp;
-
-  if(!is_sorted(input_region_target.begin(),input_region_target.end(),[](double &ra, double rb){
-    return Region::make_Region(ra)<Region::make_Region(rb);
-  }))
-    Rcpp::stop("target must be sorted");
-
-  Rcpp::IntegerVector result =Rcpp::IntegerVector::import_transform(query.begin(),query.end(),[&](double x) -> int{
-    return(nearest_snp(SNP::make_SNP(x),input_region_target.begin(),input_region_target.end(),max_dist));
-  });
-  return ret;
+  return ldmr.nearest_vec(ldms,max_dist);
 
 }
 
@@ -437,41 +407,14 @@ Rcpp::IntegerVector nearest_snp_region(Rcpp::NumericVector query,Rcpp::NumericVe
 Rcpp::IntegerVector region_in_region(Rcpp::NumericVector ldmap_region_query,Rcpp::NumericVector ldmap_region_target,bool allow_overlap=false){
 
 
-  using namespace ranges;
 
-  const size_t p=ldmap_region_query.size();
-  const size_t target_p=ldmap_region_target.size();
-  RcppParallel::RVector<double> input_region_query(ldmap_region_query);
-
-  RcppParallel::RVector<double> input_region_target(ldmap_region_target);
-
-  Rcpp::IntegerVector ret = Rcpp::no_init(p);
-  RcppParallel::RVector<int> output_v(ret);
-  int* op = output_v.begin();
-  //  auto output_region = view::all(op);
-  //  CPP_assert(input_or_output_iterator<decltype(begin(output_region))>);
-  const double* irtb = input_region_target.begin();
-  const double* irte = input_region_target.end();
-
-  const double* irqb = input_region_query.begin();
-  const double* irqe = input_region_query.end();
-
-  if(!std::is_sorted(irtb,irte,[](Region ra, Region rb){
-                                 return ra<rb;
-                               }))
-    Rcpp::stop("ldmap_region_query must be sorted");
+  LDmapRegion ldmra(ldmap_region_query,false);
+  LDmapRegion ldmr(ldmap_region_target);
 
   if(allow_overlap)
-    auto result_thing = std::transform(irqb,irqe,op,
-                   [&](Region x){
-                     return(overlap(x,irtb,irte));
-                   });
-  else
-    auto result_thing = std::transform(irqb,irqe,op,
-                   [&](Region x){
-                     return(within(x,irtb,irte));
-                   });
-  return ret;
+    return ldmr.overlaps_vec(ldmra);
+
+  return allow_overlap ? ldmr.overlaps_vec(ldmra) : ldmr.contains_vec(ldmra);
 
 }
 
@@ -487,53 +430,27 @@ Rcpp::IntegerVector region_in_region(Rcpp::NumericVector ldmap_region_query,Rcpp
 //[[Rcpp::export]]
 Rcpp::IntegerVector snp_in_region(Rcpp::NumericVector ldmap_snp,Rcpp::NumericVector ldmap_region){
 
-  const size_t p=ldmap_snp.size();
-  RcppParallel::RVector<double> input_snp(ldmap_snp);
-  RcppParallel::RVector<double> input_region(ldmap_region);
-  Rcpp::IntegerVector ret = Rcpp::no_init(p);
-  RcppParallel::RVector<int> output_region(ret);
-  auto irb = input_region.begin();
-  auto ire = input_region.end();
+  LDmapSNP ldms(ldmap_snp,false);
+  LDmapRegion ldmr(ldmap_region);
 
-  std::transform(
-                 input_snp.begin(),
-                 input_snp.end(),
-                 output_region.begin(),
-                 [=](const double x){
-                   return(snp_in_region(x,irb,ire));
-                 });
-  //#endif
-  return ret;
+  return ldmr.contains_vec(ldms);
+
 }
 
 
 
-//' Assign SNPs to ranges
+//' Check SNPs for positional equality
 //'
 //' @param x vector of query ldmap_snps
 //' @param y vector of target ldmap_snps
-//' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
+//' @return a vector of integers of length `x` that indexes into `y`
 //' @export
 //[[Rcpp::export]]
 Rcpp::IntegerVector snp_overlap_snp(Rcpp::NumericVector x,Rcpp::NumericVector y){
 
-  const size_t p=x.size();
-  RcppParallel::RVector<double> input_snp_a(x);
-  RcppParallel::RVector<double> input_snp_b(y);
-  Rcpp::IntegerVector ret = Rcpp::no_init(p);
-  RcppParallel::RVector<int> output_snp(ret);
-  auto irb = input_snp_b.begin();
-  auto ire = input_snp_b.end();
-
-  std::transform(
-                 input_snp_a.begin(),
-                 input_snp_a.end(),
-                 output_snp.begin(),
-                 [=](const double x){
-                   return(snp_overlap_snp(x,irb,ire));
-                 });
-  //#endif
-  return ret;
+  LDmapSNP a(x,false);
+  LDmapRegion b(y);
+  return b.overlaps_vec(a);
 }
 
 
@@ -548,23 +465,12 @@ Rcpp::IntegerVector snp_overlap_snp(Rcpp::NumericVector x,Rcpp::NumericVector y)
 //[[Rcpp::export]]
 Rcpp::IntegerVector region_overlap_snp(Rcpp::NumericVector ldmap_region,Rcpp::NumericVector ldmap_snp){
 
-  const size_t p=ldmap_region.size();
-  RcppParallel::RVector<double> input_snp(ldmap_snp);
-  RcppParallel::RVector<double> input_region(ldmap_region);
-  Rcpp::IntegerVector ret = Rcpp::no_init(p);
-  RcppParallel::RVector<int> output_snp(ret);
-  auto irb = input_snp.begin();
-  auto ire = input_snp.end();
 
-  std::transform(
-                 input_region.begin(),
-                 input_region.end(),
-                 output_snp.begin(),
-                 [=](const double x){
-                   return(region_overlap_snp(x,irb,ire));
-                 });
-  //#endif
-  return ret;
+
+  LDmapSNP ldms(ldmap_snp);
+  LDmapRegion ldmr(ldmap_region);
+
+  return ldms.overlaps_vec(ldmr);
 
 }
 
