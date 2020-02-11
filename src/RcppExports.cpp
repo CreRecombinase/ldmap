@@ -103,6 +103,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// group_regions
+Rcpp::IntegerVector group_regions(Rcpp::NumericVector query);
+RcppExport SEXP _ldmap_group_regions(SEXP querySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type query(querySEXP);
+    rcpp_result_gen = Rcpp::wrap(group_regions(query));
+    return rcpp_result_gen;
+END_RCPP
+}
 // nearest_snp_region
 Rcpp::IntegerVector nearest_snp_region(Rcpp::NumericVector query, Rcpp::NumericVector target, int max_dist);
 RcppExport SEXP _ldmap_nearest_snp_region(SEXP querySEXP, SEXP targetSEXP, SEXP max_distSEXP) {
@@ -637,6 +648,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_distance_ldmap_region_ldmap_snp", (DL_FUNC) &_ldmap_distance_ldmap_region_ldmap_snp, 2},
     {"_ldmap_distance_ldmap_snp_ldmap_region", (DL_FUNC) &_ldmap_distance_ldmap_snp_ldmap_region, 2},
     {"_ldmap_distance_ldmap_snp_ldmap_snp", (DL_FUNC) &_ldmap_distance_ldmap_snp_ldmap_snp, 2},
+    {"_ldmap_group_regions", (DL_FUNC) &_ldmap_group_regions, 1},
     {"_ldmap_nearest_snp_region", (DL_FUNC) &_ldmap_nearest_snp_region, 3},
     {"_ldmap_region_in_region", (DL_FUNC) &_ldmap_region_in_region, 3},
     {"_ldmap_snp_in_region", (DL_FUNC) &_ldmap_snp_in_region, 2},

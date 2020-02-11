@@ -4,9 +4,9 @@
 #include <charconv>
 // [[Rcpp::plugins(cpp17)]]
 
-static constexpr ctll::fixed_string range_pattern =  R"(^(chr)?([0-9XY]+):([0-9]+)[\-_]([0-9]+)$)";
+static constexpr ctll::fixed_string range_pattern =  R"(^(chr)?([0-9XY]+):([0-9]+)[\-_:]([0-9]+)$)";
 
-static constexpr ctll::fixed_string  snp_pattern= R"(^(chr)?([0-9XY]+):([0-9]+)[\-_]([ACGTMRWSYKVHDBN])[ACGTMRWSYKVHDBN]*[\-_]([ACGTMRWSYKVHDBN])[ACGTMRWSYKVHDBN]*$)";
+static constexpr ctll::fixed_string  snp_pattern= R"(^(chr)?([0-9XY]+):([0-9]+)[\-_:]([ACGTMRWSYKVHDBN])[ACGTMRWSYKVHDBN]*[\-_:]([ACGTMRWSYKVHDBN])[ACGTMRWSYKVHDBN]*$)";
 
 
 std::optional<Region> parse_Region(std::string_view sr){

@@ -30,9 +30,15 @@ You can install the development version of ldmap from
 devtools::install_github("CreRecombinase/ldmap")
 ```
 
-## Example
+## Read genomic intervals from a bed file
 
-This is a basic example which shows you how to solve a common problem:
+```r
+
+
+
+```
+
+
 
 <!-- ```{r example} -->
 

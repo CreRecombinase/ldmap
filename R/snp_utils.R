@@ -560,7 +560,7 @@ is_snp_in_region <- function(ldmap_snp,ldmap_region){
 #'
 `ref_alleles<-` <- function(x, value) {
   if(inherits(x,"ldmap_snp")){
-    return(new_ldmap_snp(chrom = chromosomes(x),pos = positions(x),ref = rep(value,len=length(x)),alt = alt_alleles(alt)))
+    return(new_ldmap_snp(chrom = chromosomes(x),pos = positions(x),ref = rep(value,len=length(x)),alt = alt_alleles(x)))
   }
   stop("x must be type ldmap_snp")
 }
@@ -585,6 +585,7 @@ is_snp_in_region <- function(ldmap_snp,ldmap_region){
 ##'
 ##' @param x a vector of ldmap_snps
 ##' @return a vector of the length of x with chromosome and position set to `N`
+##' @export
 clear_alleles <- function(x){
     stopifnot(inherits(x, "ldmap_snp"))
     y <- x

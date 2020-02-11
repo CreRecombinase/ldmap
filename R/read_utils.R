@@ -105,6 +105,27 @@ read_bed <- function(file, compact = TRUE, cols = bed_region_cols(),read_fun=rea
 }
 
 
+#' Write a dataframe with an ldmap_region column as a bed file
+#'
+#' @param df dataframe with at least one ldmap_region column
+#' @param path output file to write to 
+#' @param region_col name of ldmap_region column
+#' @param write_fun function to use for writing bed file (defautls to `readr`'s `write_tsv`)
+#' @param ... arguments passed to `write_fun`
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' 
+#' temp_df <- tibble::tibble(ld=ldetect_EUR)
+#' pth <- fs::file_temp(ext="bed")
+#' write_bed(temp_df,pth)
+write_bed <- function(df,path,region_col=region_cols(df),write_fun=readr::write_tsv,...){
+    write_fun(explode_ldmap_region(df,ldmap_region = region_col),path=path,...)
+}
+
+
 #' Read HDF5 file with snp info
 #'
 #' @param h5file 

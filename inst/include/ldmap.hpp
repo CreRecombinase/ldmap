@@ -1,5 +1,6 @@
 #include "R_ext/Arith.h"
 #include "alleles.hpp"
+#include <limits>
 #include <range/v3/core.hpp>
 #include <range/v3/functional/comparisons.hpp>
 #include <range/v3/functional/identity.hpp>
@@ -26,107 +27,239 @@
 #include <range/v3/view/adaptor.hpp>
 #include <range/v3/utility/semiregular_box.hpp>
 #include <Rcpp.h>
+#include <variant>
 
-template<typename T>
-inline int region_within_region(Region x, T target){
-  using namespace ranges;
-  SNP sx=x.start_SNP();
-  SNP esx=x.last_SNP();
-  const size_t target_size = size(target);
+// struct LDMR :ranges::view_facade<LDMR>{
+// private:
+//   friend ranges::range_access;
+//   Rcpp::NumericVector x;
+//   struct cursor
+//   {
+//   private:
+//     Rcpp::NumericVector::const_iterator iter;
+//     Region cur;
 
-  if(target_size==1){
-    Region rt= *begin(target);
-    return rt.contains(x) ? 1 : NA_INTEGER;
+//     public:
+//         cursor() = default;
+//     cursor(Rcpp::NumericVector::const_iterator it)
+//           : iter(it)
+//         {}
+//         Region read() const
+//         {
+//           return Region(*iter);
+//         }
+//         bool equal(cursor const &that) const
+//         {
+//             return iter == that.iter;
+//         }
+//         void next()
+//         {
+//             ++iter;
+//         }
+//         void prev()
+//         {
+//             --iter;
+//         }
+//         std::ptrdiff_t distance_to(cursor const &that) const
+//         {
+//             return that.iter - iter;
+//         }
+//         void advance(std::ptrdiff_t n)
+//         {
+//             iter += n;
+//         }
+//     };
+//     cursor begin_cursor() const
+//     {
+//         return {x.begin()};
+//     }
+//     cursor end_cursor() const
+//     {
+//         return {x.end()};
+//     }
+// public:
+//   LDMR(Rcpp::NumericVector x_):x(x_){
+
+//   }
+// };
+class LDmapSNP{
+  Rcpp::NumericVector x;
+  double* begin_p;
+  size_t p;
+  double* end_p;
+  bool sorted;
+public:
+  using elem_type=SNP;
+  LDmapSNP(Rcpp::NumericVector x_,std::optional<bool> is_sorted=std::nullopt):
+    x(x_),
+    begin_p(&(*(x.begin()))),
+    p(x.size()),
+    end_p(begin_p+p),
+    sorted(is_sorted.value_or(std::is_sorted(begin_p,end_p,[](SNP a, SNP b){return a<b;})))
+  {
+    if(!x.inherits("ldmap_snp")){
+      Rcpp::stop("must inherit from ldmap_snp");
+    }
+  }
+};
+
+
+
+class LDmapRegion{
+  Rcpp::NumericVector x;
+  double* begin_p;
+  size_t p;
+  double* end_p;
+  
+  bool sorted;
+public:
+  using elem_type=Region;
+  LDmapRegion(Rcpp::NumericVector x_,std::optional<bool> is_sorted=std::nullopt):
+    x(x_),
+    begin_p(&(*(x.begin()))),
+    p(x.size()),
+    end_p(begin_p+p),
+    sorted(is_sorted.value_or(std::is_sorted(begin_p,end_p,[](Region a, Region b){return a<b;})))
+  {
+    if(!x.inherits("ldmap_region")){
+      Rcpp::stop("must inherit from ldmap_region");
+    }
+  }
+  bool is_sorted() const{
+    return sorted;
+  }
+  template<typename T>
+  int within(const T &x) const{
+    if(p==1)
+      return Region(*begin_p).contains(x) ? 1 : NA_INTEGER;
+    if(sorted){
+      // Find the first element of target that starts on or after x.start()
+      auto candidate_l = std::lower_bound(begin_p,end_p,x,
+                                          [](Region a, const T &b) {
+                                            return(a.end_SNP()<b.start_SNP());
+                                          });
+      if(candidate_l==end_p)
+        return NA_INTEGER;
+      return Region(*candidate_l).contains(x) ? std::distance(begin_p,candidate_l)+1 : NA_INTEGER;
+    }else{
+      auto candidate_l = std::find(begin_p,end_p,[&](Region a){
+                                                   return a.contains(x);
+                                                 });
+      if(candidate_l==end_p)
+        return NA_INTEGER;
+      return std::distance(begin_p,candidate_l)+1;
+    }
+  }
+  template<typename T>
+  int overlap(const T &x) const{
+    
+    if(p==1)
+      return Region(*begin_p).overlap(x) ? 1 : NA_INTEGER;
+    
+    if(sorted){
+      // Find the first element of target that starts on or after x.start()
+      auto candidate_l = std::lower_bound(begin_p,end_p,x,
+                                          [](Region a, const T &b) {
+                                            return(a.end_SNP()<b.start_SNP());
+                                          });
+      if(candidate_l==end_p)
+        return NA_INTEGER;
+      return Region(*candidate_l).contains(x) ? std::distance(begin_p,candidate_l)+1 : NA_INTEGER;
+    }else{
+      auto candidate_l = std::find(begin_p,end_p,[&](Region a){
+                                                   return a.overlap(x);
+                                                 });
+      if(candidate_l==end_p)
+        return NA_INTEGER;
+      return std::distance(begin_p,candidate_l)+1;
+    }
   }
 
-  auto candidate_l = lower_bound(target,x,
-                                 [&](Region a, Region b) {
-                                   return(a.start_SNP()<=b.start_SNP());
-                                 });
+  template<typename T>
+  int nearest(const T& x,int max_dist) const{
+    if(p==1)
+      return abs(Region(*begin_p).distance(x))<max_dist ? 1 : NA_INTEGER;
+    
+    int best_dist=std::numeric_limits<int>::max();
+    if(sorted){
+      auto candidate_l = std::lower_bound(begin_p,end_p,x,
+                                          [](Region a, const T &b) {
+                                            return(a.end_SNP()<b.start_SNP());
+                                          });
+      if(candidate_l!=end_p){
+        best_dist=abs(Region(*candidate_l).distance(x));
+      }
+      if(best_dist==0){
+        return std::distance(begin_p,candidate_l)+1;
+      }
+      if(candidate_l==begin_p){
+        return best_dist<max_dist ? 1 : NA_INTEGER;
+      }
+      int nbdist = abs(Region(*(candidate_l-1)).distance(x));
+      if(nbdist < best_dist)
+        return nbdist < max_dist ? std::distance(begin_p,candidate_l) : NA_INTEGER;
 
-  auto xbc = distance(begin(target),candidate_l);
-
-  if( xbc==target_size)
-    return back(target).contains(x) ? target_size : NA_INTEGER;
-
-  auto candidate_lr = views::drop(target,xbc-1);
-  auto candidate_u = upper_bound(candidate_lr,x,
-                                 [&](Region a, Region b){
-                                   return(a.end_SNP()<b.end_SNP());
-                                 });
-  size_t xbe = xbc+distance(begin(candidate_lr),candidate_u);
-
-  if(xbe > xbc)
-    return NA_INTEGER;
-
-  return xbc;
-}
-
-
-
-
-template<typename T>
-inline int region_overlap_region(const Region x, T target){
-
-  using namespace ranges;
-  const size_t target_size = size(target);
-  if(target_size==1){
-    Region rt= *begin(target);
-    return rt.overlap(x) ? 1 : NA_INTEGER;
+      return best_dist < max_dist ? std::distance(begin_p,candidate_l)+1 : NA_INTEGER;
+    }else{
+      int best_idx=0;
+      best_dist=std::abs(Region(*begin_p).distance(x));
+      for(auto it = begin_p; it!=end_p; it++){
+        auto tdist = std::abs(Region(*it).distance(x));
+        if(tdist>best_dist)
+          break;
+        best_dist=tdist;
+        best_idx++;
+        if(best_dist==0)
+          break;
+      }
+      return best_dist<max_dist ? best_idx : NA_INTEGER;
+    }
   }
 
-  auto bc = [](Region region_a, Region region_b){
-              return(region_a<region_b);
-            };
-
-  auto xb=lower_bound(target,x,bc);
-  if( xb==end(target) || !((*xb).overlap(x)))
-    return NA_INTEGER;
-  return std::distance(begin(target),xb)+1;
-}
-
-
-
-
-inline int nearest_snp(const SNP x, double* target_begin,double* target_end,const int max_dist){
-
-  using namespace ranges;
-  const size_t target_size = std::distance(target_begin,target_end);
-  if(target_size == 1){
-    Region rt= Region::make_Region(*target_begin);
-    return rt.chrom()==x.chrom() ? 1 : NA_INTEGER;
+  template<typename T>
+  Rcpp::IntegerVector overlaps_vec(const T &other) const{
+    const size_t op = other.p;
+    Rcpp::IntegerVector ret=Rcpp::no_init(op);
+    if(p==1){
+      Region rt(*begin_p);
+      std::transform(other.begin_p,other.end_p,[&](T::elem_type x){
+                                                 return rt.overlap(x) ? 1 : NA_INTEGER;
+                                               });
+    }
+    std::transform(ret.begin(),ret.end(),[&](T::elem_type x){
+                                           return overlap(x);
+                                         });
+    return ret;
   }
-  return 1;
 
-  //A query snp a is "Nearest" to another region b iff
-  // 1) a.chrom()==b.chrom()
-  // 2) a >= b.start() AND (from lower_bound)
-  // 2a) distance(a,b) < distance(a,b-1)
-  // OR
-  // 3) b+1==end() AND a.chrom() == b.chrom()
-  //First find b s.t b>=a
-  auto candidate_l = std::lower_bound(target_begin,target_end,x,
-                                 [](const double &a, const SNP &b) {
-                                   return(Region::make_Region(a).start_SNP() < b);
-                                 });
-  //If the first element is greater than or equal to a, then we only have to check chromosome
-  if(candidate_l == target_begin)
-    return x.chrom()==Region::make_Region(*(candidate_l)).chrom() ? 1 : NA_INTEGER;
-  if(candidate_l == target_end)
-    return x.chrom()==Region::make_Region(*(candidate_l-1)).chrom() ? target_size : NA_INTEGER;
-  auto dl_l2 = abs(x.distance(Region::make_Region(*(candidate_l-1))));
-  auto dl_l1 = abs(x.distance(Region::make_Region(*(candidate_l))));
-  const auto idx=std::distance(target_begin,candidate_l);
-  if(std::min(dl_l1,dl_l2)>=max_dist){
-    return NA_INTEGER;
+  template<typename T>
+  Rcpp::IntegerVector contains_vec(const T &other) const{
+    const size_t op = other.p;
+    Rcpp::IntegerVector ret=Rcpp::no_init(op);
+    if(p==1){
+      Region rt(*begin_p);
+      std::transform(other.begin_p,other.end_p,ret.begin(),[&](T::elem_type x){
+                                                             return rt.overlap(x) ? 1 : NA_INTEGER;
+                                                           });
+    }
+    std::transform(other.begin_p,other.end_p,ret.begin(),[&](T::elem_type x){
+                                                           return this->overlap(x);
+                                                         });
+    return ret;
   }
-  if(dl_l2<dl_l1)
-    return idx+1;
-  if(dl_l1<dl_l2)
-    return idx;
-  return dl_l1==std::numeric_limits<int>::max() ? NA_INTEGER : idx+1;
-}
 
+  template<typename T>
+  Rcpp::IntegerVector nearest_vec(const T &other) const{
+    const size_t op = other.p;
+    Rcpp::IntegerVector ret=Rcpp::no_init(op);
+    std::transform(other.begin_p,other.end_p,ret.begin(),[&](T::elem_type x){
+                                                           return this->nearest(x);
+                                                         });
+    return ret;
+  }
+  
+
+};
 
 
 template<typename A>
@@ -134,61 +267,3 @@ auto cycle_n(A rng,const size_t n){
   return ranges::views::common(ranges::views::take_exactly(ranges::views::cycle(rng),n));
 }
 
-
-
-
-
-  //   return target_size;
-
-  // if(candidate_l > begin(target))
-  //   candidate_l--;
-
-
-
-
-
-  // auto candidate_lr = views::drop(target,xbc-1);
-
-  // auto candidate_u = lower_bound(target,x,
-  //                                [&](Region a, SNP b) {
-  //                                  return(a.end_SNP() <= b);
-  //                                });
-
-
-  // auto xbc = distance(begin(target),candidate_l);
-
-  // if( xbc==target_size)
-  //   return back(target).contains(x) ? target_size : NA_INTEGER;
-
-  // auto candidate_lr = views::drop(target,xbc-1);
-  // auto candidate_u = upper_bound(candidate_lr,x,
-  //                                [&](Region a, Region b){
-  //                                  return(a.end_SNP()<b.end_SNP());
-  //                                });
-
-
-
-
-  // size_t xbe = xbc+distance(begin(candidate_lr),candidate_u);
-
-
-
-
-  // auto bc = [](SNP snp_a, SNP snp_b){
-  //   return(snp_a<snp_b);
-  // };
-
-  // auto xb=lower_bound(target,x,bc);
-  // if(xb==begin(target))
-  //   return 1;
-
-  // if( xb==end(target))
-  //   return target_size;
-
-  // //{1 3 5 7} find 8 -> end
-  // //{1 3 5 7} find 6 -> 7
-  // int xbi = distance(begin(target),xb);
-  // auto xb_dist = std::abs(x.distance(*xb));
-  // auto xbp = xb-1;
-  // auto xbp_dist = std::abs(x.distance(*xbp));
-  // return xb_dist<xbp_dist ? xbi:xbi-1;

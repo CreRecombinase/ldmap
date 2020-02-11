@@ -69,6 +69,7 @@ set_starts <- function(x,to){
 ##' @param df a dataframe
 ##' @return a character vector with the names `ldmap_region` columns
 ##' @author Nicholas Knoblauch
+##' @export
 region_cols <- function(df) {
     stopifnot(is.data.frame(df))
     colnames(df)[purrr::map_lgl(df, ~ inherits(.x, "ldmap_region"))]

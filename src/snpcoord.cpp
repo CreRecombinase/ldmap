@@ -63,8 +63,6 @@ using vector_variant =
   std::variant<Rcpp::NumericVector, Rcpp::RawVector, Rcpp::IntegerVector,Rcpp::StringVector,Rcpp::LogicalVector,Rcpp::List>;
 
 
-
-
 vector_variant get_vector_variant(SEXP x){
 
   Rcpp::RObject ro(x);
@@ -92,7 +90,6 @@ vector_variant get_vector_variant(SEXP x){
     Rcpp::stop("x must be a vector type in get_vector_variant (it also can't be a string type...) (this is likely not a user error)");
   }
 }
-
 
 
 class Indirector{
@@ -146,18 +143,11 @@ SEXP indirect_index_df(const A* ab, const Rcpp::DataFrame df,const A* a_itb, con
 
 
 
-
-
-
-
-
-
 //' Creation of new ldmap_regions
 //'
 //' @param chrom an integer vector of chromosomes
 //' @param start an integer vector of start positions
 //' @param stop an integer vector of stop positions
-//' @export
 //[[Rcpp::export]]
 Rcpp::NumericVector nldmap_region(Rcpp::IntegerVector chrom=Rcpp::IntegerVector::create(),
                                     Rcpp::IntegerVector start=Rcpp::IntegerVector::create(),
@@ -343,6 +333,48 @@ Rcpp::IntegerVector distance_ldmap_snp_ldmap_snp(Rcpp::NumericVector query,Rcpp:
 
 
 
+//' Assign ldmap_regions into non-overlapping groups (
+//'
+//' @param query vector of type ldmap_region
+//' @export
+//[[Rcpp::export]]
+Rcpp::IntegerVector group_regions(Rcpp::NumericVector query){
+
+  const size_t p=query.size();
+  RcppParallel::RVector<double> input_region_query(query);
+
+  if(!std::is_sorted(input_region_query.begin(),input_region_query.end(),[](double &ra, double rb){
+    return Region::make_Region(ra)<Region::make_Region(rb);
+  }))
+    Rcpp::stop("query must be sorted");
+
+  Rcpp::IntegerVector ret = Rcpp::no_init(p);
+  RcppParallel::RVector<int> output_v(ret);
+  int grp=1;
+  const auto rqb=input_region_query.begin();
+
+  auto ob=output_v.begin();
+  const auto rqe = input_region_query.end();
+
+  Region qr(*rqb);
+
+  std::transform(input_region_query.begin(),input_region_query.end(),output_v.begin(),[&](Region r) mutable {
+                                                                                        if(r.overlap(qr)){
+                                                                                          qr|=r;
+                                                                                          return grp;
+                                                                                        }else{
+                                                                                          qr=r;
+                                                                                          return ++grp;
+                                                                                        }
+                                                                                      });
+
+  return ret;
+}
+
+
+
+
+
 
 
 //' Assign ranges to nearest ranges
@@ -418,35 +450,26 @@ Rcpp::IntegerVector region_in_region(Rcpp::NumericVector ldmap_region_query,Rcpp
   int* op = output_v.begin();
   //  auto output_region = view::all(op);
   //  CPP_assert(input_or_output_iterator<decltype(begin(output_region))>);
-  double* irtb = input_region_target.begin();
-  double* irte = input_region_target.end();
+  const double* irtb = input_region_target.begin();
+  const double* irte = input_region_target.end();
 
-  double* irqb = input_region_query.begin();
-  double* irqe = input_region_query.end();
-  auto mrfun = [](double x){
-                 return(Region::make_Region(x));
-               };
+  const double* irqb = input_region_query.begin();
+  const double* irqe = input_region_query.end();
 
-
-  auto irtr = subrange(irtb,irte);
-  auto irt= view::transform(irtr,mrfun);
-  auto irq = subrange(irqb,irqe) | view::transform(mrfun);
-
-
-  if(!is_sorted(irt,[](Region ra, Region rb){
-                      return ra<rb;
-  }))
+  if(!std::is_sorted(irtb,irte,[](Region ra, Region rb){
+                                 return ra<rb;
+                               }))
     Rcpp::stop("ldmap_region_query must be sorted");
 
   if(allow_overlap)
-    auto result_thing = transform(irq,op,
+    auto result_thing = std::transform(irqb,irqe,op,
                    [&](Region x){
-                     return(region_overlap_region(x,irt));
+                     return(overlap(x,irtb,irte));
                    });
   else
-    auto result_thing = transform(irq,op,
+    auto result_thing = std::transform(irqb,irqe,op,
                    [&](Region x){
-                     return(region_within_region(x,irt));
+                     return(within(x,irtb,irte));
                    });
   return ret;
 
@@ -1791,9 +1814,18 @@ Rcpp::IntegerVector allele_match(Rcpp::NumericVector query,Rcpp::NumericVector r
   ret_match.attr("levels") =Rcpp::wrap(levs);
   ret_match.attr("class") = Rcpp::StringVector::create("factor");
   return ret_match;
-
-
 }
+
+// Rcpp::NumericVector flip_AF(Rcpp::NumericVector AF,Rcpp::IntegerVector allele_match){
+
+//   const size_t q_af=AF.size();
+//   const size_t ams=allele_match.size();
+
+
+
+// }
+
+
 
 
 //' Find SNPs that match (and find out what to do with them)

@@ -647,7 +647,12 @@ public:
   constexpr bool operator==(const Region &other) const noexcept;
   constexpr bool operator!=(const Region &other) const noexcept;
 
-
+  constexpr SNP start_SNP() const noexcept{
+    return *this;
+  }
+  constexpr SNP end_SNP() const noexcept{
+    return SNP(clear_alleles(set_pos(snp,pos()+1)));
+  }
 
   double to_double() const{
     return bit_cast<double>(snp);

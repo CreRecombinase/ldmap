@@ -35,7 +35,6 @@ interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE, pro
 #' @param chrom an integer vector of chromosomes
 #' @param start an integer vector of start positions
 #' @param stop an integer vector of stop positions
-#' @export
 nldmap_region <- function(chrom = as.integer( c()), start = as.integer( c()), end = as.integer( c())) {
     .Call('_ldmap_nldmap_region', PACKAGE = 'ldmap', chrom, start, end)
 }
@@ -86,6 +85,14 @@ distance.ldmap_snp.ldmap_region <- function(query, target) {
 #' @export
 distance.ldmap_snp.ldmap_snp <- function(query, target) {
     .Call('_ldmap_distance_ldmap_snp_ldmap_snp', PACKAGE = 'ldmap', query, target)
+}
+
+#' Assign ldmap_regions into non-overlapping groups (
+#'
+#' @param query vector of type ldmap_region
+#' @export
+group_regions <- function(query) {
+    .Call('_ldmap_group_regions', PACKAGE = 'ldmap', query)
 }
 
 #' Assign ranges to nearest ranges
