@@ -30,6 +30,22 @@ interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE, pro
     .Call('_ldmap_interpolate_genetic_map', PACKAGE = 'ldmap', map, map_pos, target_pos, strict, progress)
 }
 
+gt_subset <- function(x, i) {
+    .Call('_ldmap_gt_subset', PACKAGE = 'ldmap', x, i)
+}
+
+format_strings <- function(x) {
+    .Call('_ldmap_format_strings', PACKAGE = 'ldmap', x)
+}
+
+#' Convert ldmap_gt to numeric vector
+#'
+#' @param x a vector of type ldmap_gt
+#' @export
+gt2double <- function(x) {
+    .Call('_ldmap_gt2double', PACKAGE = 'ldmap', x)
+}
+
 #' Creation of new ldmap_regions
 #'
 #' @param chrom an integer vector of chromosomes

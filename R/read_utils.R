@@ -13,32 +13,6 @@ col_chromosome <- function(prefix_chr =  TRUE, ...) {
     return(readr::col_integer())
 }
 
-##' Column specification for a plink bim file
-##'
-##' @param chrom chromosome specifier
-##' @param rsid snp id specifier
-##' @param map genetic map specifier
-##' @param pos position specifier
-##' @param alt alt allele specifier
-##' @param ref ref allele specifier
-##' @param ... unused
-##' @return `readr::cols` specification
-##' @export
-bim_cols <- function(
-                     chrom = col_chromosome( prefix_chr = TRUE),
-                     rsid =  readr::col_character(),
-                     map =  readr::col_double(),
-                     pos =  readr::col_integer(),
-                     alt =  readr::col_character(),
-                     ref =  readr::col_character(), ...) {
-
-    return(readr::cols(chrom = chrom,
-                       rsid =  rsid,
-                       map =  map,
-                       pos =  pos,
-                       alt =  alt,
-                       ref =  ref))
-}
 
 
 
@@ -58,26 +32,6 @@ bed_region_cols <- function(chrom = col_chromosome(),
     return(rlang::exec(readr::cols, !!!arg_l))
 }
 
-
-##'
-##' Read a plink bim file
-##'
-##'
-##' @param file path to plink bim file, `file` can be any type you can pass to `readr::read_delim`
-##' @param compact a boolean indicating whether to compact chrom,pos,ref and alt as `ldmap_snp` (default to TRUE)
-##' @param cols column specification (see `?readr::cols` for more info)
-##' @param read_fun function to use to read data(must accept `col_names` and `col_types` arguments)
-##' @param ...
-##'
-##' @return a `tibble` with the contents of the `bim` file
-##' @export
-read_plink_bim <- function(file, compact = TRUE, cols = bim_cols(),read_fun=readr::read_tsv, ...) {
-
-    ret_df <- read_fun(file, col_names = names(cols$cols),col_types=cols)
-    if (compact)
-        return(compact_snp_struct(ret_df))
-    return(ret_df)
-}
 
 
 
@@ -177,6 +131,46 @@ read_snp_region_h5 <- function(h5file,ldmr,datapath="snp",...){
     argl$subset <- snp_lgl
     retdf <-    rlang::exec(EigenH5::read_df_h5,filename=h5file,datapath=datapath,!!!argl)
     return(retdf)
-
 }
 
+
+##' Read the contents of a fasta file as an ldmap_allele
+##'
+
+##' @param fastafile
+##' @param subset positions to subset in the file.  Default is the whole sequence
+##' @param line_length the number of nucleotide characters per line (default is 50)
+##' @return a vector ldmap_allele with the sequence contents of the file
+##' @export
+read_fasta <- function(fastafile, subset = NULL, line_length = 50L){
+    fasta_ext <- fs::path_ext(fastafile)
+    if (fasta_ext == "gz") {
+        fc <- gzfile(fastafile, "rb")
+    }else{
+        fc <- file(fastafile, "rb")
+    }
+    hdr <- readLines(fc, n = 1)
+    if (!is.null(subset)) {
+        file_subset <- subset + as.integer(subset / (line_length + 1))
+        max_sub <- max(file_subset)
+        mdata <- readBin(fc, what = raw(), n = max_sub)[file_subset]
+        na <- new_ldmap_allele(mdata)
+        close(fc)
+        return(na)
+    }else{
+        if (fasta_ext == "gz") {
+            nfc <- file(fastafile, "rb")
+            tfp <- seek(nfc, where = -4, origin = "end")
+            nub <- readBin(nfc, what = integer(), size = 4) - (nchar(hdr) + 1)
+            close(nfc)
+        }else{
+            nub <- as.integer(fs::file_size(fastafile)) - (nchar(hdr) + 1)
+        }
+        file_subset <- seq_len(nub)[-seq(from = (line_length + 1),
+                                         to = nub,
+                                         by = (line_length + 1))]
+        retv <- new_ldmap_allele(readBin(fc, what = raw(), n = nub - 1)[file_subset])
+        close(fc)
+        return(retv)
+    }
+}

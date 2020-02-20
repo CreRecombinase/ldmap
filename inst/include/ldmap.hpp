@@ -1,4 +1,3 @@
-#include "R_ext/Arith.h"
 #include "alleles.hpp"
 #include <limits>
 #include <range/v3/core.hpp>
@@ -28,6 +27,68 @@
 #include <range/v3/utility/semiregular_box.hpp>
 #include <Rcpp.h>
 #include <variant>
+#include <R_ext/Altrep.h>
+
+
+
+
+class GT_view{
+  Rcpp::RawVector x;
+  size_t p;
+  size_t N;
+  Rbyte* begin_x;
+  //std::optional<Rbyte>
+public:
+  GT_view(Rcpp::RawVector x_);
+  //  GT_view(const int N_):x(N_*4),p(N_/4),N(N_),begin_x(x.begin()){}
+  //  double get_gt(int i) const;
+  //  Rcpp::String get_fmt(int i) const;
+  Rbyte operator()(int i) const noexcept;
+  Rcpp::RawVector operator()(Rcpp::IntegerVector i) const;
+  Rcpp::RawVector operator()(Rcpp::CharacterVector i) const;
+  Rcpp::RawVector operator()(Rcpp::LogicalVector i) const;
+  Rcpp::RawVector operator()(Rcpp::NumericVector i) const;
+  //  double allele_frequency() const;
+  //  double sum() const;
+
+
+};
+
+
+inline bool is_compact_seq(SEXP x) {
+  if(!ALTREP(x)){
+    return false;
+  }
+  R_xlen_t info_l=::Rf_xlength(R_altrep_data1(x));
+  if(info_l!=3){
+    return false;
+  }
+  return true;
+}
+
+
+inline std::variant<Rcpp::NumericVector,Rcpp::IntegerVector,Rcpp::StringVector,Rcpp::LogicalVector>  get_index_variant(SEXP x){
+
+  //  Rcpp::RObject ro(x);
+  // auto attr = ro.attributeNames();
+  switch (TYPEOF(x)) {
+  case INTSXP:{
+    return Rcpp::IntegerVector(x);
+  }
+  case REALSXP:{
+    return Rcpp::NumericVector(x);
+  }
+  case STRSXP:{
+    return Rcpp::StringVector(x);
+  }
+  case LGLSXP:{
+    return Rcpp::LogicalVector(x);
+  }
+  default:
+    Rcpp::stop("unexpected type in index_variant (should be integer, numeric, string or logical)");
+  }
+}
+
 
 // struct LDMR :ranges::view_facade<LDMR>{
 // private:

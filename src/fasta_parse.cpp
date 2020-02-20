@@ -1,6 +1,8 @@
 #include <Rcpp.h>
 #include "ctre.hpp"
 #include "alleles.hpp"
+#include "kseq.h"
+#include <zlib.h>
 #include <charconv>
 // [[Rcpp::plugins(cpp17)]]
 
@@ -61,7 +63,6 @@ std::optional<SNP> parse_SNP(std::string_view sr){
     return std::nullopt;
   }
 }
-
 
 
 

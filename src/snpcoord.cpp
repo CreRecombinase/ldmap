@@ -56,11 +56,13 @@
 #else
 #include <cstdio>
 #endif
-
+#include <ctype.h>
 
 
 using vector_variant =
   std::variant<Rcpp::NumericVector, Rcpp::RawVector, Rcpp::IntegerVector,Rcpp::StringVector,Rcpp::LogicalVector,Rcpp::List>;
+
+
 
 
 vector_variant get_vector_variant(SEXP x){
@@ -1121,7 +1123,9 @@ Rcpp::RawVector new_ldmap_allele_s(Rcpp::StringVector allele){
 
 Rcpp::RawVector new_ldmap_allele_r(Rcpp::RawVector allele){
   return Rcpp::RawVector::import_transform(allele.begin(),allele.end(),[&](const Rbyte i){
-                                                                         return static_cast<Rbyte>(ascii2Nuc(i));});
+
+                                                                         return static_cast<Rbyte>(ascii2Nuc(toupper(i)));
+                                                                       });
 }
 
 

@@ -42,6 +42,40 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// gt_subset
+Rcpp::RawVector gt_subset(Rcpp::RawVector x, SEXP i);
+RcppExport SEXP _ldmap_gt_subset(SEXP xSEXP, SEXP iSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::RawVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type i(iSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_subset(x, i));
+    return rcpp_result_gen;
+END_RCPP
+}
+// format_strings
+Rcpp::StringVector format_strings(Rcpp::RawVector x);
+RcppExport SEXP _ldmap_format_strings(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::RawVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(format_strings(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt2double
+Rcpp::NumericVector gt2double(const Rcpp::RawVector x);
+RcppExport SEXP _ldmap_gt2double(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::RawVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt2double(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // nldmap_region
 Rcpp::NumericVector nldmap_region(Rcpp::IntegerVector chrom, Rcpp::IntegerVector start, Rcpp::IntegerVector end);
 RcppExport SEXP _ldmap_nldmap_region(SEXP chromSEXP, SEXP startSEXP, SEXP endSEXP) {
@@ -643,6 +677,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_parse_ldmap_region", (DL_FUNC) &_ldmap_parse_ldmap_region, 1},
     {"_ldmap_parse_ldmap_SNP", (DL_FUNC) &_ldmap_parse_ldmap_SNP, 1},
     {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
+    {"_ldmap_gt_subset", (DL_FUNC) &_ldmap_gt_subset, 2},
+    {"_ldmap_format_strings", (DL_FUNC) &_ldmap_format_strings, 1},
+    {"_ldmap_gt2double", (DL_FUNC) &_ldmap_gt2double, 1},
     {"_ldmap_nldmap_region", (DL_FUNC) &_ldmap_nldmap_region, 3},
     {"_ldmap_distance_ldmap_region_ldmap_region", (DL_FUNC) &_ldmap_distance_ldmap_region_ldmap_region, 2},
     {"_ldmap_distance_ldmap_region_ldmap_snp", (DL_FUNC) &_ldmap_distance_ldmap_region_ldmap_snp, 2},
