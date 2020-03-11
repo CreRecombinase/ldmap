@@ -1,4 +1,6 @@
 #include "alleles.hpp"
+#include "range/v3/detail/range_access.hpp"
+#include "range/v3/range_fwd.hpp"
 #include <limits>
 #include <range/v3/core.hpp>
 #include <range/v3/functional/comparisons.hpp>
@@ -24,6 +26,7 @@
 #include <range/v3/algorithm/for_each.hpp> // specific includes
 #include <range/v3/view/transform.hpp>
 #include <range/v3/view/adaptor.hpp>
+#include <range/v3/view/facade.hpp>
 #include <range/v3/utility/semiregular_box.hpp>
 #include <Rcpp.h>
 #include <variant>
@@ -37,9 +40,11 @@ class GT_view{
   size_t p;
   size_t N;
   Rbyte* begin_x;
+  mutable std::optional<double> c_af;
   //std::optional<Rbyte>
 public:
   GT_view(Rcpp::RawVector x_);
+  GT_view(SEXP x_);
   //  GT_view(const int N_):x(N_*4),p(N_/4),N(N_),begin_x(x.begin()){}
   //  double get_gt(int i) const;
   //  Rcpp::String get_fmt(int i) const;
@@ -48,11 +53,236 @@ public:
   Rcpp::RawVector operator()(Rcpp::CharacterVector i) const;
   Rcpp::RawVector operator()(Rcpp::LogicalVector i) const;
   Rcpp::RawVector operator()(Rcpp::NumericVector i) const;
+  double cov(const GT_view &other)const;
+
+  int sum(bool na_rm) const;
+  double af(bool na_rm) const;
   //  double allele_frequency() const;
   //  double sum() const;
-
-
 };
+
+
+
+class rcpp_doubles : public ranges::view_facade<rcpp_doubles>
+{
+  friend ranges::range_access;
+  Rcpp::Vector<REALSXP> vec;
+  struct cursor
+  {
+  private:
+    Rcpp::Vector<REALSXP>::const_iterator iter;
+    public:
+        cursor() = default;
+    cursor(Rcpp::Vector<REALSXP>::const_iterator it)
+          : iter(it)
+        {}
+    double const&  read() const
+    {
+      return *iter;
+    }
+    bool equal(cursor const &that) const
+    {
+      return iter == that.iter;
+    }
+    void next()
+    {
+      ++iter;
+    }
+    void prev()
+    {
+      --iter;
+    }
+    std::ptrdiff_t distance_to(cursor const &that) const
+    {
+      return that.iter - iter;
+    }
+    void advance(std::ptrdiff_t n)
+    {
+      iter += n;
+    }
+  };
+  cursor begin_cursor() const
+  {
+    return {vec.begin()};
+  }
+  cursor end_cursor() const
+  {
+    return {vec.end()};
+  }
+public:
+  rcpp_doubles() = default;
+  explicit rcpp_doubles(Rcpp::RObject sz) : vec(SEXP(sz)){}
+  explicit rcpp_doubles(Rcpp::Vector<INTSXP> sz) : vec(sz) {}
+};
+
+
+
+class rcpp_ints : public ranges::view_facade<rcpp_ints>
+{
+  friend ranges::range_access;
+  Rcpp::Vector<INTSXP> vec;
+  struct cursor
+  {
+  private:
+    Rcpp::Vector<INTSXP>::const_iterator iter;
+    public:
+        cursor() = default;
+    cursor(Rcpp::Vector<INTSXP>::const_iterator it)
+          : iter(it)
+        {}
+    int const&  read() const
+    {
+      return *iter;
+    }
+    bool equal(cursor const &that) const
+    {
+      return iter == that.iter;
+    }
+    void next()
+    {
+      ++iter;
+    }
+    void prev()
+    {
+      --iter;
+    }
+    std::ptrdiff_t distance_to(cursor const &that) const
+    {
+      return that.iter - iter;
+    }
+    void advance(std::ptrdiff_t n)
+    {
+      iter += n;
+    }
+  };
+  cursor begin_cursor() const
+  {
+    return {vec.begin()};
+  }
+  cursor end_cursor() const
+  {
+    return {vec.end()};
+  }
+public:
+  rcpp_ints() : vec(Rcpp::IntegerVector::create()) {}
+  explicit rcpp_ints(Rcpp::RObject sz) : vec(SEXP(sz)){}
+  explicit rcpp_ints(Rcpp::Vector<INTSXP> sz) : vec(sz) {}
+};
+
+
+
+class rcpp_raws : public ranges::view_facade<rcpp_raws>
+{
+  friend ranges::range_access;
+  Rcpp::Vector<RAWSXP> vec;
+  struct cursor
+  {
+  private:
+    Rcpp::Vector<RAWSXP>::const_iterator iter;
+    public:
+        cursor() = default;
+    cursor(Rcpp::Vector<RAWSXP>::const_iterator it)
+          : iter(it)
+        {}
+    Rbyte const&  read() const
+    {
+      return *iter;
+    }
+    bool equal(cursor const &that) const
+    {
+      return iter == that.iter;
+    }
+    void next()
+    {
+      ++iter;
+    }
+    void prev()
+    {
+      --iter;
+    }
+    std::ptrdiff_t distance_to(cursor const &that) const
+    {
+      return that.iter - iter;
+    }
+    void advance(std::ptrdiff_t n)
+    {
+      iter += n;
+    }
+  };
+  cursor begin_cursor() const
+  {
+    return {vec.begin()};
+  }
+  cursor end_cursor() const
+  {
+    return {vec.end()};
+  }
+public:
+  rcpp_raws() : vec(Rcpp::RawVector::create()) {}
+  explicit rcpp_raws(Rcpp::RObject sz) : vec(SEXP(sz)){}
+  explicit rcpp_raws(Rcpp::Vector<RAWSXP> sz) : vec(sz) {}
+};
+
+
+
+class rcpp_strings : public ranges::view_facade<rcpp_strings>
+{
+  friend ranges::range_access;
+  Rcpp::StringVector vec;
+  struct cursor
+  {
+  private:
+    SEXP vec;
+    int i=0;
+    //    std::string_view sv;
+    public:
+    cursor() = default;
+    cursor(SEXP v,int it): vec(v),i(it)
+    {}
+    std::string_view const  read() const
+    {
+      auto s = STRING_ELT(vec,i);
+      auto l = LENGTH( s ) ;
+      const char* bgv = CHAR(s);
+      std::string_view sv(bgv,l);
+      return sv;
+    }
+    bool equal(cursor const &that) const
+    {
+      return (i == that.i) and (vec == that.vec);
+    }
+    void next()
+    {
+      ++i;
+    }
+    void prev()
+    {
+      --i;
+    }
+    std::ptrdiff_t distance_to(cursor const &that) const
+    {
+      return that.i - i;
+    }
+    void advance(std::ptrdiff_t n)
+    {
+      i += n;
+    }
+  };
+  cursor begin_cursor() const
+  {
+    return {SEXP(vec),0};
+  }
+  cursor end_cursor() const
+  {
+    return {SEXP(vec),LENGTH(vec)};
+  }
+public:
+  rcpp_strings() : vec(Rcpp::StringVector::create()) {}
+  explicit rcpp_strings(Rcpp::RObject sz) : vec(sz){}
+  explicit rcpp_strings(Rcpp::Vector<STRSXP> sz) : vec(sz) {}
+};
+
+
 
 
 inline bool is_compact_seq(SEXP x) {
@@ -88,6 +318,7 @@ inline std::variant<Rcpp::NumericVector,Rcpp::IntegerVector,Rcpp::StringVector,R
     Rcpp::stop("unexpected type in index_variant (should be integer, numeric, string or logical)");
   }
 }
+
 
 
 // struct LDMR :ranges::view_facade<LDMR>{

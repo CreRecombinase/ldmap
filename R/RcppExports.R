@@ -30,8 +30,75 @@ interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE, pro
     .Call('_ldmap_interpolate_genetic_map', PACKAGE = 'ldmap', map, map_pos, target_pos, strict, progress)
 }
 
+#' Linear interpolation of genetic map values
+#'
+#' @param map  is a length `p` vector of cumulative genetic map values. `map` must be _strictly_ _sorted_
+#' @param map_pos  is a length `p` vector of genome coordinates corresponding to the reference genetic map. `map_pos` must be _strictly_ _sorted_
+#' @param target_pos is a vector of coordinates to interpolate
+#' @param strict a boolean indicating whether to strictly interpolate
+#' @param progress a boolean indicating whether to indicate progress with a progress bar
+#'
+#' @export
+new_interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE, progress = FALSE) {
+    .Call('_ldmap_new_interpolate_genetic_map', PACKAGE = 'ldmap', map, map_pos, target_pos, strict, progress)
+}
+
+parse_hap <- function(x) {
+    .Call('_ldmap_parse_hap', PACKAGE = 'ldmap', x)
+}
+
+#' New vector of haplotypes
+#'
+#' @param x data vector
+#' @param N sample size
+#' @return vector of (packed, dense) haplotypes
+#' @export
+new_ldmap_ht <- function(x) {
+    .Call('_ldmap_new_ldmap_ht', PACKAGE = 'ldmap', x)
+}
+
+sum_ldmap_ht <- function(x) {
+    .Call('_ldmap_sum_ldmap_ht', PACKAGE = 'ldmap', x)
+}
+
+dot_ht <- function(x, y) {
+    .Call('_ldmap_dot_ht', PACKAGE = 'ldmap', x, y)
+}
+
+cov_ht <- function(x, y) {
+    .Call('_ldmap_cov_ht', PACKAGE = 'ldmap', x, y)
+}
+
+cov_htm <- function(x, cov_2_cor = FALSE) {
+    .Call('_ldmap_cov_htm', PACKAGE = 'ldmap', x, cov_2_cor)
+}
+
+ldshrink_S <- function(x, map, m = 85, Ne = 11490.672741, cutoff = 0.001, cov_2_cor = TRUE) {
+    .Call('_ldmap_ldshrink_S', PACKAGE = 'ldmap', x, map, m, Ne, cutoff, cov_2_cor)
+}
+
+ht2int <- function(x) {
+    .Call('_ldmap_ht2int', PACKAGE = 'ldmap', x)
+}
+
+format_ht <- function(x) {
+    .Call('_ldmap_format_ht', PACKAGE = 'ldmap', x)
+}
+
+read_plink_bed_l <- function(file_name, p, N) {
+    .Call('_ldmap_read_plink_bed_l', PACKAGE = 'ldmap', file_name, p, N)
+}
+
 gt_subset <- function(x, i) {
     .Call('_ldmap_gt_subset', PACKAGE = 'ldmap', x, i)
+}
+
+gt_af <- function(x, na_rm = FALSE) {
+    .Call('_ldmap_gt_af', PACKAGE = 'ldmap', x, na_rm)
+}
+
+gt_afs <- function(x, na_rm = FALSE) {
+    .Call('_ldmap_gt_afs', PACKAGE = 'ldmap', x, na_rm)
 }
 
 format_strings <- function(x) {
@@ -235,10 +302,6 @@ ldmap_region_2_data_frame <- function(ldmap_region) {
     .Call('_ldmap_ldmap_region_2_data_frame', PACKAGE = 'ldmap', ldmap_region)
 }
 
-sample_interval <- function(n, beginv, endv, replace = FALSE) {
-    .Call('_ldmap_sample_interval', PACKAGE = 'ldmap', n, beginv, endv, replace)
-}
-
 #' Creation of new ldmap_snps
 #'
 #' @param chrom an integer vector of chromosomes
@@ -247,9 +310,12 @@ sample_interval <- function(n, beginv, endv, replace = FALSE) {
 #' @param alt an optional vector of alternate allele (see `?new_ldmap_allele`)
 #' @param NA2N an optional boolean specifying whether missing/NA alleles should be treated as "N"
 #'
-#' @export
-new_ldmap_snp <- function(chrom = as.integer( c()), pos = as.numeric( c()), ref = as.integer( c()), alt = as.integer( c()), NA2N = FALSE) {
-    .Call('_ldmap_new_ldmap_snp', PACKAGE = 'ldmap', chrom, pos, ref, alt, NA2N)
+new_ldmap_snp_impl <- function(chrom, pos, ref, alt, NA2N = FALSE) {
+    .Call('_ldmap_new_ldmap_snp_impl', PACKAGE = 'ldmap', chrom, pos, ref, alt, NA2N)
+}
+
+sample_interval <- function(n, beginv, endv, replace = FALSE) {
+    .Call('_ldmap_sample_interval', PACKAGE = 'ldmap', n, beginv, endv, replace)
 }
 
 #' Which SNPs are strand ambiguous
@@ -468,7 +534,7 @@ split_by_overlap <- function(x) {
 #' Determine whether 2 alleles are compatible
 #' @param query_ref_alt is a ref/alt pair
 #' @param target_ref_alt is another ref/alt pair
-#' @return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
+#' @return raw matrix
 #' @export
 snp2raw <- function(input_matrix) {
     .Call('_ldmap_snp2raw', PACKAGE = 'ldmap', input_matrix)

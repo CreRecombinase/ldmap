@@ -22,9 +22,15 @@ left_snp_join(
 
 \item{by}{column name of snp column}
 
+\item{suffix}{suffix to add}
+
 \item{snp_struct_col}{column name of ldmap_snp in \code{gwas_df}}
 
 \item{flip_sign_col}{columns that should be flipped when the query SNP is flipped against the target}
+
+\item{rename_col}{whether to rename column}
+
+\item{remove_missing}{whether to remove missing data}
 
 \item{remove_ambig}{whether to remove strand ambiguous query SNPs prior to trying to match target}
 }

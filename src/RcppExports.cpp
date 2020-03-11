@@ -42,6 +42,141 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// new_interpolate_genetic_map
+Rcpp::NumericVector new_interpolate_genetic_map(const Rcpp::NumericVector& map, const Rcpp::NumericVector map_pos, const Rcpp::NumericVector target_pos, const bool strict, const bool progress);
+RcppExport SEXP _ldmap_new_interpolate_genetic_map(SEXP mapSEXP, SEXP map_posSEXP, SEXP target_posSEXP, SEXP strictSEXP, SEXP progressSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type map(mapSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector >::type map_pos(map_posSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector >::type target_pos(target_posSEXP);
+    Rcpp::traits::input_parameter< const bool >::type strict(strictSEXP);
+    Rcpp::traits::input_parameter< const bool >::type progress(progressSEXP);
+    rcpp_result_gen = Rcpp::wrap(new_interpolate_genetic_map(map, map_pos, target_pos, strict, progress));
+    return rcpp_result_gen;
+END_RCPP
+}
+// parse_hap
+Rcpp::List parse_hap(Rcpp::StringVector x);
+RcppExport SEXP _ldmap_parse_hap(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::StringVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(parse_hap(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// new_ldmap_ht
+Rcpp::NumericVector new_ldmap_ht(Rcpp::IntegerVector x);
+RcppExport SEXP _ldmap_new_ldmap_ht(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(new_ldmap_ht(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sum_ldmap_ht
+int sum_ldmap_ht(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_sum_ldmap_ht(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(sum_ldmap_ht(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dot_ht
+int dot_ht(Rcpp::NumericVector x, Rcpp::NumericVector y);
+RcppExport SEXP _ldmap_dot_ht(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(dot_ht(x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cov_ht
+double cov_ht(Rcpp::NumericVector x, Rcpp::NumericVector y);
+RcppExport SEXP _ldmap_cov_ht(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(cov_ht(x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cov_htm
+Rcpp::NumericMatrix cov_htm(Rcpp::List x, const bool cov_2_cor);
+RcppExport SEXP _ldmap_cov_htm(SEXP xSEXP, SEXP cov_2_corSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const bool >::type cov_2_cor(cov_2_corSEXP);
+    rcpp_result_gen = Rcpp::wrap(cov_htm(x, cov_2_cor));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ldshrink_S
+Rcpp::NumericMatrix ldshrink_S(Rcpp::List x, Rcpp::NumericVector map, const double m, const double Ne, const double cutoff, const bool cov_2_cor);
+RcppExport SEXP _ldmap_ldshrink_S(SEXP xSEXP, SEXP mapSEXP, SEXP mSEXP, SEXP NeSEXP, SEXP cutoffSEXP, SEXP cov_2_corSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type map(mapSEXP);
+    Rcpp::traits::input_parameter< const double >::type m(mSEXP);
+    Rcpp::traits::input_parameter< const double >::type Ne(NeSEXP);
+    Rcpp::traits::input_parameter< const double >::type cutoff(cutoffSEXP);
+    Rcpp::traits::input_parameter< const bool >::type cov_2_cor(cov_2_corSEXP);
+    rcpp_result_gen = Rcpp::wrap(ldshrink_S(x, map, m, Ne, cutoff, cov_2_cor));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ht2int
+Rcpp::IntegerVector ht2int(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_ht2int(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(ht2int(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// format_ht
+Rcpp::StringVector format_ht(Rcpp::NumericVector x);
+RcppExport SEXP _ldmap_format_ht(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(format_ht(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// read_plink_bed_l
+Rcpp::ListOf<Rcpp::RawVector> read_plink_bed_l(std::string file_name, const int p, const size_t N);
+RcppExport SEXP _ldmap_read_plink_bed_l(SEXP file_nameSEXP, SEXP pSEXP, SEXP NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type file_name(file_nameSEXP);
+    Rcpp::traits::input_parameter< const int >::type p(pSEXP);
+    Rcpp::traits::input_parameter< const size_t >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_plink_bed_l(file_name, p, N));
+    return rcpp_result_gen;
+END_RCPP
+}
 // gt_subset
 Rcpp::RawVector gt_subset(Rcpp::RawVector x, SEXP i);
 RcppExport SEXP _ldmap_gt_subset(SEXP xSEXP, SEXP iSEXP) {
@@ -51,6 +186,30 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::RawVector >::type x(xSEXP);
     Rcpp::traits::input_parameter< SEXP >::type i(iSEXP);
     rcpp_result_gen = Rcpp::wrap(gt_subset(x, i));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_af
+double gt_af(Rcpp::RawVector x, const bool na_rm);
+RcppExport SEXP _ldmap_gt_af(SEXP xSEXP, SEXP na_rmSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::RawVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const bool >::type na_rm(na_rmSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_af(x, na_rm));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gt_afs
+Rcpp::NumericVector gt_afs(Rcpp::List x, const bool na_rm);
+RcppExport SEXP _ldmap_gt_afs(SEXP xSEXP, SEXP na_rmSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const bool >::type na_rm(na_rmSEXP);
+    rcpp_result_gen = Rcpp::wrap(gt_afs(x, na_rm));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -293,6 +452,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// new_ldmap_snp_impl
+Rcpp::NumericVector new_ldmap_snp_impl(Rcpp::IntegerVector chrom, Rcpp::IntegerVector pos, Rcpp::RawVector ref, Rcpp::RawVector alt, const bool NA2N);
+RcppExport SEXP _ldmap_new_ldmap_snp_impl(SEXP chromSEXP, SEXP posSEXP, SEXP refSEXP, SEXP altSEXP, SEXP NA2NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type chrom(chromSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type pos(posSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RawVector >::type ref(refSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RawVector >::type alt(altSEXP);
+    Rcpp::traits::input_parameter< const bool >::type NA2N(NA2NSEXP);
+    rcpp_result_gen = Rcpp::wrap(new_ldmap_snp_impl(chrom, pos, ref, alt, NA2N));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sample_interval
 Rcpp::IntegerVector sample_interval(Rcpp::IntegerVector n, Rcpp::IntegerVector beginv, Rcpp::IntegerVector endv, const bool replace);
 RcppExport SEXP _ldmap_sample_interval(SEXP nSEXP, SEXP beginvSEXP, SEXP endvSEXP, SEXP replaceSEXP) {
@@ -304,21 +478,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type endv(endvSEXP);
     Rcpp::traits::input_parameter< const bool >::type replace(replaceSEXP);
     rcpp_result_gen = Rcpp::wrap(sample_interval(n, beginv, endv, replace));
-    return rcpp_result_gen;
-END_RCPP
-}
-// new_ldmap_snp
-Rcpp::NumericVector new_ldmap_snp(Rcpp::IntegerVector chrom, Rcpp::NumericVector pos, Rcpp::RObject ref, Rcpp::RObject alt, const bool NA2N);
-RcppExport SEXP _ldmap_new_ldmap_snp(SEXP chromSEXP, SEXP posSEXP, SEXP refSEXP, SEXP altSEXP, SEXP NA2NSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type chrom(chromSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pos(posSEXP);
-    Rcpp::traits::input_parameter< Rcpp::RObject >::type ref(refSEXP);
-    Rcpp::traits::input_parameter< Rcpp::RObject >::type alt(altSEXP);
-    Rcpp::traits::input_parameter< const bool >::type NA2N(NA2NSEXP);
-    rcpp_result_gen = Rcpp::wrap(new_ldmap_snp(chrom, pos, ref, alt, NA2N));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -677,7 +836,20 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_parse_ldmap_region", (DL_FUNC) &_ldmap_parse_ldmap_region, 1},
     {"_ldmap_parse_ldmap_SNP", (DL_FUNC) &_ldmap_parse_ldmap_SNP, 1},
     {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
+    {"_ldmap_new_interpolate_genetic_map", (DL_FUNC) &_ldmap_new_interpolate_genetic_map, 5},
+    {"_ldmap_parse_hap", (DL_FUNC) &_ldmap_parse_hap, 1},
+    {"_ldmap_new_ldmap_ht", (DL_FUNC) &_ldmap_new_ldmap_ht, 1},
+    {"_ldmap_sum_ldmap_ht", (DL_FUNC) &_ldmap_sum_ldmap_ht, 1},
+    {"_ldmap_dot_ht", (DL_FUNC) &_ldmap_dot_ht, 2},
+    {"_ldmap_cov_ht", (DL_FUNC) &_ldmap_cov_ht, 2},
+    {"_ldmap_cov_htm", (DL_FUNC) &_ldmap_cov_htm, 2},
+    {"_ldmap_ldshrink_S", (DL_FUNC) &_ldmap_ldshrink_S, 6},
+    {"_ldmap_ht2int", (DL_FUNC) &_ldmap_ht2int, 1},
+    {"_ldmap_format_ht", (DL_FUNC) &_ldmap_format_ht, 1},
+    {"_ldmap_read_plink_bed_l", (DL_FUNC) &_ldmap_read_plink_bed_l, 3},
     {"_ldmap_gt_subset", (DL_FUNC) &_ldmap_gt_subset, 2},
+    {"_ldmap_gt_af", (DL_FUNC) &_ldmap_gt_af, 2},
+    {"_ldmap_gt_afs", (DL_FUNC) &_ldmap_gt_afs, 2},
     {"_ldmap_format_strings", (DL_FUNC) &_ldmap_format_strings, 1},
     {"_ldmap_gt2double", (DL_FUNC) &_ldmap_gt2double, 1},
     {"_ldmap_nldmap_region", (DL_FUNC) &_ldmap_nldmap_region, 3},
@@ -698,8 +870,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_split_ldmap_region_overlap", (DL_FUNC) &_ldmap_split_ldmap_region_overlap, 1},
     {"_ldmap_merge_ldmap_regions", (DL_FUNC) &_ldmap_merge_ldmap_regions, 2},
     {"_ldmap_ldmap_region_2_data_frame", (DL_FUNC) &_ldmap_ldmap_region_2_data_frame, 1},
+    {"_ldmap_new_ldmap_snp_impl", (DL_FUNC) &_ldmap_new_ldmap_snp_impl, 5},
     {"_ldmap_sample_interval", (DL_FUNC) &_ldmap_sample_interval, 4},
-    {"_ldmap_new_ldmap_snp", (DL_FUNC) &_ldmap_new_ldmap_snp, 5},
     {"_ldmap_is_strand_ambiguous", (DL_FUNC) &_ldmap_is_strand_ambiguous, 1},
     {"_ldmap_new_ldmap_allele", (DL_FUNC) &_ldmap_new_ldmap_allele, 1},
     {"_ldmap_order_snps", (DL_FUNC) &_ldmap_order_snps, 1},

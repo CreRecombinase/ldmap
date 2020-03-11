@@ -1,6 +1,10 @@
 #include "alleles.hpp"
 #include "ldmap/genetic_map.hpp"
+#include "ldmap.hpp"
 #include <progress.hpp>
+#include <range/v3/algorithm/lower_bound.hpp>
+#include <range/v3/algorithm/upper_bound.hpp>
+#include <range/v3/action/sort.hpp>
 
 double ConstantGeneticMap::interpolate_post(const int pos)const {
   const std::string error_mess="position"+std::to_string(pos)+" is after final position";
@@ -112,7 +116,7 @@ ConstantGeneticMap::ConstantGeneticMap(const Rcpp::IntegerVector &pos_vec,
 		     }
 		     orb = *mb;
 		   }
-		   return (std::move(retmap));
+		   return (retmap);
 		 }(pos_vec, map_vec, strict_)) {}
 
 
@@ -144,3 +148,158 @@ Rcpp::NumericVector interpolate_genetic_map(const Rcpp::NumericVector &map,
 }
 
 
+
+double linear_interp(const std::pair<SNP,double> prev_it,
+                     const std::pair<SNP,double> next_it,
+                     const SNP pos){
+
+  const auto [prev_snp,prev_map] = prev_it;
+  const auto [next_snp,next_map] = next_it;
+
+  // const int prev_mappos = prev_it->first;
+  // const int mappos = next_it->first;
+  // const double prev_map = prev_it->second;
+  // const double cur_map = next_it->second;
+
+
+  const double frac = pos.relative_distance(prev_snp,next_snp);
+  if(std::isnan(frac)){
+    Rcpp::stop("cannot perform linear interpolation between chromosomes");
+  }
+  // double frac = static_cast<double>(pos - prev_mappos) /
+  //   static_cast<double>(mappos - prev_mappos);
+  // if(strict){
+  //   if (frac < 0 || frac > 1) {
+  //     Rcpp::Rcerr << "in position: " << pos << std::endl;
+  //     Rcpp::Rcerr << prev_it->first << "," << prev_it->second << std::endl;
+  //     Rcpp::Rcerr << next_it->first << "," << next_it->second << std::endl;
+  //     Rcpp::Rcerr << "frac:" << frac << std::endl;
+  //     Rcpp::stop("frac must be positive (and less than 1)");
+  //   }
+
+  return (prev_map + frac * (next_map - prev_map));
+}
+
+
+
+// find a snp less than or equal to and a snp greater than pos
+template<typename T>
+std::pair<T, T> find_pair(T zipped_b,T zipped_e, const SNP pos){
+
+  static_assert(SNP::make_SNP<true>(1,15).distance(SNP::make_SNP<true>(1,10))==5);
+  static_assert(SNP::make_SNP<true>(1,10).distance(SNP::make_SNP<true>(1,15))==(-5));
+  //  static_assert(SNP::make_SNP<true>(1,10).distance(SNP::make_SNP<true>(1,20))==(-5));
+  //  static_assert(SNP::make_SNP<true>(1,15).relative_distance(SNP::make_SNP<true>(1,10),SNP::make_SNP<true>(1,15)));
+  auto zipped_range = ranges::subrange(zipped_b,zipped_e);
+  if(ranges::size(zipped_range)<2){
+    Rcpp::stop("zipped_range must be at least size 2 to interpolate");
+  }
+
+  auto ret_it = ranges::lower_bound(zipped_range,pos,ranges::less(),&std::pair<SNP,double>::first);
+
+  // there is no value greater than or equal to pos in zipped_range
+  // this means every value is less than pos in zipped_range
+  // and it also means that you can't interpolate between two
+  // values, instead we'll do "right interpolation"
+  if(ret_it==std::end(zipped_range)){
+    auto lp = ranges::prev(ranges::end(zipped_range));
+    auto fp = ranges::prev(lp);
+    return std::make_pair(fp,lp);
+  }
+
+
+  if(ret_it->first.distance(pos)==0)
+    return std::make_pair(ret_it,next(ret_it));
+
+
+  // If the first element is the smallest geq pos, then there is nothing lt
+  // This means we'll do "left interpolation"
+  if(ret_it == zipped_b)
+    return std::make_pair(ret_it,next(ret_it));
+
+  // The element before the smallest geq must be lt (if strictly sorted)
+
+  auto fp = ranges::prev(ret_it);
+  auto lp = ret_it;
+  // Rcpp::Rcerr<<fp->first<<" vs "<<lp->first<<std::endl;
+  // Rcpp::Rcerr<<static_cast<int>(fp->first.chrom())<<" vs "<<static_cast<int>(lp->first.chrom())<<std::endl;
+  // Rcpp::Rcerr<<std::boolalpha<<! ((fp->first.chrom() ) == (lp->first.chrom() ))<<std::endl;
+  if(! ((fp->first.chrom() ) == (lp->first.chrom() ))){
+    if(pos.chrom()==fp->first.chrom()){
+      if(fp > zipped_b)
+        return std::make_pair(ranges::prev(fp),fp);
+      else{
+        //        Rcpp::Rcerr<<fp->first.chrom()<<" vs "<<lp->first.chrom()<<" looking for  "<<pos<<std::endl;
+        Rcpp::stop("cannot perform (left) linear interpolation between chromosomes");
+      }
+    }else{
+      if(ranges::next(lp) < zipped_e)
+        return std::make_pair(lp,ranges::next(lp));
+      else{
+        // Rcpp::Rcerr<<fp->first<<" vs "<<lp->first<<std::endl;
+        // Rcpp::Rcerr<<fp->first.chrom()<<" vs "<<lp->first.chrom()<<" looking for  "<<pos<<std::endl;
+        Rcpp::stop("cannot perform (right) linear interpolation between chromosomes");
+      }
+    }
+  }
+  return std::make_pair(fp,lp);
+}
+
+
+
+//' Linear interpolation of genetic map values
+//'
+//' @param map  is a length `p` vector of cumulative genetic map values. `map` must be _strictly_ _sorted_
+//' @param map_pos  is a length `p` vector of genome coordinates corresponding to the reference genetic map. `map_pos` must be _strictly_ _sorted_
+//' @param target_pos is a vector of coordinates to interpolate
+//' @param strict a boolean indicating whether to strictly interpolate
+//' @param progress a boolean indicating whether to indicate progress with a progress bar
+//'
+//' @export
+//[[Rcpp::export]]
+Rcpp::NumericVector new_interpolate_genetic_map(const Rcpp::NumericVector &map,
+					    const Rcpp::NumericVector map_pos,
+					    const Rcpp::NumericVector target_pos,
+					    const bool strict = true,
+					    const bool progress = false) {
+
+
+  auto make_snp = [](const double x) -> SNP{
+                       return SNP::make_SNP(bit_cast<uint64_t>(x));
+                     };
+
+  const size_t p = target_pos.size();
+  auto ref_pos=ranges::views::transform(rcpp_doubles(map_pos),make_snp);
+  auto q_pos =  ranges::views::common(ranges::views::transform(rcpp_doubles(target_pos),make_snp));
+
+
+  auto dub_map = rcpp_doubles(map);
+
+  auto zip_v = ranges::views::zip(ref_pos,dub_map) |
+    ranges::to<std::vector>() |
+    ranges::actions::sort([](std::pair<SNP,double> a,std::pair<SNP,double> b){
+                            return a.first < b.first;
+                          });
+
+
+
+  auto zip_b = std::begin(zip_v);
+  auto zip_e = std::end(zip_v);
+
+
+
+  return Rcpp::NumericVector::import_transform(
+                                               std::begin(q_pos),
+                                               std::end(q_pos),
+                                               [&](SNP ix) mutable  -> double {
+                                                 auto [first_p, last_p] = find_pair(zip_b,zip_e,ix);
+                                                 if(first_p->first.distance(ix) == 0)
+                                                   return first_p->second;
+                                                 double ret_v = linear_interp(*first_p,*last_p,ix);
+                                                 zip_b = first_p;
+                                                 return ret_v;
+                                               });
+
+
+
+}

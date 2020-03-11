@@ -34,7 +34,7 @@ rregion <- function(n,chroms=1L:23L,sort=TRUE){
 ##' @param n number of SNPs to simulate
 ##' @param chroms chromosomes from which to draw
 ##' @param sort whether to sort output
-##' @param ...
+##' @param ... currently unused
 ##' @return
 ##' @author Nicholas Knoblauch
 rsnp <- function(n, chroms = 1L:23L, sort = TRUE,replace=FALSE, ...){
@@ -49,7 +49,7 @@ rsnp <- function(n, chroms = 1L:23L, sort = TRUE,replace=FALSE, ...){
   if (sort)
     tdf <- dplyr::arrange(tdf, chrom, pos)
 
-  return(new_ldmap_snp(tdf$chrom, tdf$pos, NA2N = TRUE))
+  return(new_ldmap_snp(tdf$chrom, tdf$pos))
   
 }
 
@@ -79,7 +79,7 @@ rsnp_region <- function(ldmap_region, n, sort = TRUE,replace=FALSE){
     pos <- purrr::flatten_int(purrr::map2(ldmap_region,n,function(x,y){
       sample(as.integer(starts(x)):as.integer(ends(x)),y,replace=replace)
     }))
-    rets <- new_ldmap_snp(chrom,pos,NA2N=TRUE)
+    rets <- new_ldmap_snp(chrom,pos)
     if(sort){
       return(sort(rets))
     }

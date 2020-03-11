@@ -3,7 +3,7 @@
 class ConstantGeneticMap{
   const bool strict;
   using	idmap=std::map<int,double>;
-  const idmap genmap;
+  idmap genmap;
 public:
   ConstantGeneticMap(const Rcpp::IntegerVector &pos_vec,
                      const Rcpp::NumericVector &map_vec,

@@ -1,3 +1,13 @@
+chromosome_levels <- function(as_ucsc=TRUE){
+    paste0(ifelse(as_ucsc,"chr",""),
+           c(as.character(1:22),
+             c("X",
+               "Y")))
+}
+
+
+
+##'
 ##' column specifier for chromosme
 ##'
 ##' @param prefix_chr boolean indicating whether or not there is a `chr` prefix
@@ -6,10 +16,7 @@
 ##' @export
 col_chromosome <- function(prefix_chr =  TRUE, ...) {
     if (prefix_chr)
-        return(readr::col_factor(paste0("chr",
-                                        c(as.character(1:22),
-                                          c("X",
-                                            "Y")))))
+        return(readr::col_factor(levels=chromosome_levels(TRUE)))
     return(readr::col_integer())
 }
 
@@ -91,19 +98,19 @@ write_bed <- function(df,path,region_col=region_cols(df),write_fun=readr::write_
 #'
 #' @return a dataframe with only SNPs from inside `ldmr`
 #' @export
-read_snp_region_h5 <- function(h5file,ldmr,datapath="snp",...){
+read_snp_region_h5 <- function(h5file,ldmr,datapath="snp", ...){
     if(!requireNamespace("EigenH5", quietly = TRUE)){
         stop("Package \"EigenH5\" needed for this function to work, please install it `(remotes::install_github(\"CreRecombinase/EigenH5\")`)",call.=FALSE)
     }
     argl <- rlang::list2(...)
-    if("chrom_offset" %in% EigenH5::ls_h5(h5file)){
+    if ("chrom_offset" %in% EigenH5::ls_h5(h5file)){
         chroms <- unique(chromosomes(ldmr))
-        co_df <- read_df_h5(h5file,"chrom_offset",subset=chroms)
-        if(nrow(co_df)==1){
+        co_df <- EigenH5::read_df_h5(h5file,"chrom_offset", subset=chroms)
+        if (nrow(co_df) == 1){
             ss=seq(from=co_df$offset,length.out = co_df$datasize)
-            snp_df <- rlang::exec(EigenH5::read_df_h5,filename=h5file,datapath = datapath,subset=ss,!!!argl) 
+            snp_df <- rlang::exec(EigenH5::read_df_h5,filename=h5file,datapath = datapath,subset=ss, !!!argl)
             sc <- snp_df[[snp_cols(snp_df)]]
-            return(dplyr::filter(snp_df,sc %overlaps%ldmr))
+            return(dplyr::filter(snp_df,sc %overlaps% ldmr))
         }
         else{
             return(purrr::pmap_dfr(co_df,function(offset,datasize,...){
@@ -118,7 +125,7 @@ read_snp_region_h5 <- function(h5file,ldmr,datapath="snp",...){
     snp_col <- dplyr::filter(sinfo,lengths(attributes)==1) %>% 
         dplyr::filter(purrr::map_lgl(attributes,function(x){
         xc <- x[["class"]]
-        if(is.null(xc)){
+        if (is.null(xc)){
             return(FALSE)
         }
         return("ldmap_snp"%in% xc)
@@ -129,15 +136,14 @@ read_snp_region_h5 <- function(h5file,ldmr,datapath="snp",...){
     sro <- srv %overlaps% sort(ldmr)
     snp_lgl <- which( sro)
     argl$subset <- snp_lgl
-    retdf <-    rlang::exec(EigenH5::read_df_h5,filename=h5file,datapath=datapath,!!!argl)
+retdf <- rlang::exec(EigenH5::read_df_h5, filename = h5file, datapath = datapath, !!!argl)
     return(retdf)
 }
 
 
-##' Read the contents of a fasta file as an ldmap_allele
+##' Read the contents of a fasta file as a vector of ldmap_alleles
 ##'
-
-##' @param fastafile
+##' @param fastafile path to a fasta file (can be gzipped)
 ##' @param subset positions to subset in the file.  Default is the whole sequence
 ##' @param line_length the number of nucleotide characters per line (default is 50)
 ##' @return a vector ldmap_allele with the sequence contents of the file

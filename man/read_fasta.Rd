@@ -2,11 +2,13 @@
 % Please edit documentation in R/read_utils.R
 \name{read_fasta}
 \alias{read_fasta}
-\title{Read the contents of a fasta file as an ldmap_allele}
+\title{Read the contents of a fasta file as a vector of ldmap_alleles}
 \usage{
 read_fasta(fastafile, subset = NULL, line_length = 50L)
 }
 \arguments{
+\item{fastafile}{path to a fasta file (can be gzipped)}
+
 \item{subset}{positions to subset in the file.  Default is the whole sequence}
 
 \item{line_length}{the number of nucleotide characters per line (default is 50)}
@@ -15,5 +17,5 @@ read_fasta(fastafile, subset = NULL, line_length = 50L)
 a vector ldmap_allele with the sequence contents of the file
 }
 \description{
-Read the contents of a fasta file as an ldmap_allele
+Read the contents of a fasta file as a vector of ldmap_alleles
 }

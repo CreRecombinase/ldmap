@@ -95,7 +95,9 @@ constexpr inline char ascii2Nuc(const int l){
   return ascii2Nuc(static_cast<char>(l));
 }
 
-constexpr inline char ascii2Nuc(const char *l){
+constexpr inline char ascii2Nuc(const char *l) { return ascii2Nuc(l[0]); }
+
+constexpr inline char ascii2Nuc(std::string_view l){
   return ascii2Nuc(l[0]);
 }
 inline constexpr char operator"" _L(char l){return ascii2Nuc(l);}
@@ -570,6 +572,7 @@ public:
     return boost::icl::construct<boost::icl::discrete_interval<uint64_t>>(start(),end(),boost::icl::interval_bounds::left_open());
   }
 
+
   template<bool NA2N>
   static constexpr SNP  make_SNP(const unsigned char chrom, const uint64_t pos, const Nuc ref, const Nuc alt) noexcept{
     SNP snp(make_ldmap_snp(chrom,pos,ref.let,alt.let));
@@ -640,6 +643,7 @@ public:
     return clear_alleles(snp)==clear_alleles(other.snp);
   }
 
+
   constexpr int distance(const Region &other) const noexcept;
   constexpr bool overlap(const Region &other) const noexcept;
   constexpr bool contains(const Region &other) const noexcept;
@@ -648,6 +652,20 @@ public:
   constexpr bool operator>(const Region &other) const noexcept;
   constexpr bool operator==(const Region &other) const noexcept;
   constexpr bool operator!=(const Region &other) const noexcept;
+    constexpr bool between(const SNP &left, const SNP &right) const noexcept{
+    return (*this > left ) and (*this < right);
+  }
+
+  // Returns the distance between self and left as a fraction of the distance between left and right
+  // if *this < left, returns negative, if *this > right, returns >1 , otherwise returns a number between 0 and 1
+  // if left.chrom()!=right.chrom(), returns NAN
+  constexpr double relative_distance(const SNP &left, const SNP &right) const noexcept{
+    if((left.chrom()!=right.chrom()) or chrom() != left.chrom()){
+      return std::numeric_limits<double>::quiet_NaN();
+    }
+    return static_cast<double>(distance(left))/static_cast<double>(right.distance(left));
+  }
+
 
   constexpr SNP start_SNP() const noexcept{
     return *this;
@@ -869,6 +887,9 @@ class Region{
     return overlap(other);
   }
 
+
+
+
   constexpr bool overlap(const SNP &other) const noexcept{
 
     if(get_chrom<unsigned char>(this->br)!=other.chrom())
@@ -979,8 +1000,9 @@ public:
 };
 
 class RegionSets{
-  std::vector<RegionSet> rsets;
   size_t count;
+  std::vector<RegionSet> rsets;
+
 public:
   RegionSets():count(0),rsets(){};
   size_t insert_region(Region r){

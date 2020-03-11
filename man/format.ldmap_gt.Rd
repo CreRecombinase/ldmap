@@ -2,7 +2,7 @@
 % Please edit documentation in R/plink_utils.R
 \name{format.ldmap_gt}
 \alias{format.ldmap_gt}
-\title{Formatting method for ldmap allele}
+\title{Formatting method for ldmap genotype}
 \usage{
 \method{format}{ldmap_gt}(x, ...)
 }
@@ -15,5 +15,5 @@
 
 }
 \description{
-Formatting method for ldmap allele
+Formatting method for ldmap genotype
 }

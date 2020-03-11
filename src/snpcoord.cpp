@@ -35,7 +35,6 @@
 #include <boost/icl/split_interval_set.hpp>
 #include <boost/icl/interval_map.hpp>
 #include <boost/config/warning_disable.hpp>
-#include <boost/iterator/counting_iterator.hpp>
 #include <boost/spirit/home/x3.hpp>
 
 #if __has_include("tbb/parallel_for.h")
@@ -860,110 +859,146 @@ SEXP ldmap_region_2_data_frame(Rcpp::NumericVector ldmap_region){
 
 
 
-template<typename Vec_t>
+// template<typename Vec_t>
+// Rcpp::NumericVector new_ldmap_snp_s(Rcpp::IntegerVector chrom,
+//                                     Rcpp::NumericVector pos,
+//                                     Vec_t ref,
+//                                     Vec_t alt,
+//                                     bool NA2N
+//                                     ){
+
+//   const size_t p=chrom.size();
+//   const size_t allele_size=ref.size();
+//   if(allele_size!=alt.size())
+//     Rcpp::stop("ref and alt must be the same size");
+
+
+//   Rcpp::NumericVector ret=Rcpp::no_init(p);
+//   ret.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
+
+//   if(NA2N){
+//     for(int i=0; i<p; i++){
+//       SNP mp=SNP::make_SNP<true>(static_cast<unsigned char>(chrom(i)),
+//                                  static_cast<uint64_t>(pos(i)),
+//                                  Nuc{ascii2Nuc(ref(i))},
+//                                  Nuc{ascii2Nuc(alt(i))});
+//       ret(i)=mp.to_double();
+//     }
+//   }else{
+//     for(int i=0; i<p; i++){
+//       SNP mp=SNP::make_SNP<false>(static_cast<unsigned char>(chrom(i)),
+//                                   static_cast<uint64_t>(pos(i)),
+//                                   Nuc{ascii2Nuc(ref(i))},
+//                                   Nuc{ascii2Nuc(alt(i))}
+//                                   );
+//       ret(i)=mp.to_double();
+//     }
+//   }
+//   return ret;
+// }
+
+
+using allele_types = std::variant<Rcpp::IntegerVector,
+                                  Rcpp::StringVector,
+                                  Rcpp::RawVector>;
+
+
+
 Rcpp::NumericVector new_ldmap_snp_s(Rcpp::IntegerVector chrom,
-                                    Rcpp::NumericVector pos,
-                                    Vec_t ref,
-                                    Vec_t alt,
-                                    bool NA2N
+                                    Rcpp::IntegerVector pos,
+                                    Rcpp::RawVector ref,
+                                    Rcpp::RawVector alt
                                     ){
 
-  const size_t p=chrom.size();
-  const size_t allele_size=ref.size();
-  if(allele_size!=alt.size())
-    Rcpp::stop("ref and alt must be the same size");
+  const size_t pc=chrom.size();
+  const size_t ps = pos.size();
 
 
+  const size_t rs=ranges::size(ref);
+  const size_t as=ranges::size(ref);
+
+  const size_t p = std::max(pc,ps);
   Rcpp::NumericVector ret=Rcpp::no_init(p);
-  ret.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
 
-  if(NA2N){
-    for(int i=0; i<p; i++){
-      SNP mp=SNP::make_SNP<true>(static_cast<unsigned char>(chrom(i)),
-                                 static_cast<uint64_t>(pos(i)),
-                                 Nuc{ascii2Nuc(ref(i))},
-                                 Nuc{ascii2Nuc(alt(i))});
-      ret(i)=mp.to_double();
+
+  ret.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
+  auto [ min_p, max_p] = std::minmax(pc,ps);
+  if(max_p>0){
+    if(min_p==0)
+      Rcpp::stop("In new_ldmap_snp, both chrom and pos may be empty or neither can be empty");
+    if(min_p>1 and (max_p % min_p !=0 )){
+      if(ps>pc)
+        Rcpp::warning("In new_ldmap_snp: length(chrom) is not a multiple of length(pos), recycling");
+      Rcpp::warning("In new_ldmap_snp: length(pos) is not a multiple of length(chrom), recycling");
     }
-  }else{
-    for(int i=0; i<p; i++){
-      SNP mp=SNP::make_SNP<false>(static_cast<unsigned char>(chrom(i)),
-                                  static_cast<uint64_t>(pos(i)),
-                                  Nuc{ascii2Nuc(ref(i))},
-                                  Nuc{ascii2Nuc(alt(i))}
-                                  );
-      ret(i)=mp.to_double();
-    }
+  }
+
+  for(int i=0; i<p; i++){
+    auto tref = Nuc{ascii2Nuc(ref[i % rs])};
+    auto talt = Nuc{ascii2Nuc(alt[i % as])};
+    SNP mp=SNP::make_SNP<false>(static_cast<unsigned char>(chrom[i % pc]),
+                                static_cast<uint64_t>(pos[i % ps]),
+                                tref,
+                                talt);
+    ret(i)=mp.to_double();
   }
   return ret;
 }
 
+template <typename Rng>
+auto allele_range(Rcpp::RObject x) {
 
-
-template<typename Vec_t>
-Rcpp::NumericVector new_ldmap_snp_s(Rcpp::IntegerVector chrom,
-                                    Rcpp::NumericVector pos,
-                                    Vec_t ref,
-                                    bool NA2N
-                                    ){
-
-  const size_t p=chrom.size();
-  const size_t allele_size=ref.size();
-  if(chrom.size()!=pos.size())
-    Rcpp::stop("length(chrom) != length(pos) in new_ldmap_snp");
-  if(allele_size!=p)
-    Rcpp::stop("ref and chrom/pos must be the same size");
-
-
-  Rcpp::NumericVector ret=Rcpp::no_init(p);
-  ret.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
-
-  if(NA2N){
-    for(int i=0; i<p; i++){
-      SNP mp=SNP::make_SNP<true>(static_cast<unsigned char>(chrom(i)),
-                                 static_cast<uint64_t>(pos(i)),
-                                 Nuc{ascii2Nuc(ref(i))});
-      ret(i)=mp.to_double();
-    }
+  auto lamf= [](auto xe) -> Nuc{
+               return(Nuc{ascii2Nuc(xe)});
+             };
+  if(Rf_length(SEXP(x))==0){
+    Rng r;
+    return ranges::views::transform(r,lamf);
   }else{
-    for(int i=0; i<p; i++){
-      SNP mp=SNP::make_SNP<false>(static_cast<unsigned char>(chrom(i)),
-                                 static_cast<uint64_t>(pos(i)),
-                                 Nuc{ascii2Nuc(ref(i))});
-      ret(i)=mp.to_double();
-    }
+    Rng r(x);
+    return ranges::views::transform(r,lamf);
+
   }
-  return ret;
 }
 
+//' Creation of new ldmap_snps
+//'
+//' @param chrom an integer vector of chromosomes
+//' @param pos a double vector of positions
+//' @param ref an optional vector of reference allele (see `?new_ldmap_allele`)
+//' @param alt an optional vector of alternate allele (see `?new_ldmap_allele`)
+//' @param NA2N an optional boolean specifying whether missing/NA alleles should be treated as "N"
+//'
+//[[Rcpp::export]]
+Rcpp::NumericVector new_ldmap_snp_impl(Rcpp::IntegerVector chrom,
+                                       Rcpp::IntegerVector pos,
+                                       Rcpp::RawVector ref,
+                                       Rcpp::RawVector alt,
+                                       const bool NA2N=false){
 
 
-Rcpp::NumericVector new_ldmap_snp_s(Rcpp::IntegerVector chrom,
-                                    Rcpp::NumericVector pos,
-                                    const bool NA2N){
 
-  const size_t p=chrom.size();
-  if(chrom.size()!=pos.size())
-    Rcpp::stop("length(chrom) != length(pos) in new_ldmap_snp");
-  Rcpp::NumericVector ret=Rcpp::no_init(p);
-  ret.attr("class")=Rcpp::StringVector::create("ldmap_snp","vctrs_vctr");
 
-  if(NA2N){
-    for(int i=0; i<p; i++){
-      SNP mp=SNP::make_SNP<true>(static_cast<unsigned char>(chrom(i)),
-                                 static_cast<uint64_t>(pos(i)));
-      ret(i)=mp.to_double();
-    }
-  }else{
-    for(int i=0; i<p; i++){
-      SNP mp=SNP::make_SNP<false>(static_cast<unsigned char>(chrom(i)),
-                                 static_cast<uint64_t>(pos(i)));
-      ret(i)=mp.to_double();
-    }
+  static_assert(sizeof(Snp)==sizeof(double) and sizeof(double) == 8,"packed SNP structure must be the size of a double precision floating point (8 bytes)");
+
+  const size_t allele_size = Rf_length(SEXP(ref));
+  if(Rf_length(SEXP(alt))!=allele_size){
+    Rcpp::stop("ref and alt must be the same size or can both be empty/NULL or alt can be empty/NULL");
+  }
+  bool use_ref=allele_size!=0;
+  bool use_alt=Rf_length(SEXP(alt))!=0;
+
+  if(use_ref and use_alt and (ref.sexp_type() != alt.sexp_type())){
+    Rcpp::stop("ref and alt must both be of the same type if both are to be used");
   }
 
-  return ret;
+  // rules for ldmap snp ref and alt:
+  // alt cannot be provided (have length>0) without ref
+  // can be of type string,integer or raw
+  //
+  return new_ldmap_snp_s(chrom,pos,ref,alt);
 }
+
 
 
 
@@ -1027,68 +1062,6 @@ Rcpp::IntegerVector sample_interval(Rcpp::IntegerVector n,Rcpp::IntegerVector be
   // }
 
   return(ret);
-}
-
-
-//' Creation of new ldmap_snps
-//'
-//' @param chrom an integer vector of chromosomes
-//' @param pos a double vector of positions
-//' @param ref an optional vector of reference allele (see `?new_ldmap_allele`)
-//' @param alt an optional vector of alternate allele (see `?new_ldmap_allele`)
-//' @param NA2N an optional boolean specifying whether missing/NA alleles should be treated as "N"
-//'
-//' @export
-//[[Rcpp::export]]
-Rcpp::NumericVector new_ldmap_snp(Rcpp::IntegerVector chrom=Rcpp::IntegerVector::create(),
-                                  Rcpp::NumericVector pos=Rcpp::NumericVector::create(),
-                                  Rcpp::RObject ref=Rcpp::IntegerVector::create(),
-                                  Rcpp::RObject alt=Rcpp::IntegerVector::create(),
-                                  const bool NA2N=false){
-
-
-
-
-  static_assert(sizeof(Snp)==sizeof(double),"packed structure is the size of a double");
-
-
-
-
-
-  const size_t allele_size = Rf_length(SEXP(ref));
-  if(Rf_length(SEXP(alt))!=allele_size){
-    Rcpp::stop("ref and alt must be the same size or can both be empty/NULL or alt can be empty/NULL");
-  }
-  bool use_ref=allele_size!=0;
-  bool use_alt=Rf_length(SEXP(alt))!=0;
-
-  if(use_ref and use_alt and (ref.sexp_type() != alt.sexp_type())){
-    Rcpp::stop("ref and alt must both be of the same type if both are to be used");
-  }
-
-
-  if(use_ref){
-    switch (ref.sexp_type()) {
-    case INTSXP:{
-      if(use_alt)
-        return new_ldmap_snp_s<Rcpp::IntegerVector>(chrom,pos,SEXP(ref),SEXP(alt),NA2N);
-      return new_ldmap_snp_s<Rcpp::IntegerVector>(chrom,pos,SEXP(ref),NA2N);
-    }
-    case STRSXP:{
-      if(use_alt)
-        return new_ldmap_snp_s<Rcpp::StringVector>(chrom,pos,SEXP(ref),SEXP(alt),NA2N);
-      return new_ldmap_snp_s<Rcpp::StringVector>(chrom,pos,SEXP(ref),NA2N);
-    }
-    case RAWSXP:{
-      if(use_alt)
-        return new_ldmap_snp_s<Rcpp::RawVector>(chrom,pos,SEXP(ref),SEXP(alt),NA2N);
-      return new_ldmap_snp_s<Rcpp::RawVector>(chrom,pos,SEXP(ref),NA2N);
-    }
-    default:
-      Rcpp::stop("ref and alt must be coercable to ldmap_allele (i.e must be integer, character or raw)");
-    }
-  }
-  return new_ldmap_snp_s(chrom,pos,NA2N);
 }
 
 
@@ -1162,23 +1135,6 @@ Rcpp::RawVector new_ldmap_allele(Rcpp::RObject allele=Rcpp::IntegerVector::creat
   ret.attr("class")=Rcpp::StringVector::create("ldmap_allele","vctrs_vctr");
   return ret;
 }
-
-
-
-// Rcpp::NumericVector sort_snps(Rcpp::NumericVector struct_vec){
-
-//   Rcpp::NumericVector ret(struct_vec.begin(),struct_vec.end());
-
-
-//   std::sort(ret.begin(),ret.end(),[](const SNP a,const SNP b){
-//                                     return (a<b);
-//                                   });
-//   ret.attr("class") = struct_vec.attr("class");
-//   ret.attr("sorted")=Rcpp::LogicalVector::create(true);
-//   return(ret);
-// }
-
-
 
 //' sorting method for ldmap snps
 //'

@@ -1,5 +1,27 @@
 
 
+#' @method vec_ptype2 ldmap_snp
+#' @export
+#' @export vec_ptype2.ldmap_snp
+#'
+vec_ptype2.ldmap_snp <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_snp", y)
+
+
+#' @method vec_ptype2.ldmap_snp ldmap_snp
+#' @export
+vec_ptype2.ldmap_snp.ldmap_snp <- function(x, y, ...) new_ldmap_snp()
+
+#' @method vec_ptype2.ldmap_snp double
+#' @export
+vec_ptype2.ldmap_snp.double <- function(x, y, ...) double()
+
+#' @method vec_ptype2.double ldmap_snp
+#' @export
+vec_ptype2.double.ldmap_snp <- function(x, y, ...) double()
+
+
+
+
 #'
 #' @method is.na ldmap_snp
 #' @export
@@ -60,31 +82,6 @@ vec_proxy_equal.ldmap_allele <- function(x, ...) {
 
 
 
-#' @method vec_ptype2 ldmap_snp
-#' @export
-#' @export vec_ptype2.ldmap_snp
-#'
-vec_ptype2.ldmap_snp <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_snp", y)
-
-
-
-#' @method vec_ptype2.ldmap_snp ldmap_snp
-#' @export
-vec_ptype2.ldmap_snp.ldmap_snp <- function(x, y, ...) new_ldmap_snp()
-
-#' @method vec_ptype2.ldmap_snp double
-#' @export
-vec_ptype2.ldmap_snp.double <- function(x, y, ...) double()
-
-#' @method vec_ptype2.double ldmap_snp
-#' @export
-vec_ptype2.double.ldmap_snp <- function(x, y, ...) double()
-
-
-
-
-
-
 #' @param from A vector of type ldmap_snp or ldmap_region
 #'
 #' @param to  A vector of type ldmap_snp or ldmap_region
@@ -141,7 +138,62 @@ set_chromosomes <- function(x,to){
   return(y)
 }
 
+##' @title Convert data to chromosome
+##'
+##' Interprets the input as a chromosome
+##' (which I model as integers/factors)
+##'
+##' @param x data to be converted to a format compatible with new_ldmap_snp or new_ldmap_region
+##' @return an integer vector (I may or may not make this a factor in the future)
+##' @export
+as_chromosome <- function(x){
+    if(length(unique(x)) > 2^5)
+        stop("ldmap cannot currently represent genomic coordinates in reference genomes with more than 2^5(32) chromosomes");
+    if(is.integer(x))
+        return(x)
 
+    if(is.character(x)){
+        prefix_chr <- stringr::str_detect(x,"^chr")
+        if(! sum(prefix_chr) %in% c(0,length(prefix_chr))){
+            warning("'chr' should be a prefix for all or none of the input chromosomes, dropping 'chr'")
+            x <- stringr::str_remove(x,"^chr")
+            prefix_chr <- rep(FALSE,length(prefix_chr))
+        }
+        return(as.integer(factor(x,levels=chromosome_levels(all(prefix_chr)))))
+    }
+    return(as.integer(x))
+}
+
+
+
+##' @title create a new ldmap_snp vector
+##'
+##'
+##' @param chrom a vector that can be coerced to integer through
+##' `as_chromosome` (e.g c(1L), c(12.0), c("chrX","chr11"))
+##' @param pos a vector that can be coerced to integer
+##' @param ref a vector of single nucleotide reference alleles
+##' @param alt a vector of single nucleotide alternate alleles
+##' @return
+##' @export
+new_ldmap_snp <- function(chrom = integer(),
+                          pos = integer(),
+                          ref = new_ldmap_allele(),
+                          alt = new_ldmap_allele())
+{
+
+    chrom <- as_chromosome(chrom)
+    pos <- as.integer(pos)
+    ref <- new_ldmap_allele(ref)
+    alt <- new_ldmap_allele(alt)
+    if (length(ref) == 0 && length(chrom) > 0)
+        ref <- new_ldmap_allele("N")
+    if (length(alt) == 0 && length(chrom) > 0)
+        alt <- new_ldmap_allele("N")
+
+    new_ldmap_snp_impl(chrom, pos, ref, alt, NA2N = FALSE)
+
+}
 
 
 
@@ -161,7 +213,6 @@ vec_cast.ldmap_snp.default <- function(x, to, ...) {
 }
 
 
-
 #' Formatting method for ldmap snps
 #'
 #' @param x ldmap_snp
@@ -178,45 +229,11 @@ format.ldmap_snp <- function(x, ...) {
 
 
 
-#' @export vec_cast.ldmap_snp.ldmap_snp
-#' @export
-#' @method vec_cast.ldmap_snp ldmap_snp
-vec_cast.ldmap_snp.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "") x
-
-#' @export vec_cast.ldmap_snp.double
-#' @export
-#' @method vec_cast.ldmap_snp double
-vec_cast.ldmap_snp.double <- function(x, to, ..., x_arg = "", to_arg = "")
-    structure(vctrs::vec_data(x), class = c("ldmap_snp", "vctrs_vctr"))
-
-
-#' @export vec_cast.double.ldmap_snp
-#' @export
-#' @method vec_cast.double ldmap_snp
-vec_cast.double.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
-    vctrs::vec_data(x)
-
-
-#' @export vec_cast.integer64.ldmap_snp
-#' @export
-#' @method vec_cast.integer64 ldmap_snp
-vec_cast.integer64.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
-    structure(unclass(x),class="integer64")
-
-
-#' @export vec_cast.character.ldmap_snp
-#' @export
-#' @method vec_cast.character ldmap_snp
-vec_cast.character.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
-    format_ldmap_snp(x)
-
-
 
 #' @export
 as_ldmap_snp <- function(x) {
   vec_cast(x, new_ldmap_snp())
 }
-
 
 
 
@@ -361,103 +378,7 @@ compact_snp_struct <- function(df,
   return(dplyr::select(df, -dplyr::one_of(ucols)))
 }
 
-#' @method vec_ptype2 ldmap_allele
-#' @export
-#' @export vec_ptype2.ldmap_allele
-#'
-vec_ptype2.ldmap_allele <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_allele", y)
 
-#' @method vec_ptype2.ldmap_allele ldmap_allele
-#' @export
-#' @export vec_ptype2.ldmap_allele.ldmap_allele
-vec_ptype2.ldmap_allele.ldmap_allele <- function(x, y, ...)
-    new_ldmap_allele()
-
-#' @export vec_ptype2.ldmap_allele.character
-#' @method vec_ptype2.ldmap_allele character
-#' @export
-vec_ptype2.ldmap_allele.character <- function(x, y, ...)
-    character()
-
-#' @export vec_ptype2.character.ldmap_allele
-#' @method vec_ptype2.character ldmap_allele
-#' @export
-vec_ptype2.character.ldmap_allele <- function(x, y, ...)
-    character()
-
-#' @export vec_ptype2.ldmap_allele.integer
-#' @method vec_ptype2.ldmap_allele integer
-#' @export
-vec_ptype2.ldmap_allele.integer <- function(x, y, ...) integer()
-
-#' @export vec_ptype2.integer.ldmap_allele
-#' @method vec_ptype2.integer ldmap_allele
-#' @export
-vec_ptype2.integer.ldmap_allele <- function(x, y, ...) integer()
-
-#' @export vec_cast.ldmap_allele
-#' @method vec_cast ldmap_allele
-#' @export
-vec_cast.ldmap_allele <- function(x, to, ...) {
-  UseMethod("vec_cast.ldmap_allele")
-}
-
-#' @export
-vec_cast.ldmap_allele.default <- function(x, to, ...) {
-  vec_default_cast(x, to)
-}
-
-
-#' @export vec_cast.ldmap_allele.ldmap_allele
-#' @export
-#' @method vec_cast.ldmap_allele ldmap_allele
-vec_cast.ldmap_allele.ldmap_allele <- function(x, to, ..., x_arg = "", to_arg = "") x
-
-
-
-#' @export vec_cast.ldmap_allele.character
-#' @method vec_cast.ldmap_allele character
-#' @export
-vec_cast.ldmap_allele.character <- function(x, to, ...) {
-  new_ldmap_allele(x)
-}
-
-
-#' @export vec_cast.ldmap_allele.integer
-#' @method vec_cast.ldmap_allele integer
-#' @export
-vec_cast.ldmap_allele.integer <- function(x, to, ...) {
-  new_ldmap_allele(x)
-}
-
-
-#' @export vec_cast.character.ldmap_allele
-#' @method vec_cast.character ldmap_allele
-#' @export
-vec_cast.character.ldmap_allele <- function(x, to, ...) {
-  format_ldmap_allele(x)
-}
-
-
-
-#' @export vec_cast.integer.ldmap_allele
-#' @method vec_cast.integer ldmap_allele
-#' @export
-vec_cast.integer.ldmap_allele <- function(x, to, ...) {
-  as_integer_ldmap_allele(x)
-}
-
-#' Formatting method for ldmap allele
-#'
-#' @param x ldmap_snp
-#' @param ... unused
-#' @return
-#' @export
-#' @export format.ldmap_allele
-#' @method format ldmap_allele
-format.ldmap_allele <- function(x, ...) {
-  format_ldmap_allele(x)
-}
 
 
 #' Whether or not your vector is a ldmap_snp
@@ -488,12 +409,6 @@ is_ldmap_snp <- function(x) {
 ldmap_snp <- function(x=double()){
   as_ldmap_snp(x)
 }
-
-
-
-
-
-
 
 
 

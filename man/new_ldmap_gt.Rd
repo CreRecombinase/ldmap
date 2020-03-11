@@ -5,6 +5,8 @@
 \title{Create a vector of plink genotypes from a raw byte vector}
 \usage{
 new_ldmap_gt(x, N = length(x) * 4)
+
+new_ldmap_gt(x, N = length(x) * 4)
 }
 \arguments{
 \item{x}{vector of bytes of type raw}
@@ -13,7 +15,11 @@ new_ldmap_gt(x, N = length(x) * 4)
 }
 \value{
 a vector of ldmap_gt
+
+a vector of ldmap_gt
 }
 \description{
+Create a vector of plink genotypes from a raw byte vector
+
 Create a vector of plink genotypes from a raw byte vector
 }

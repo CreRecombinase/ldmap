@@ -100,7 +100,7 @@ subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_f
 ##' estimate LD from a reference panel
 ##'
 ##'
-##' @param reference_file
+##' @param reference_file path to reference haplotype data
 ##' @param LDshrink boolean for whether to use ldshrink
 ##' @param read_map_fun function for reading snp metadata
 ##' @param read_dosage_fun function for reading dosage data
@@ -110,13 +110,6 @@ subset_rds <- function(ldmr, reference_files, output_file,init_fn , filter_map_f
 ##' @export
 panel_ld <- function(reference_file, LDshrink = TRUE, read_map_fn, read_dosage_fn) {
 
-    ## bs <- bigsnpr::snp_attach(reference_file)
-    ## bsmap <- tibble::as_tibble(bs$map) %>%
-    ##     compact_snp_struct(chrom =  "chromosome",
-    ##                        pos =  "physical.pos",
-    ##                        ref = "allele2",
-    ##                        alt = "allele1",
-    ##                        remove = FALSE)
     bsmap <- read_map_fn(reference_file)
     nbsx <- read_dosage_fn(reference_file, bsmap)
     ## nbsx <- bs$genotypes[,]
@@ -133,5 +126,3 @@ panel_ld <- function(reference_file, LDshrink = TRUE, read_map_fn, read_dosage_f
     colnames(R) <- as.character(bsmap$snp_struct)
     return(R)
 }
-
-

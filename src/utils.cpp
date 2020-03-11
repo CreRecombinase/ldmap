@@ -78,24 +78,24 @@ int allele_check(const char* query,const char* alt){
 //' Determine whether 2 alleles are compatible
 //' @param query_ref_alt is a ref/alt pair
 //' @param target_ref_alt is another ref/alt pair
-//' @return returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
+//' @return raw matrix
 //' @export
 //[[Rcpp::export]]
 Rcpp::RawMatrix snp2raw(Rcpp::IntegerMatrix input_matrix){
-  const size_t p = input_matrix.cols();
+  const int p = input_matrix.cols();
   const size_t N = input_matrix.rows();
   const size_t newsize = static_cast<size_t>(std::ceil(static_cast<double>(N)/ 8.0f));
   const size_t rem = N % 8;
   const size_t newsize_b = N-rem;
   // Rcpp::Rcout<<newsize_b<<std::endl;
   // Rcpp::Rcout<<rem<<std::endl;
-  char t_out;
+
   Rcpp::RawMatrix retmat(newsize,p);
 
   // RcppParallel::RMatrix<char> prm(retmat);
   // RcppParallel::RMatrix<int>  inpm(input_matrix);
   if(rem!=0){
-    for(size_t i=0; i<p; i++){
+    for(int i=0; i<p; i++){
       for(int j=0; j<newsize_b; j+=8){
 	retmat(j/8,i)=
 	  input_matrix(j+0,i)|
@@ -325,7 +325,7 @@ Rcpp::IntegerVector find_alleles(Rcpp::IntegerVector query_chrom,
                                  Rcpp::IntegerVector ref_chunk=Rcpp::IntegerVector::create()
                                   ){
   const size_t q_p = query_chrom.size();
-  const size_t r_p = ref_chrom.size();
+
   Progress p(0, false); // we need an instance, should be improved in next version
 
   if(query_chrom.size()!=query_pos.size()){
@@ -348,8 +348,8 @@ Rcpp::IntegerVector find_alleles(Rcpp::IntegerVector query_chrom,
 
 
   Reference_Snps refsnps(ref_chrom,ref_pos,ref_chunk);
-  auto q_chrom_it = query_chrom.begin();
-  auto q_pos_it = query_pos.begin();
+
+
 
   // auto q_chunk_e = query_chrom.begin();
 

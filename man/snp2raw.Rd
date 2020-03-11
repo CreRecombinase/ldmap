@@ -12,7 +12,7 @@ snp2raw(input_matrix)
 \item{target_ref_alt}{is another ref/alt pair}
 }
 \value{
-returns a vector with 1 if the query matches the target, -1 if a flip is required, or 0 if they are incompatible;
+raw matrix
 }
 \description{
 Determine whether 2 alleles are compatible

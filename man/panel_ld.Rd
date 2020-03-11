@@ -7,6 +7,8 @@
 panel_ld(reference_file, LDshrink = TRUE, read_map_fn, read_dosage_fn)
 }
 \arguments{
+\item{reference_file}{path to reference haplotype data}
+
 \item{LDshrink}{boolean for whether to use ldshrink}
 
 \item{read_map_fun}{function for reading snp metadata}

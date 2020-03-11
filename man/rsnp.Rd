@@ -12,6 +12,8 @@ rsnp(n, chroms = 1L:23L, sort = TRUE, replace = FALSE, ...)
 \item{chroms}{chromosomes from which to draw}
 
 \item{sort}{whether to sort output}
+
+\item{...}{currently unused}
 }
 \value{
 

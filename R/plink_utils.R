@@ -10,7 +10,7 @@
 ##' @return `readr::cols` specification
 ##' @export
 bim_cols <- function(
-                     chrom = col_chromosome( prefix_chr = TRUE),
+                     chrom = col_chromosome(prefix_chr = TRUE),
                      rsid =  readr::col_character(),
                      map =  readr::col_double(),
                      pos =  readr::col_integer(),
@@ -44,7 +44,7 @@ bim_cols <- function(
 ##' @export
 read_plink_bim <- function(file, compact = TRUE, cols = bim_cols(),read_fun=readr::read_tsv, ...) {
 
-    fc <- scan(as.character(file),what=character(),n=1)
+    fc <- scan(as.character(file), what = character(), n = 1, quiet = TRUE)
     chrp <- stringr::str_detect(fc,"^chr")
     levp <- all(stringr::str_detect(cols$cols$chrom$levels,"^chr"))
     if (levp != chrp){
@@ -101,6 +101,18 @@ new_ldmap_gt <- function(x,N=length(x)*4){
 }
 
 
+##' Create a vector of plink genotypes from a raw byte vector
+##'
+##' @param x vector of bytes of type raw
+##' @param N number of samples in the data(otherwise assumed it is length(x)*4
+##' @return a vector of ldmap_gt
+##' @export
+new_ldmap_gt <- function(x,N=length(x)*4){
+    retv <- new_vctr(x,N=N,class="ldmap_gt")
+}
+
+
+
 
 ##' Read plink bed file into a (relatively) tidy format
 ##'
@@ -112,25 +124,20 @@ read_plink_bed <- function(f,return_fam=FALSE){
     bim_df <- read_plink_bim(bimf)
     p  <- nrow(bim_df)
     fam_f <- fs::path_ext_set(f, "fam")
-    fam_df <- readr::read_delim(fam_f,delim=" ",col_names=names(fam_cols()$cols),col_types=fam_cols())
+    fam_df <- readr::read_delim(fam_f, delim=" ", col_names=names(fam_cols()$cols),col_types=fam_cols())
     N <- nrow(fam_df)
-
-    fc <- file(f, "rb")
-    fbytes <- readBin(fc, what = raw(), n = 3)
-    craw <- as.raw(c(0x6c, 0x1b, 0x01))
-    stopifnot(all.equal(fbytes, craw))
- #   blocks <- p*ceiling(N/4)
-    dplyr::mutate(bim_df,
-                  genotypes = purrr::map(seq_along(p),
-                                         ~new_ldmap_gt(
-    readBin(f, what = raw(), n = ceiling(N / 4)), N = N)))
-#    retvec <- readBin(f, what = raw(), n = blocks)
+    ## fc <- file(f, open = "rb", raw = TRUE)
+    ## fbytes <- readBin(fc, what = raw(), n = 3)
+    ## craw <- as.raw(c(0x6c, 0x1b, 0x01))
+    ## stopifnot(all.equal(fbytes, craw))
+    bim_df$genotypes  <-  read_plink_bed_l(f,p,N)
+    return(bim_df)
 
 }
 
 
 
-#' Formatting method for ldmap allele
+#' Formatting method for ldmap genotype
 #'
 #' @param x ldmap_gt
 #' @param ... unused
@@ -145,18 +152,32 @@ format.ldmap_gt <- function(x,...){
 
 
 
+
 #' @export
 `[.ldmap_gt` <-  function(x, i, ...) {
     return(gt_subset(x, i))
 }
 
 
-
 get_N <- function(x){
-    stopifnot(inherits(x,"ldmap_gt"))
     attr(x,"N")
 }
 
+##' @title Calculate allele frequency
+##'
+##'
+##' @param x either a vector of type `ldmap_gt`, a list_of of type `ldmap_gt`, or a vector for which
+##' @param na.rm whether or not to remove missing data
+##' @return
+##' @export
+calc_AF <- function(x, na.rm = FALSE){
+
+    if (inherits(x,"ldmap_gt"))
+        return(gt_af(x,na.rm))
+    if (inherits(x,"vctrs_list_of") && inherits(attr(x,"ptype"),"ldmap_gt"))
+        return(gt_afs(x,na.rm))
+    return(sum(x,na.rm=na.rm) / (2 * length(x[!is.na(x)])))
+}
 
 sum_N <- function(x,y){
     stopifnot(inherits(x,"ldmap_gt"),

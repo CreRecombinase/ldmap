@@ -11,12 +11,20 @@
 #' at each locus
 #' @export
 assign_genetic_map <- function(snp_df, map_df, strict = FALSE) {
-    u_chr <- dplyr::distinct(snp_df, chr)
-    snp_dfl <- split(snp_df, snp_df$chr)
-    map_dfl <- dplyr::semi_join(map_df, u_chr, by = "chr") %>% split(.$chr)
-    stopifnot(all(names(map_dfl) == names(snp_dfl)))
-    retdf <- purrr::map2_df(map_dfl, snp_dfl, ~ dplyr::mutate(.y, map = interpolate_genetic_map(.x$map, .x$pos, .y$pos, strict = strict)))
-    return(retdf)
+    ## snp_dfl <- split(snp_df, chromosomes(snp_df$snp))
+    ## map_dfl <- dplyr::filter(map_df, u_chr, by = "chr") %>% split(.$chr)
+    ## stopifnot(all(names(map_dfl) == names(snp_dfl)))
+
+    ## retdf <- purrr::map2_df(map_dfl,
+    ##                         snp_dfl,
+    ##                         ~ dplyr::mutate(.y,
+    ##                                         map = interpolate_genetic_map(.x$map,
+    ##                                                                       positions(.x$snp),
+    ##                                                                       positions(.y$snp),
+    ##                                                                       strict = strict)))
+
+    return(dplyr::mutate(snp_df,
+                         map=new_interpolate_genetic_map(map_df$map,map_df$snp,snp)))
 }
 
 
@@ -84,11 +92,11 @@ query_reference_snpset <- function(query_chr, query_pos, query_allele, query_blo
 #' @param x dataframe with at least one ldmap_snp column to join on
 #' @param y dataframe with at least one ldmap_snp column
 #' @param by column name of snp column
-#' @param suffix
+#' @param suffix suffix to add
 #' @param snp_struct_col column name of ldmap_snp in `gwas_df`
 #' @param flip_sign_col columns that should be flipped when the query SNP is flipped against the target
-#' @param rename_col
-#' @param remove_missing
+#' @param rename_col whether to rename column
+#' @param remove_missing whether to remove missing data
 #' @param remove_ambig whether to remove strand ambiguous query SNPs prior to trying to match target
 #' @return
 #' @export
