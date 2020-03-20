@@ -32,8 +32,14 @@ read_1kg_maps <- function(map_files,chromosomes=seq_along(map_files)){
                      map = readr::col_double(),
                      filtered = readr::col_double()
                  )
-    purrr::map2_dfr(map_files, chromosomes, function(tmap,chr) {
-        tmap_df <- vroom::vroom(tmap,
+    if (!requireNamespace("vroom", quietly = TRUE)) {
+        read_fun <- readr::read_delim
+    }else{
+        read_fun <- vroom::vroom
+    }
+
+    purrr::map2_dfr(map_files, chromosomes, function(tmap, chr) {
+        tmap_df <- read_fun(tmap,
                                 col_names = c("position", "rate", "map", "filtered"),
                                 col_types = rc,
                                 skip = 1) %>%

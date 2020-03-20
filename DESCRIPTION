@@ -30,4 +30,5 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.2
 Suggests: 
     testthat,
-    roxygen2
+    roxygen2,
+    vroom
