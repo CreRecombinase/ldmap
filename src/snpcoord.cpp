@@ -58,6 +58,25 @@
 #include <ctype.h>
 
 
+#define MAKE_CONST(x) const_val<decltype(x), x>{}
+#define STATIC_ASSERT_EQUAL(x, y) assert_equal(MAKE_CONST(x), MAKE_CONST(y));
+
+
+
+
+template<typename T, T val>
+struct const_val {
+    constexpr const_val() = default;
+    constexpr const_val(T v) {}
+};
+
+template<typename T, T A, typename U, U B>
+constexpr void assert_equal(const_val<T, A>, const_val<U, B>) {
+    static_assert(A == B, "Values are not equal!");
+}
+
+
+
 using vector_variant =
   std::variant<Rcpp::NumericVector, Rcpp::RawVector, Rcpp::IntegerVector,Rcpp::StringVector,Rcpp::LogicalVector,Rcpp::List>;
 
@@ -409,7 +428,7 @@ Rcpp::IntegerVector region_in_region(Rcpp::NumericVector ldmap_region_query,Rcpp
 
 
 
-  LDmapRegion ldmra(ldmap_region_query,false);
+  LDmapRegion ldmra(ldmap_region_query);
   LDmapRegion ldmr(ldmap_region_target);
 
   if(allow_overlap)
@@ -422,19 +441,12 @@ Rcpp::IntegerVector region_in_region(Rcpp::NumericVector ldmap_region_query,Rcpp
 
 
 
-//' Assign SNPs to ranges
-//'
-//' @param ldmap_snp vector of ldmap_snps (must be sorted)
-//' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
-//' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
-//' @export
 //[[Rcpp::export]]
-Rcpp::IntegerVector snp_in_region(Rcpp::NumericVector ldmap_snp,Rcpp::NumericVector ldmap_region){
+Rcpp::IntegerVector snp_in_region_(Rcpp::NumericVector ldmap_snp,Rcpp::NumericVector ldmap_region){
 
   LDmapSNP ldms(ldmap_snp,false);
   LDmapRegion ldmr(ldmap_region);
-
-  return ldmr.contains_vec(ldms);
+  return ldmr.overlaps_vec(ldms);
 
 }
 
@@ -449,6 +461,29 @@ Rcpp::IntegerVector snp_in_region(Rcpp::NumericVector ldmap_snp,Rcpp::NumericVec
 //[[Rcpp::export]]
 Rcpp::IntegerVector snp_overlap_snp(Rcpp::NumericVector x,Rcpp::NumericVector y){
 
+
+  // STATIC_ASSERT_EQUAL(SNP::make_SNP<false>(make_mask(0,6), make_mask(0,42), 'N'_N, 'N'_N).snp,
+  //                     make_mask(0,48));
+  LDmapSNP a(x,false);
+  LDmapSNP b(y);
+  return b.overlaps_vec(a);
+}
+
+
+
+
+//' Check SNPs for positional equality
+//'
+//' @param x vector of query ldmap_snps
+//' @param y vector of target ldmap_snps
+//' @return a vector of integers of length `x` that indexes into `y`
+//' @export
+//[[Rcpp::export]]
+Rcpp::IntegerVector snp_overlap_region(Rcpp::NumericVector x,Rcpp::NumericVector y){
+
+
+  // STATIC_ASSERT_EQUAL(SNP::make_SNP<false>(make_mask(0,6), make_mask(0,42), 'N'_N, 'N'_N).snp,
+  //                     make_mask(0,48));
   LDmapSNP a(x,false);
   LDmapRegion b(y);
   return b.overlaps_vec(a);
@@ -457,16 +492,9 @@ Rcpp::IntegerVector snp_overlap_snp(Rcpp::NumericVector x,Rcpp::NumericVector y)
 
 
 
-//' Assign SNPs to ranges
-//'
-//' @param ldmap_snp vector of ldmap_snps (must be sorted)
-//' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
-//' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
-//' @export
+
 //[[Rcpp::export]]
-Rcpp::IntegerVector region_overlap_snp(Rcpp::NumericVector ldmap_region,Rcpp::NumericVector ldmap_snp){
-
-
+Rcpp::IntegerVector region_overlap_snp_(Rcpp::NumericVector ldmap_region,Rcpp::NumericVector ldmap_snp){
 
   LDmapSNP ldms(ldmap_snp);
   LDmapRegion ldmr(ldmap_region);
@@ -500,10 +528,6 @@ Rcpp::List vec_from_bitset(tbb::concurrent_vector<std::pair<double,std::bitset<6
                                                                                Rcpp::IntegerVector rel(el);
                                                                                return RcppParallel::RVector<int>(rel);
                                                                              });
-  // auto start = tbb::make_zip_iterator(cnt0,bsp.cbegin());
-  // auto end = tbb::make_zip_iterator(cntp,bsp.cend());
-
-  // std::for_each(start,end,
   tbb::parallel_for(tbb::blocked_range<size_t>(0,p),
                     [&](const tbb::blocked_range<size_t> &r){
                       for(int i=r.begin(); i<r.end(); i++){
@@ -537,6 +561,8 @@ std::vector<RcppParallel::RVector<double>> prepare_regions(Rcpp::ListOf<Rcpp::Nu
                                                   });
   return input_regions;
 }
+
+
 
 //' Assign SNPs to ranges
 //'
@@ -905,7 +931,7 @@ using allele_types = std::variant<Rcpp::IntegerVector,
 
 
 Rcpp::NumericVector new_ldmap_snp_s(Rcpp::IntegerVector chrom,
-                                    Rcpp::IntegerVector pos,
+                                    Rcpp::NumericVector pos,
                                     Rcpp::RawVector ref,
                                     Rcpp::RawVector alt
                                     ){
@@ -971,7 +997,7 @@ auto allele_range(Rcpp::RObject x) {
 //'
 //[[Rcpp::export]]
 Rcpp::NumericVector new_ldmap_snp_impl(Rcpp::IntegerVector chrom,
-                                       Rcpp::IntegerVector pos,
+                                       Rcpp::NumericVector pos,
                                        Rcpp::RawVector ref,
                                        Rcpp::RawVector alt,
                                        const bool NA2N=false){
@@ -1682,14 +1708,6 @@ Rcpp::IntegerVector allele_match(Rcpp::NumericVector query,Rcpp::NumericVector r
   return ret_match;
 }
 
-// Rcpp::NumericVector flip_AF(Rcpp::NumericVector AF,Rcpp::IntegerVector allele_match){
-
-//   const size_t q_af=AF.size();
-//   const size_t ams=allele_match.size();
-
-
-
-// }
 
 
 

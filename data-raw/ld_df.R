@@ -1,6 +1,8 @@
 ## code to prepare `ld_df` dataset goes here
 #create a dataframe 
-#
+                                        #
+
+
 input_f <- fs::path_package("test_data/fourier_ls-all.bed.gz",package = "ldmap")
 ld_df <- read_bed(input_f,compact = FALSE)
 ld_df <- dplyr::group_by(ld_df,chrom)

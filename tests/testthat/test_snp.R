@@ -33,7 +33,9 @@ testthat::test_that("crazy bit packing works", {
     alt <- sample(letter_to_int, p, replace = T)
     ret <- new_ldmap_snp(chrom, pos, ref, alt)
     so_ret <- sort(ret)
-    cso_ret <- tibble::tibble(snp=ret) %>% dplyr::arrange(snp) %>% dplyr::pull(snp)
+    cso_ret <- tibble::tibble(snp = ret) %>%
+        dplyr::arrange(snp) %>%
+        dplyr::pull(snp)
     testthat::expect_equal(cso_ret,so_ret)
     cdf <- ldmap::ldmap_snp_2_dataframe(ret)
     testthat::expect_equal(cdf$chrom, chrom)
@@ -42,8 +44,8 @@ testthat::test_that("crazy bit packing works", {
     testthat::expect_equal(cdf$alt, alt)
 })
 
-testthat::test_that("we can read snp HDF5 files",{
-  
+testthat::test_that("we can read snp HDF5 files", {
+
   sort_colnames <- function(x){
     x[sort(colnames(x))]
   }  
@@ -172,12 +174,12 @@ testthat::test_that("we can index with ourselves", {
     names(nucs) <- nucs
     letter_to_int <- new_ldmap_allele(nucs)
     chrom <- sample(1:23, p, replace = TRUE)
-    pos <- sample(2^43, p, replace = T)
+    pos <- sample(2^25, p, replace = T)
     ref <- sample(letter_to_int, p, replace = T)
     alt <- sample(letter_to_int, p, replace = T)
     ret <- new_ldmap_snp(chrom, pos, ref, alt)
     sret <- sort(ret[-1])
-    sret_id <- 1:length(sret)
+    sret_id <- seq_len(length(sret))
     query <- sort(c(sample(ret[-1], size = 100), ret[1]))
 
     perf_match <- join_snp(query, sret)
@@ -199,7 +201,7 @@ testthat::test_that("we get the best match possible", {
     names(nucs) <- nucs
     letter_to_int <- new_ldmap_allele(nucs)
     chrom <- sample(1:23, 1)
-    pos <- sample(2^43, 1)
+    pos <- sample(2^35, 1)
     ref <- new_ldmap_allele("G")
     alt <- new_ldmap_allele("A")
     ref_q <- new_ldmap_snp(chrom, pos, ref, alt)
@@ -218,7 +220,7 @@ testthat::test_that("we get the best match possible", {
 test_that("NA in any of chrom start end or pos give back NA",{
 
 
-    nldms <- new_ldmap_snp(12,100,NA2N=TRUE)
+    nldms <- new_ldmap_snp(12,100)
     expect_true(!is.na(nldms))
     chromosomes(nldms) <- NA_integer_
 
@@ -260,6 +262,38 @@ test_that("we can parses ldmap_snps",{
   expect_equal(tldms,ret)  
   
 })
-  
 
-  
+
+
+
+test_that("snps 'overlap' with themselves (reversed)",{
+
+    snp_a <- as_ldmap_snp("chr1:701835_T_C")
+    snp_b <- as_ldmap_snp(c("chr1:701835_C_T"))
+
+    testthat::expect_equal(snp_in_snp(snp_a,snp_b), 1)
+
+
+    snp_a <- ldmap::as_ldmap_snp(c("chr1:701835_T_C",
+                          "chr1:701837_T_C"))
+    snp_b <- ldmap::as_ldmap_snp(c("chr1:701830_C_T",
+                            "chr1:701835_C_T",
+                            "chr1:701837_C_T"
+
+                            ))
+    testthat::expect_equal(ldmap::snp_in_snp(snp_a, snp_b),
+                           c(2, 3))
+})
+
+testthat::test_that("snp overlap works correctly on boundary",{
+
+    sldmr <- c("chr1:1_1892607", "chr1:1892607_3582736", "chr1:3582736_4380811",
+              "chr1:4380811_5913893", "chr1:5913893_7247335", "chr1:7247335_9365199")
+
+    csnp <- structure(c(2.05244501193512e-289, 2.0524450157272e-289, 2.05244502199874e-289
+                        ), class = c("ldmap_snp", "vctrs_vctr"))
+
+    testthat::expect_equal(ldmap::snp_in_region(csnp, sldmr),c(4,5,5))
+
+
+    })

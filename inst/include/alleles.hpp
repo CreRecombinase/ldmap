@@ -13,6 +13,13 @@
 #include <tuple>
 #include <bitset>
 #include <iostream>
+
+
+
+
+
+
+
 enum class Ref : char { A = 0, C = 1, G = 2, T = 3, N = 4 };
 template <class To, class From>
 typename std::enable_if<
@@ -331,7 +338,8 @@ inline std::optional<Snp_match> is_reverse_complement(const char lref, const cha
 }
 
 
-[[nodiscard]] inline constexpr uint64_t make_mask(const int offset, const int size){
+[[gnu::pure]]
+inline constexpr uint64_t make_mask(const int offset, const int size){
   uint64_t retval=0;
   const uint64_t inn=1;
   for(uint64_t i=offset; i<offset+size; i++){
@@ -343,6 +351,10 @@ inline std::optional<Snp_match> is_reverse_complement(const char lref, const cha
 
 // static_assert(make_mask(0, 1) == 1);//1
 // static_assert(make_mask(0, 2) == 3);//2
+static_assert(make_mask(1, 1) == 2);//2
+static_assert(make_mask(2, 1) == 4);//2
+static_assert(make_mask(2, 2) == 12);//2
+
 // static_assert(make_mask(0, 3) == 7);//4
 // static_assert(make_mask(0, 4) == 15); // 8
 // static_assert(make_mask(0, 5) == 31);//16
@@ -356,73 +368,71 @@ inline std::optional<Snp_match> is_reverse_complement(const char lref, const cha
 
 
 template<typename T>
-[[nodiscard]] inline constexpr uint64_t set_chrom(const uint64_t input,const T chrom)noexcept{
+[[gnu::pure]] inline constexpr uint64_t set_chrom(const uint64_t input,const T chrom)noexcept{
   return (~make_mask(58,6)&input)|(static_cast<uint64_t>(chrom) << (29+29));
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr T get_chrom(const uint64_t input)noexcept{
+[[gnu::pure]] inline constexpr T get_chrom(const uint64_t input)noexcept{
   return static_cast<T>((input|make_mask(0,58))>>(29+29));
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr uint64_t set_end(const uint64_t input,const T end)noexcept{
+[[gnu::pure]] inline constexpr uint64_t set_end(const uint64_t input,const T end)noexcept{
   return (~make_mask(0,29)&input)|(static_cast<uint64_t>(end));
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr T get_end(const uint64_t input)noexcept{
+[[gnu::pure]] inline constexpr T get_end(const uint64_t input)noexcept{
   return static_cast<T>(~make_mask(29,29)&input);
 }
 
 
-
-
 template<typename T>
-[[nodiscard]] inline constexpr uint64_t set_pos(const uint64_t input,const T pos)noexcept{
-  return (~make_mask(16,43)&input)|(static_cast<uint64_t>(pos) << (16));
+[[gnu::pure]] inline constexpr uint64_t set_pos(const uint64_t input,const T pos)noexcept{
+  return (~make_mask(16,42)&input)|(static_cast<uint64_t>(pos) << (16));
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr T get_pos(const uint64_t input)noexcept{
+[[gnu::pure]] inline constexpr T get_pos(const uint64_t input)noexcept{
   // clear bits except for offset 16 length 43
-  return static_cast<T>((make_mask(16,43)&input)>>(16));
+  return static_cast<T>((make_mask(16,42)&input)>>(16));
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr uint64_t set_ref(const uint64_t input,const T ref)noexcept{
+[[gnu::pure]] inline constexpr uint64_t set_ref(const uint64_t input,const T ref)noexcept{
   return (~make_mask(8,8)&input)|(static_cast<uint64_t>(ref) << (8));
 }
 
 
-[[nodiscard]] inline constexpr uint64_t clear_alleles(const uint64_t input)noexcept{
+[[gnu::pure]] inline constexpr uint64_t clear_alleles(const uint64_t input)noexcept{
   return ~make_mask(0,16)&input;
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr T get_ref(const uint64_t input)noexcept{
+[[gnu::pure]] inline constexpr T get_ref(const uint64_t input)noexcept{
   // clear bits except for offset 8 length 8
   return static_cast<T>((make_mask(8,8)&input)>>(8));
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr uint64_t set_alt(const uint64_t input,const T alt)noexcept{
+[[gnu::pure]] inline constexpr uint64_t set_alt(const uint64_t input,const T alt)noexcept{
   return (~make_mask(0,8)&input)|(static_cast<uint64_t>(alt));
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr T get_alt(const uint64_t input)noexcept{
+[[gnu::pure]] inline constexpr T get_alt(const uint64_t input)noexcept{
   // clear bits except for offset 0 length 8
   return static_cast<T>((make_mask(0,8)&input));
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr uint64_t set_start(const uint64_t input,const T start)noexcept{
+[[gnu::pure]] inline constexpr uint64_t set_start(const uint64_t input,const T start)noexcept{
   return (~make_mask(29,29)&input)|(static_cast<uint64_t>(start) << (29));
 }
 
 template<typename T>
-[[nodiscard]] inline constexpr T get_start(const uint64_t input)noexcept{
+[[gnu::pure]] inline constexpr T get_start(const uint64_t input)noexcept{
   return static_cast<T>((~make_mask(58,6)&input)>>(29));
 }
 
@@ -437,10 +447,10 @@ static_assert(get_start<int>(set_start(288230376151711745ull, 24000)) == 24000);
 static_assert(get_chrom<int>(set_chrom(288230376151711745ull, 24)) == 24);
 
 
-// static_assert(get_pos<int>(set_pos(288230376151711745ull, 536870911)) == 536870911);
-// static_assert(get_pos<int>(set_pos(18446744073709551615ull, 0)) == 0);
-// static_assert(get_pos<int>(set_pos(288230376151711745ull, 24000)) == 24000);
-// static_assert(get_pos<int>(set_pos(288230376151711745ull, 24)) == 24);
+static_assert(get_pos<int>(set_pos(288230376151711745ull, 536870911)) == 536870911);
+static_assert(get_pos<int>(set_pos(18446744073709551615ull, 0)) == 0);
+static_assert(get_pos<int>(set_pos(288230376151711745ull, 24000)) == 24000);
+static_assert(get_pos<int>(set_pos(288230376151711745ull, 24)) == 24);
 
 
 // static_assert(get_ref<int>(set_ref(288230376151711745ull, 11)) == 11);
@@ -462,7 +472,7 @@ static_assert(get_end<int>(set_end(18446744073709551615ull, 24000)) == 24000);
 static_assert(get_end<int>(set_end(288230376151711745ull, 24000)) == 24000);
 static_assert(get_end<int>(set_end(288230376151711745ull, 24)) == 24);
 
-[[nodiscard]]
+[[gnu::pure]]
 inline constexpr uint64_t make_ldmap_region(const int chrom, const unsigned int start, const unsigned int stop) noexcept{
   //take first 29 bits from stop
   // next 29 bits from start
@@ -471,7 +481,7 @@ inline constexpr uint64_t make_ldmap_region(const int chrom, const unsigned int 
   return(set_end(set_start(set_chrom(retval,chrom),start),stop));
 }
 
-[[nodiscard]]
+[[gnu::pure]]
 inline constexpr uint64_t make_ldmap_snp(const int chrom, const unsigned int pos,const unsigned char ref='\0', const unsigned char alt='\0') noexcept{
   //take first 29 bits from stop
   // next 29 bits from start
@@ -497,12 +507,12 @@ inline std::tuple<int, int, int> get_ldmap_region(const float x) = delete;
 inline std::tuple<int, int, int>
 get_ldmap_region(const long double x) = delete;
 
-[[nodiscard]]
+[[gnu::pure]]
 inline std::tuple<int,int,unsigned char,unsigned char> get_ldmap_snp(const uint64_t x) noexcept{
   return {get_chrom<int>(x),get_pos<int>(x),get_ref<unsigned char>(x),get_alt<unsigned char>(x)};
 }
 
-[[nodiscard]]
+[[gnu::pure]]
 inline
 std::tuple<int,int,int> get_ldmap_region(const uint64_t x) noexcept{
   return {get_chrom<int>(x),get_start<int>(x),get_end<int>(x)};
@@ -671,7 +681,8 @@ public:
     return *this;
   }
   constexpr SNP end_SNP() const noexcept{
-    return SNP(clear_alleles(set_pos(snp,pos()+1)));
+    auto p = pos()+1;
+    return SNP{.snp=clear_alleles(set_pos(snp,pos()+1))};
   }
 
   double to_double() const{
@@ -714,6 +725,17 @@ public:
   friend Region;
   friend std::ostream & operator << (std::ostream &out, const SNP &c);
 };
+
+
+static_assert(SNP{clear_alleles(288230422147301896)}.chrom()== 1);
+static_assert(SNP{clear_alleles(288230422147301896)}.pos()== 701837);
+static_assert(SNP{set_pos(288230422147301896,701838)}.pos()== 701838);
+static_assert(SNP{clear_alleles(set_pos(288230422147301896,701838))}.pos()== 701838);
+//static_assert(SNP{set_pos(288230422147301896,701838)}.chrom()== 1);
+
+
+//static_assert(SNP{clear_alleles(288230422147301896)}.end_SNP().chrom()== 1);
+
 
 
 inline std::ostream& operator<<( std::ostream& out, const SNP &lra ){

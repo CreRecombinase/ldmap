@@ -16,8 +16,8 @@ chromosome_levels <- function(as_ucsc=TRUE){
 ##' @export
 col_chromosome <- function(prefix_chr =  TRUE, ...) {
     if (prefix_chr)
-        return(readr::col_factor(levels=chromosome_levels(TRUE)))
-    return(readr::col_integer())
+        return(readr::col_factor(levels = chromosome_levels(TRUE)))
+    return(readr::col_factor(levels = chromosome_levels(FALSE)))
 }
 
 
@@ -107,7 +107,7 @@ read_snp_region_h5 <- function(h5file,ldmr,datapath="snp", ...){
         chroms <- unique(chromosomes(ldmr))
         co_df <- EigenH5::read_df_h5(h5file,"chrom_offset", subset=chroms)
         if (nrow(co_df) == 1){
-            ss=seq(from=co_df$offset,length.out = co_df$datasize)
+            ss=seq(from=co_df$offset,length.out = co_df$datasize)+1
             snp_df <- rlang::exec(EigenH5::read_df_h5,filename=h5file,datapath = datapath,subset=ss, !!!argl)
             sc <- snp_df[[snp_cols(snp_df)]]
             return(dplyr::filter(snp_df,sc %overlaps% ldmr))

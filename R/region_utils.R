@@ -17,6 +17,35 @@ translate_ldmr <- function(x,offset=0L){
 }
 
 
+##' @title Assign ranges to ranges
+##'
+##'
+##' @param ldmap_region_query vector of ldmap_regions
+##' @param ldmap_region_target vector of *non-overlapping* ldmap_regions (must be sorted)
+##' @return a vector of integers of length `length(ldmap_region_query)` with the index of the `ldmap_region_target`
+##' @export
+region_overlaps_region <- function(ldmap_region_query,ldmap_region_target){
+    stopifnot(inherits(ldmap_region_query,"ldmap_region"),
+              inherits(ldmap_region_target,"ldmap_region"))
+    region_in_region(ldmap_region_query,ldmap_region_target, allow_overlap = TRUE)
+}
+
+
+
+
+##' @title Assign ranges to ranges
+##'
+##'
+##' @param ldmap_region_query vector of ldmap_regions
+##' @param ldmap_region_target vector of *non-overlapping* ldmap_regions (must be sorted)
+##' @return a vector of integers of length `length(ldmap_region_query)` with the index of the `ldmap_region_target`
+##' @export
+region_overlap_region <- function(ldmap_region_query,ldmap_region_target){
+    stopifnot(inherits(ldmap_region_query, "ldmap_region"),
+              inherits(ldmap_region_target, "ldmap_region"))
+    region_in_region(ldmap_region_query,ldmap_region_target, allow_overlap = TRUE)
+}
+
 
 #' @export distance.ldmap_region
 #' @method distance ldmap_region
@@ -475,12 +504,19 @@ new_ldmap_region <- function(chrom=integer(), start=integer(), end=integer()){
     stopifnot(is.numeric(start),
               is.numeric(end),
               is.factor(chrom)|| is.numeric(chrom))
-  if(is.factor(chrom)){
-    stopifnot(all.equal(levels(chrom),c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8", 
-                                        "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", 
-                                        "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", 
-                                        "chrX", "chrY")))
-  }
-  p <- max(length(chrom),length(start),length(end))
-  nldmap_region(rep(as.integer(chrom),length.out=p),rep(start,length.out=p),rep(end,length.out=p))
+    if(is.factor(chrom)){
+        if ( ! (isTRUE(all.equal(levels(chrom),
+                          c("chr1", "chr2", "chr3", "chr4", "chr5", "chr6", "chr7", "chr8",
+                            "chr9", "chr10", "chr11", "chr12", "chr13", "chr14", "chr15",
+                            "chr16", "chr17", "chr18", "chr19", "chr20", "chr21", "chr22",
+                            "chrX", "chrY"))) ||
+                isTRUE(all.equal(levels(chrom),
+                                 c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
+                                   "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X",
+                                   "Y"))))) {
+            warning("unrecognized levels detected in levels(chrom)")
+        }
+    }
+    p <- max(length(chrom),length(start),length(end))
+    nldmap_region(rep(as.integer(chrom),length.out=p),rep(start,length.out=p),rep(end,length.out=p))
 }

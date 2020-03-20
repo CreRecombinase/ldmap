@@ -333,15 +333,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// snp_in_region
-Rcpp::IntegerVector snp_in_region(Rcpp::NumericVector ldmap_snp, Rcpp::NumericVector ldmap_region);
-RcppExport SEXP _ldmap_snp_in_region(SEXP ldmap_snpSEXP, SEXP ldmap_regionSEXP) {
+// snp_in_region_
+Rcpp::IntegerVector snp_in_region_(Rcpp::NumericVector ldmap_snp, Rcpp::NumericVector ldmap_region);
+RcppExport SEXP _ldmap_snp_in_region_(SEXP ldmap_snpSEXP, SEXP ldmap_regionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_snp(ldmap_snpSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region(ldmap_regionSEXP);
-    rcpp_result_gen = Rcpp::wrap(snp_in_region(ldmap_snp, ldmap_region));
+    rcpp_result_gen = Rcpp::wrap(snp_in_region_(ldmap_snp, ldmap_region));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -357,15 +357,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// region_overlap_snp
-Rcpp::IntegerVector region_overlap_snp(Rcpp::NumericVector ldmap_region, Rcpp::NumericVector ldmap_snp);
-RcppExport SEXP _ldmap_region_overlap_snp(SEXP ldmap_regionSEXP, SEXP ldmap_snpSEXP) {
+// snp_overlap_region
+Rcpp::IntegerVector snp_overlap_region(Rcpp::NumericVector x, Rcpp::NumericVector y);
+RcppExport SEXP _ldmap_snp_overlap_region(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(snp_overlap_region(x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
+// region_overlap_snp_
+Rcpp::IntegerVector region_overlap_snp_(Rcpp::NumericVector ldmap_region, Rcpp::NumericVector ldmap_snp);
+RcppExport SEXP _ldmap_region_overlap_snp_(SEXP ldmap_regionSEXP, SEXP ldmap_snpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_region(ldmap_regionSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type ldmap_snp(ldmap_snpSEXP);
-    rcpp_result_gen = Rcpp::wrap(region_overlap_snp(ldmap_region, ldmap_snp));
+    rcpp_result_gen = Rcpp::wrap(region_overlap_snp_(ldmap_region, ldmap_snp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -453,13 +465,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // new_ldmap_snp_impl
-Rcpp::NumericVector new_ldmap_snp_impl(Rcpp::IntegerVector chrom, Rcpp::IntegerVector pos, Rcpp::RawVector ref, Rcpp::RawVector alt, const bool NA2N);
+Rcpp::NumericVector new_ldmap_snp_impl(Rcpp::IntegerVector chrom, Rcpp::NumericVector pos, Rcpp::RawVector ref, Rcpp::RawVector alt, const bool NA2N);
 RcppExport SEXP _ldmap_new_ldmap_snp_impl(SEXP chromSEXP, SEXP posSEXP, SEXP refSEXP, SEXP altSEXP, SEXP NA2NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type chrom(chromSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type pos(posSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type pos(posSEXP);
     Rcpp::traits::input_parameter< Rcpp::RawVector >::type ref(refSEXP);
     Rcpp::traits::input_parameter< Rcpp::RawVector >::type alt(altSEXP);
     Rcpp::traits::input_parameter< const bool >::type NA2N(NA2NSEXP);
@@ -860,9 +872,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_group_regions", (DL_FUNC) &_ldmap_group_regions, 1},
     {"_ldmap_nearest_snp_region", (DL_FUNC) &_ldmap_nearest_snp_region, 3},
     {"_ldmap_region_in_region", (DL_FUNC) &_ldmap_region_in_region, 3},
-    {"_ldmap_snp_in_region", (DL_FUNC) &_ldmap_snp_in_region, 2},
+    {"_ldmap_snp_in_region_", (DL_FUNC) &_ldmap_snp_in_region_, 2},
     {"_ldmap_snp_overlap_snp", (DL_FUNC) &_ldmap_snp_overlap_snp, 2},
-    {"_ldmap_region_overlap_snp", (DL_FUNC) &_ldmap_region_overlap_snp, 2},
+    {"_ldmap_snp_overlap_region", (DL_FUNC) &_ldmap_snp_overlap_region, 2},
+    {"_ldmap_region_overlap_snp_", (DL_FUNC) &_ldmap_region_overlap_snp_, 2},
     {"_ldmap_snp_in_regions", (DL_FUNC) &_ldmap_snp_in_regions, 2},
     {"_ldmap_format_ldmap_region", (DL_FUNC) &_ldmap_format_ldmap_region, 1},
     {"_ldmap_match_regions_snps", (DL_FUNC) &_ldmap_match_regions_snps, 3},

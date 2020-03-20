@@ -2,7 +2,7 @@
 % Please edit documentation in R/hap_utils.R
 \name{read_hap_samples}
 \alias{read_hap_samples}
-\title{read haploid sample info}
+\title{read haploid sample info##'}
 \usage{
 read_hap_samples(x)
 }
@@ -13,5 +13,5 @@ read_hap_samples(x)
 dataframe with sample info
 }
 \description{
-read haploid sample info
+read haploid sample info##'
 }

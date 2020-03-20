@@ -138,6 +138,47 @@ set_chromosomes <- function(x,to){
   return(y)
 }
 
+
+##' @export
+snp_in_snp <- snp_overlap_snp
+
+
+
+#' Assign SNPs to ranges
+#'
+#' @param ldmap_snp vector of ldmap_snps (must be sorted)
+#' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
+#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
+#' @export
+snp_in_region <- function(x,y){
+    snp_in_region_(as_ldmap_snp(x),as_ldmap_region(y))
+}
+
+
+#' Assign SNPs to ranges
+#'
+#' @param ldmap_snp vector of ldmap_snps (must be sorted)
+#' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
+#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
+#' @export
+snp_overlap_region <- function(ldmap_snp, ldmap_region){
+    snp_in_region_(as_ldmap_snp(ldmap_snp), as_ldmap_region(ldmap_region))
+}
+
+
+
+
+#' Assign SNPs to ranges
+#'
+#' @param ldmap_snp vector of ldmap_snps (must be sorted)
+#' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
+#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
+#' @export
+region_overlap_snp <- function(ldmap_region,ldmap_snp){
+    region_overlap_snp_(as_ldmap_region(ldmap_region),as_ldmap_snp(ldmap_snp))
+}
+
+
 ##' @title Convert data to chromosome
 ##'
 ##' Interprets the input as a chromosome
@@ -183,7 +224,7 @@ new_ldmap_snp <- function(chrom = integer(),
 {
 
     chrom <- as_chromosome(chrom)
-    pos <- as.integer(pos)
+    pos <- as.numeric(pos)
     ref <- new_ldmap_allele(ref)
     alt <- new_ldmap_allele(alt)
     if (length(ref) == 0 && length(chrom) > 0)
@@ -211,6 +252,51 @@ vec_cast.ldmap_snp <- function(x, to, ...) {
 vec_cast.ldmap_snp.default <- function(x, to, ...) {
   vec_default_cast(x, to)
 }
+
+
+
+#' @export vec_cast.ldmap_snp.ldmap_snp
+#' @export
+#' @method vec_cast.ldmap_snp ldmap_snp
+vec_cast.ldmap_snp.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
+  x
+
+
+
+#' @export vec_cast.ldmap_snp.double
+#' @export
+#' @method vec_cast.ldmap_snp double
+vec_cast.ldmap_snp.double <- function(x, to, ..., x_arg = "", to_arg = "")
+    structure(vctrs::vec_data(x), class = c("ldmap_snp", "vctrs_vctr"))
+
+
+#' @export vec_cast.double.ldmap_snp
+#' @export
+#' @method vec_cast.double ldmap_snp
+vec_cast.double.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
+    vctrs::vec_data(x)
+
+
+#' @export vec_cast.integer64.ldmap_snp
+#' @export
+#' @method vec_cast.integer64 ldmap_snp
+vec_cast.integer64.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
+    structure(unclass(x),class="integer64")
+
+
+#' @export vec_cast.character.ldmap_snp
+#' @export
+#' @method vec_cast.character ldmap_snp
+vec_cast.character.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
+    format_ldmap_snp(x)
+
+
+#' @export vec_cast.ldmap_snp.character
+#' @export
+#' @method vec_cast.ldmap_snp character
+vec_cast.ldmap_snp.character <- function(x, to, ..., x_arg = "", to_arg = "")
+    parse_ldmap_SNP(x)
+
 
 
 #' Formatting method for ldmap snps

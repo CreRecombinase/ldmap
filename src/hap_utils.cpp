@@ -173,7 +173,8 @@ Rcpp::NumericMatrix cov_htm(Rcpp::List x,const bool cov_2_cor=false){
 
 
 
-double calc_nmsum(const double m) {
+[[gnu::pure]]
+double calc_nmsum(const double m) noexcept {
   int nms=(2 * m - 1);
   double sums=0;
   for(double i=1; i<nms; i++){
@@ -183,9 +184,19 @@ double calc_nmsum(const double m) {
   return sums;
 }
 
-inline double calc_theta(const double m){
+[[gnu::pure]]
+double calc_theta(const double m) noexcept {
   double nmsum=calc_nmsum(m);
   return((1/nmsum)/(2*m+1/nmsum));
+}
+
+[[gnu::pure]]
+double calculate_rho(const double map_a,const double map_b, const double m, const double Ne,const double cutoff) noexcept {
+  if(map_a == map_b)
+    return 1.0;
+  auto ddiff = 4.0 * Ne*(map_a-map_b)/100.0;
+  ddiff = std::exp(ddiff / (2 * m));
+  return ddiff>cutoff ? ddiff : 0.0;
 }
 
 
@@ -197,31 +208,41 @@ Rcpp::NumericMatrix ldshrink_S(Rcpp::List x,Rcpp::NumericVector map,const double
     Rcpp::stop("x and map must have equal length in `ldshrink_scale`");
   }
   const double theta = calc_theta(m);
-
+  const double one_minus_theta_sq = ((1.0-theta)*(1.0-theta));
+  const double theta_diag = (theta/2.0)*(1-(theta/2.0));
   Rcpp::NumericMatrix ret(p,p);
   for(int i=0; i<p; i++){
     Rcpp::NumericVector a(x[i]);
-    double map_a =map[i];
+    const double map_a =map[i];
     for(int j=i; j<p; j++){
       Rcpp::NumericVector b(x[j]);
-      double map_b = map[j];
-      double cr=cov_ht(a,b);
-      cr*=std::exp(-(map_b-map_a)/(2*m));
-      cr*=((1.0-theta)*(1.0-theta));
+      const double map_b = map[j];
+      const double sigma=cov_ht(a,b);
+      const double shrnk =calculate_rho(map_a,map_b,m,Ne,cutoff);
+      const double s = shrnk * sigma;
+      double sig_hat = one_minus_theta_sq * s;
       if(i==j){
-        cr+=(theta/2.0)*(1-(theta/2.0));
+        sig_hat += theta_diag;
       }
-      if(cov_2_cor and (i!=j)){
-        cr/=(std::sqrt(ret(i,i))*std::sqrt(ret(j,j)));
-        cr = std::abs(cr)<cutoff ? 0 : cr;
-        ret(i,j)=cr;
-        ret(j,i)=cr;
-      }
+      ret(i,j)=sig_hat;
+      ret(j,i)=sig_hat;
     }
   }
   if(cov_2_cor){
     for(int i=0; i<p; i++){
-      ret(i,i)=1.0;
+      const int min_i = std::min(i+1,static_cast<int>(p));
+      const double i_rat = std::sqrt(1.0/ret(i,i));
+      for(int j=min_i; j<p; j++){
+        const double j_rat =std::sqrt(1.0/ret(j,j));
+        ret(i,j)*=i_rat*j_rat;
+        ret(j,i)=ret(i,j);
+      }
+    }
+  }
+
+  if(cov_2_cor){
+    for(int i=0; i<p; i++){
+      ret(i,i)= 1.0;
     }
   }
   return ret;

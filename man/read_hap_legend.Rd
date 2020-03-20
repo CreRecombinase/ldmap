@@ -4,7 +4,7 @@
 \alias{read_hap_legend}
 \title{read haplegend}
 \usage{
-read_hap_legend(x, chr = guess_chr(x))
+read_hap_legend(x, chr = guess_chr(x), read_fun = readr::read_delim)
 }
 \arguments{
 \item{x}{path to haplegend file}

@@ -32,7 +32,7 @@ test_that("can compute allele frequencies", {
     plinkf <- fs::path_package("plink.bed", package = "ldmap")
     plink_df <- read_plink_bed(plinkf)
     tgt <- plink_df$genotypes[[1]]
-    af_1 <- calc_AF(plink_df$genotypes[[1]])
+    (af_1 <- calc_AF(plink_df$genotypes[[1]]))
     expect_true(is.na(af_1))
     af_1<- calc_AF(plink_df$genotypes[[1]],TRUE)
     tgtd <- gt2double(tgt)
@@ -62,8 +62,9 @@ test_that("can compute LD", {
         dplyr::select(-nav) %>%
         dplyr::mutate(geno_a=purrr::map(genotypes_A,gt2double),
                       geno_b=purrr::map(genotypes_B,gt2double)) %>%
-        dplyr::mutate(R=map2_dbl(geno_a,geno_b,cor)) %>% left_join(ld_df,by=c("SNP_A","SNP_B")) %>%
-        select(SNP_A,SNP_B,R.x,R.y)
-    filter(combo_df,SNP_A!=SNP_B
-
+        dplyr::mutate(R=purrr::map2_dbl(geno_a,geno_b,cor)) %>%
+        dplyr::left_join(ld_df,by=c("SNP_A","SNP_B")) %>%
+        dplyr::select(SNP_A,SNP_B,R.x,R.y) %>%
+        dplyr::filter(SNP_A!=SNP_B,!is.na(R.y))
+    expect_equivalent(combo_df$R.x,combo_df$R.y,tolerance=1e-6)
 })

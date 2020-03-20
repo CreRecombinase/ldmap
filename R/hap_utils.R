@@ -27,23 +27,25 @@ guess_chr <- function(x){
 ##' @param x path to haplegend file
 ##' @return tibble with 1 ldmap_snp column
 ##' @export
-read_hap_legend <- function(x,chr = guess_chr(x)) {
-
+read_hap_legend <- function(x, chr = guess_chr(x),read_fun=readr::read_delim) {
     legend_cols <- readr::cols(
-                              id = readr::col_character(),
-                              position = readr::col_integer(),
-                              a0 = readr::col_character(),
-                              a1 = readr::col_character()
-                          )
-    xdf <- readr::read_delim(x, delim = " ",
-                             col_names = names(legend_cols$cols),
-                             col_types=legend_cols,skip=1) %>%
-        mutate(chrom=chr) %>%
-        dplyr::tramsmute(id=id,snp=new_ldmap_snp(chrom,pos,a0,a1))
-
+        id = readr::col_character(),
+        position = readr::col_integer(),
+        a0 = readr::col_character(),
+        a1 = readr::col_character()
+        )
+    if(fs::path_ext(x)=="gz")
+        stopifnot(fs::path_ext(fs::path_ext_remove(x)) == "legend")
+    else
+        stopifnot(fs::path_ext(x) == "legend")
+    xdf <- read_fun(x,
+        delim = " ",
+        col_names = names(legend_cols$cols),
+        col_types = legend_cols, skip = 1
+    ) %>%
+        dplyr::transmute(id = id, snp = new_ldmap_snp(chr, position, a0, a1))
 }
-##' @title read haploid sample info
-##'
+##' @title read haploid sample info##'
 ##'
 ##' @param x `.samples` file
 ##' @return dataframe with sample info
@@ -56,16 +58,28 @@ read_hap_samples <- function(x){
             group = readr::col_character(),
             sex = readr::col_integer()
     )
-    ret_df <- readr::read_delim(x, delim=" ",col_names = names(samp_cols$cols),col_types=samp_cols,skip=1)
+  ret_df <- readr::read_delim(x,
+                              delim = " ",
+                              col_names = names(samp_cols$cols),
+                              col_types = samp_cols,
+                              skip = 1)
 }
+
+
 
 ##' @title read `.hap` (or `.hap.gz`) files into a list of ldmap_ht
 ##'
 ##'
 ##' @param x path to `.hap` (or `.hap.gz`) file
+##' @param subset either `NULL` ,in which case all samples are written, or an integer vector of rows to subset
+##' @param ...
 ##' @return list_of ldmap_ht
 ##' @export
-read_hap <- function(x,...) {
-        psimf <- readr::ListCallback$new(function(x, index) parse_hap(x))
-        purrr::flatten(readr::read_lines_chunked(x, psimf, ...))
+read_hap <- function(x, subset = NULL, ...) {
+    if (!is.null(subset)) {
+          psimf <- readr::ListCallback$new(function(x, index, subset) parse_hap(x[index %in% subset]), subset = subset)
+      } else {
+          psimf <- readr::ListCallback$new(function(x, index) parse_hap(x))
+      }
+    purrr::flatten(readr::read_lines_chunked(x, psimf, ...))
 }

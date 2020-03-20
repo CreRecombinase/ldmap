@@ -255,12 +255,12 @@ Rcpp::NumericVector gt2double(const Rcpp::RawVector x){
 }
 
 
-GT_view::GT_view(Rcpp::RawVector x_):x(x_),p(x.size()),N(Rcpp::as<Rcpp::IntegerVector>(x.attr("N"))[0]),begin_x(x.begin()){
+GT_view::GT_view(Rcpp::RawVector x_):x(x_),p(x.size()),N(Rcpp::as<Rcpp::IntegerVector>(x.attr("N"))[0]),begin_x(x.begin()),c_af(std::nullopt){
     if(!x.inherits("ldmap_gt"))
       Rcpp::stop("Internal error: x must be of type ldmap_gt in Internal function `GT_view`");
 }
 
-GT_view::GT_view(SEXP x_):x(x_),p(x.size()),N(Rcpp::as<Rcpp::IntegerVector>(x.attr("N"))[0]),begin_x(x.begin()){
+GT_view::GT_view(SEXP x_):x(x_),p(x.size()),N(Rcpp::as<Rcpp::IntegerVector>(x.attr("N"))[0]),begin_x(x.begin()),c_af(std::nullopt){
     if(!x.inherits("ldmap_gt"))
       Rcpp::stop("Internal error: x must be of type ldmap_gt in Internal function `GT_view`");
 }
@@ -363,8 +363,6 @@ int GT_view::sum(const bool na_rm=false) const {
 double GT_view::af(const bool na_rm=false) const {
   static_assert(std::numeric_limits<Rbyte>::max()==255);
   if(!c_af.has_value()){
-
-
     int retv=0;
     int tN=N;
     if(na_rm){
@@ -378,7 +376,7 @@ double GT_view::af(const bool na_rm=false) const {
         auto atb = ctv.sum_tot(xb,tN);
         if(Rcpp::IntegerVector::is_na(atb)){
           *c_af =  NA_REAL;
-          break;
+          return NA_REAL;
         }
         retv+=atb;
       }
@@ -388,12 +386,6 @@ double GT_view::af(const bool na_rm=false) const {
   return *c_af;
 }
 
-
-// double GT_view::cov(const GT_view &other)const {
-
-
-
-// }
 
 
 Rbyte pack_bytes(const std::vector<Rbyte> &rb){

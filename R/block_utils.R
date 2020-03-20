@@ -22,20 +22,49 @@ assign_genetic_map <- function(snp_df, map_df, strict = FALSE) {
     ##                                                                       positions(.x$snp),
     ##                                                                       positions(.y$snp),
     ##                                                                       strict = strict)))
+    stopifnot(inherits(snp_df, "data.frame"),
+              inherits(map_df, "data.frame"),
+              inherits(snp_df$snp, "ldmap_snp"),
+              inherits(map_df$snp, "ldmap_snp"),
+              is.numeric(map_df$map))
 
     return(dplyr::mutate(snp_df,
-                         map=new_interpolate_genetic_map(map_df$map,map_df$snp,snp)))
+                         map = new_interpolate_genetic_map(map_df$map,map_df$snp, snp)))
 }
 
+##' @title Calculate theta
+##'
+##'
+##' @param m genetic map sample size (85 for CEU from 1000 genomes estimate)
+##' @return scalar estimate of theta
+##' @export
+calc_theta <- function(m=85) {
 
-calc_theta <- function(m) {
     nmsum <- sum(1 / (1:(2 * m - 1)))
     (1 / nmsum) / (2 * m + 1 / nmsum)
 }
 
 
-
-
+##' @title assign ldmap snp or region to an ldetect block
+##'
+##'
+##' @param x vector of type ldmap_snp or ldmap_region
+##' @param pop population for ldetect
+##' @param overlaps logical indicating whether overlap is allowed (TRUE),
+##' or only complete membership
+##' @return vector of lengtth length(x) with ldetect windows for each variant
+##' @export
+which_ldetect_window <- function(x, pop = "EUR",overlaps = FALSE){
+    if (pop != "EUR"){
+        stop("I really need to add non EUR ldetect windows",
+        "(please please please file a bug report)")
+    }
+    stopifnot(inherits(x, "ldmap_snp") || inherits(x, "ldmap_region"))
+    if(inherits(x, "ldmap_snp"))
+        return(ldetect_EUR[snp_in_region(x,ldetect_EUR)])
+    else
+        return(ldetect_EUR[region_in_region(x,ldetect_EUR,allow_overlap = overlaps)])
+}
 
 
 #' Query a a reference panel for a set of SNPs and see if any of them need a sign flip
@@ -138,6 +167,23 @@ left_snp_join <- function(x,
 }
 
 
+##' @title Are ref and alt reversed?
+##'
+##' @param x a factor as returned from `allele_match`
+##' @return a logical vector of length `length(x)`
+##' @export
+is_reversed <- function(x){
+    stopifnot(all.equal(levels(x),c("perfect_match",
+                                    "reverse_match",
+                                    "complement_match",
+                                    "reverse_complement_match",
+                                    "ambig_match",
+                                    "reverse_ambig_match",
+                                    "complement_ambig_match",
+                                    "reverse_complement_ambig_match")))
+    x %in% c("reverse_match",
+             "reverse_ambig_match")
+}
 
 #' Match Summary Statistics with an external reference panel
 #'

@@ -90,7 +90,7 @@ testthat::test_that("we can find windows",{
     p <- 500
     tsnps <- sort(new_ldmap_snp(chrom = rep(1L,p),
                            pos =  sample(as.integer(2^28), p, replace = F),
-                           NA2N = TRUE))
+                          ))
     map <- cumsum(runif(p))
     window_r <- window_ldmap_region(tsnps,map,window = 1)
     expect_true(all(starts(window_r)<=positions(tsnps)))

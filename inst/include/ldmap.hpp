@@ -41,7 +41,6 @@ class GT_view{
   size_t N;
   Rbyte* begin_x;
   mutable std::optional<double> c_af;
-  //std::optional<Rbyte>
 public:
   GT_view(Rcpp::RawVector x_);
   GT_view(SEXP x_);
@@ -435,11 +434,11 @@ public:
       // Find the first element of target that starts on or after x.start()
       auto candidate_l = std::lower_bound(begin_p,end_p,x,
                                           [](elem_type a, const T &b) {
-                                            return(a.end_SNP()<b.start_SNP());
+                                            return(a.end_SNP()<=b.start_SNP());
                                           });
       if(candidate_l==end_p)
         return NA_INTEGER;
-      return elem_type(*candidate_l).contains(x) ? std::distance(begin_p,candidate_l)+1 : NA_INTEGER;
+      return elem_type(*candidate_l).overlap(x) ? std::distance(begin_p,candidate_l)+1 : NA_INTEGER;
     }else{
       auto candidate_l = std::find_if(begin_p,end_p,[&](elem_type a){
                                                    return a.overlap(x);

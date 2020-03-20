@@ -201,14 +201,8 @@ region_in_region <- function(ldmap_region_query, ldmap_region_target, allow_over
     .Call('_ldmap_region_in_region', PACKAGE = 'ldmap', ldmap_region_query, ldmap_region_target, allow_overlap)
 }
 
-#' Assign SNPs to ranges
-#'
-#' @param ldmap_snp vector of ldmap_snps (must be sorted)
-#' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
-#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
-#' @export
-snp_in_region <- function(ldmap_snp, ldmap_region) {
-    .Call('_ldmap_snp_in_region', PACKAGE = 'ldmap', ldmap_snp, ldmap_region)
+snp_in_region_ <- function(ldmap_snp, ldmap_region) {
+    .Call('_ldmap_snp_in_region_', PACKAGE = 'ldmap', ldmap_snp, ldmap_region)
 }
 
 #' Check SNPs for positional equality
@@ -221,14 +215,18 @@ snp_overlap_snp <- function(x, y) {
     .Call('_ldmap_snp_overlap_snp', PACKAGE = 'ldmap', x, y)
 }
 
-#' Assign SNPs to ranges
+#' Check SNPs for positional equality
 #'
-#' @param ldmap_snp vector of ldmap_snps (must be sorted)
-#' @param ldmap_region vector of non-overlapping ldmap_regions (must be sorted)
-#' @return a vector of integers of length `length(ldmap_snp)` with the index of the `ldmap_region`
+#' @param x vector of query ldmap_snps
+#' @param y vector of target ldmap_snps
+#' @return a vector of integers of length `x` that indexes into `y`
 #' @export
-region_overlap_snp <- function(ldmap_region, ldmap_snp) {
-    .Call('_ldmap_region_overlap_snp', PACKAGE = 'ldmap', ldmap_region, ldmap_snp)
+snp_overlap_region <- function(x, y) {
+    .Call('_ldmap_snp_overlap_region', PACKAGE = 'ldmap', x, y)
+}
+
+region_overlap_snp_ <- function(ldmap_region, ldmap_snp) {
+    .Call('_ldmap_region_overlap_snp_', PACKAGE = 'ldmap', ldmap_region, ldmap_snp)
 }
 
 #' Assign SNPs to ranges

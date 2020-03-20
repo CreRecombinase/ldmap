@@ -4,10 +4,12 @@
 \alias{read_hap}
 \title{read \code{.hap} (or \code{.hap.gz}) files into a list of ldmap_ht}
 \usage{
-read_hap(x, ...)
+read_hap(x, subset = NULL, ...)
 }
 \arguments{
 \item{x}{path to \code{.hap} (or \code{.hap.gz}) file}
+
+\item{subset}{either \code{NULL} ,in which case all samples are written, or an integer vector of rows to subset}
 }
 \value{
 list_of ldmap_ht

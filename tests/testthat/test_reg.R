@@ -103,3 +103,21 @@ test_that("overlap operators work", {
         expect_equal(rir, snp_df$region_id != i)
     }
 })
+
+
+
+
+test_that("overlap check works",{
+
+    treg <- as_ldmap_region("chr1:1796266_1898735")
+    treg_2 <- as_ldmap_region("chr3:128148270_128262028")
+    hld <- head(ldetect_EUR)
+    ohld <- ldetect_EUR[chromosomes(ldetect_EUR)==3]
+
+    testthat::expect_true(treg %overlaps% hld)
+    testthat::expect_equal(which_ldetect_window(treg,"EUR",TRUE), ldetect_EUR[1])
+    testthat::expect_true(treg_2 %overlaps% ldetect_EUR)
+    ldmap:::region_overlaps_region(treg_2, ldetect_EUR)
+
+
+})
