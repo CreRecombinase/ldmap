@@ -1,6 +1,6 @@
 Package: ldmap
 Title: Manipulate SNP coordinates and Interpolate Genetic Map Data
-Version: 1.5.1
+Version: 1.5.2
 Authors@R: 
     person(given = "Nicholas",
            family = "Knoblauch",
