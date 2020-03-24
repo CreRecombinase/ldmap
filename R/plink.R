@@ -28,7 +28,9 @@ bim_cols <- function(
 
 
 
-
+read_fam <- function(x,cols=fam_cols()){
+    readr::read_delim(x, delim=" ", col_names=names(cols$cols),col_types=cols)
+}
 
 ##'
 ##' Read a plink bim file

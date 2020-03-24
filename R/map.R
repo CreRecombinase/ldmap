@@ -24,7 +24,7 @@ jitter_map <- function(map,min_diff = 10 * .Machine$double.eps) {
 ##' @param chromosomes chromosome corresponding to each genetic map file (default is seq_along(map_files))
 ##' @return dataframe with column `snp` with ldmap_snp (no alleles) and `map` with cumulative genetic map values
 ##' @export
-read_1kg_maps <- function(map_files,chromosomes=seq_along(map_files)){
+read_1kg_maps <- function(map_files,chromosomes=seq_along(map_files)) {
     stopifnot(length(map_files) == length(chromosomes))
     rc <- readr::cols(
                      position = readr::col_double(),

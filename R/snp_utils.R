@@ -41,6 +41,26 @@ vec_duplicate_id.ldmap_snp <- function(x,...){
 }
 
 
+##' @title quickly convert a vector of rsids from string to integer representation
+##'
+##'
+##' @param x vector of rsids
+##' @return
+##' @export
+rsid2int <- function(x){
+    if(is.character(x)){
+        return(fast_str2int(x,prefix="rs"))
+    }
+    if(is.integer(x)){
+        return(x)
+    }
+    if(is.factor(x)){
+        return(fast_str2int(levels(x),prefix="rs")[as.integer(x)])
+    }
+    stop("type :",typeof(x)," cannot be converted to integer")
+}
+
+
 
 #'
 #' @method vec_duplicate_id ldmap_snp
