@@ -218,9 +218,8 @@ namespace ranges
 
 #define RANGES_CXX_VER _MSVC_LANG
 
-#if _MSC_VER < 1920 || _MSVC_LANG < 201703L || !defined(_MSVC_TRADITIONAL) || \
-    _MSVC_TRADITIONAL != 0
-#error range-v3 requires Visual Studio 2019 with the /std:c++17 (or /std:c++latest) /permissive- and /experimental:preprocessor options.
+#if _MSC_VER < 1920 || _MSVC_LANG < 201703L
+#error range-v3 requires Visual Studio 2019 with the /std:c++17 (or /std:c++latest) and /permissive- options.
 #endif
 
 #if _MSC_VER < 1923
@@ -678,7 +677,9 @@ namespace ranges
 #define RANGES_IS_SAME(...) std::is_same<__VA_ARGS__>::value
 #endif
 
-#if defined(__has_cpp_attribute) && __has_cpp_attribute(no_unique_address)
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=93667
+#if defined(__has_cpp_attribute) && __has_cpp_attribute(no_unique_address) && \
+    !(defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 10)
 #define RANGES_NO_UNIQUE_ADDRESS [[no_unique_address]]
 #else
 #define RANGES_NO_UNIQUE_ADDRESS

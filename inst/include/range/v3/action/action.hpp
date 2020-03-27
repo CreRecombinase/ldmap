@@ -24,6 +24,7 @@
 #include <range/v3/functional/compose.hpp>
 #include <range/v3/functional/concepts.hpp>
 #include <range/v3/functional/invoke.hpp>
+#include <range/v3/functional/reference_wrapper.hpp>
 #include <range/v3/functional/pipeable.hpp>
 #include <range/v3/range/concepts.hpp>
 #include <range/v3/utility/move.hpp>
@@ -56,7 +57,7 @@ namespace ranges
     /// \endcond
 
     template<typename ActionFn, typename Rng>
-    CPP_concept_fragment(invocable_action_closure_, (ActionFn, Rng),
+    CPP_concept_fragment(invocable_action_closure_, requires()(0) &&
         !derived_from<invoke_result_t<ActionFn, Rng>, detail::action_closure_base_>
     );
     template<typename ActionFn, typename Rng>

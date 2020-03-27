@@ -37,7 +37,7 @@ double pack_range(Rng inp){
 
 
 
-Rcpp::NumericVector parse_ldmap_ht(SEXP data){
+Rcpp::NumericVector parse_ldmap_ht(SEXP data,const int stride=2){
 
   using namespace ranges;
   const size_t str_len= ::Rf_length(data);
@@ -46,7 +46,7 @@ Rcpp::NumericVector parse_ldmap_ht(SEXP data){
   const size_t N=(str_len+1)/2;
 
   auto chunk_x  = subrange(xb,xe) |
-    views::stride(2) | views::transform([](char c) -> std::uint64_t{
+    views::stride(stride) | views::transform([](char c) -> std::uint64_t{
       return c-48;
     }) |
     views::chunk(64);
@@ -61,15 +61,20 @@ Rcpp::NumericVector parse_ldmap_ht(SEXP data){
 }
 
 
-//[[Rcpp::export]]
-Rcpp::List parse_hap(Rcpp::StringVector x){
 
-  Rcpp::String itx = x[0];
+//[[Rcpp::export]]
+Rcpp::List parse_hap(Rcpp::StringVector x,int stride=2){
+  int gn=0;
   Rcpp::List retl = Rcpp::List::import_transform(x.begin(),x.end(),[&](SEXP ix)-> Rcpp::NumericVector{
-    return parse_ldmap_ht(ix);
-  });
-  // retl.attr("N")=Rcpp::IntegerVector::create(N);
-  // retl.attr("class")=Rcpp::StringVector::create("ldmap_ht","vctrs_vctr");
+                                                                     auto rv = parse_ldmap_ht(ix,stride);
+                                                                     gn = Rcpp::as<Rcpp::IntegerVector>(rv.attr("N"))[0];
+                                                                     return rv;
+                                                                   });
+  // retl.attr("class")=Rcpp::StringVector::create("vctrs_list_of","vctrs_vctr");
+  // Rcpp::NumericVector ret;
+  // ret.attr("N")=Rcpp::IntegerVector::create(gn);
+  // ret.attr("class")=Rcpp::StringVector::create("ldmap_ht","vctrs_vctr");
+  // retl.attr("ptype")=ret;
   return retl;
 }
 
@@ -82,7 +87,7 @@ Rcpp::List parse_hap(Rcpp::StringVector x){
 //' @return vector of (packed, dense) haplotypes
 //' @export
 //[[Rcpp::export]]
-Rcpp::NumericVector new_ldmap_ht(Rcpp::IntegerVector x){
+Rcpp::NumericVector new_ldmap_ht(Rcpp::IntegerVector x = Rcpp::IntegerVector::create()){
   static_assert(sizeof(double)*8==64);
   // = Rcpp::no_init(num_bits(N));
   const int N =x.size();
@@ -149,8 +154,8 @@ double cov_ht(Rcpp::NumericVector x,Rcpp::NumericVector y){
 }
 
 
-//[[Rcpp::export]]
-Rcpp::NumericMatrix cov_htm(Rcpp::List x,const bool cov_2_cor=false){
+
+Rcpp::NumericMatrix cov_htd(Rcpp::List x,const bool cov_2_cor=false){
 
   const size_t p=x.size();
   Rcpp::NumericMatrix ret(p,p);
@@ -169,6 +174,42 @@ Rcpp::NumericMatrix cov_htm(Rcpp::List x,const bool cov_2_cor=false){
     }
   }
   return ret;
+}
+
+
+
+Rcpp::NumericMatrix cov_htd(Rcpp::NumericMatrix x,const bool cov_2_cor=false){
+
+
+  const size_t p=x.size();
+  Rcpp::NumericMatrix ret(p,p);
+  for(int i=0; i<p; i++){
+    auto a=x.column(i);
+    for(int j=i; j<p; j++){
+      auto  b = x.column(j);
+      double cr=cov_ht(a,b);
+      ret(i,j)=cr;
+      ret(j,i)=cr;
+    }
+  }
+  if(cov_2_cor){
+    for(int i=0; i<p; i++){
+      ret(i,i)=1.0;
+    }
+  }
+  return ret;
+}
+
+
+
+//[[Rcpp::export]]
+Rcpp::NumericMatrix cov_htm(Rcpp::RObject x,const bool cov_2_cor=false){
+  if(x.hasAttribute("dim")){
+    Rcpp::NumericMatrix mx(x);
+    return cov_htd(mx,cov_2_cor);
+  }
+  Rcpp::List mx(x);
+  return cov_htd(mx,cov_2_cor);
 }
 
 
@@ -211,6 +252,7 @@ Rcpp::NumericMatrix ldshrink_S(Rcpp::List x,Rcpp::NumericVector map,const double
   const double one_minus_theta_sq = ((1.0-theta)*(1.0-theta));
   const double theta_diag = (theta/2.0)*(1-(theta/2.0));
   Rcpp::NumericMatrix ret(p,p);
+
   for(int i=0; i<p; i++){
     Rcpp::NumericVector a(x[i]);
     const double map_a =map[i];
@@ -282,6 +324,9 @@ Rcpp::IntegerVector ht2int(Rcpp::NumericVector x){
 
 
 
+
+
+
 Rcpp::String format_bin(const double x,const int N=64){
 
   std::string rv;
@@ -293,6 +338,10 @@ Rcpp::String format_bin(const double x,const int N=64){
   }
   return Rcpp::String(rv.c_str());
 }
+
+
+
+
 
 //[[Rcpp::export]]
 Rcpp::StringVector format_ht(Rcpp::NumericVector x) {

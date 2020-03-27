@@ -179,6 +179,9 @@ namespace ranges
         using detail::slice_view_<Rng, (bool)random_access_range<Rng>>::slice_view_;
     };
 
+    template<typename Rng>
+    RANGES_INLINE_VAR constexpr bool enable_safe_range<slice_view<Rng>> = enable_safe_range<Rng>;
+
 #if RANGES_CXX_DEDUCTION_GUIDES >= RANGES_CXX_DEDUCTION_GUIDES_17
     template<typename Rng>
     slice_view(Rng &&, range_difference_t<Rng>, range_difference_t<Rng>)
@@ -203,7 +206,7 @@ namespace ranges
                               range_difference_t<Rng> count, random_access_range_tag,
                               common_range_tag = {})
                 -> CPP_ret(subrange<iterator_t<Rng>>)( //
-                    requires forwarding_range_<Rng>)
+                    requires safe_range<Rng>)
             {
                 auto it =
                     detail::pos_at_(rng, from, range_tag_of<Rng>{}, is_infinite<Rng>{});

@@ -17,6 +17,34 @@ parse_ldmap_SNP <- function(input) {
     .Call('_ldmap_parse_ldmap_SNP', PACKAGE = 'ldmap', input)
 }
 
+open_bgzf <- function(fstr, read_only = TRUE) {
+    .Call('_ldmap_open_bgzf', PACKAGE = 'ldmap', fstr, read_only)
+}
+
+read_bgzf <- function(fpsexp) {
+    .Call('_ldmap_read_bgzf', PACKAGE = 'ldmap', fpsexp)
+}
+
+close_bgzf <- function(fpsexp) {
+    .Call('_ldmap_close_bgzf', PACKAGE = 'ldmap', fpsexp)
+}
+
+num_bgzf_blocks <- function(fpsexp) {
+    .Call('_ldmap_num_bgzf_blocks', PACKAGE = 'ldmap', fpsexp)
+}
+
+format_bgzf <- function(fpsexp) {
+    .Call('_ldmap_format_bgzf', PACKAGE = 'ldmap', fpsexp)
+}
+
+get_bgzf_data <- function(fpsexp) {
+    .Call('_ldmap_get_bgzf_data', PACKAGE = 'ldmap', fpsexp)
+}
+
+readlines_chunk_bgzf <- function(fpsexp) {
+    .Call('_ldmap_readlines_chunk_bgzf', PACKAGE = 'ldmap', fpsexp)
+}
+
 #' Linear interpolation of genetic map values
 #'
 #' @param map  is a length `p` vector of cumulative genetic map values. `map` must be _strictly_ _sorted_
@@ -43,8 +71,8 @@ new_interpolate_genetic_map <- function(map, map_pos, target_pos, strict = TRUE,
     .Call('_ldmap_new_interpolate_genetic_map', PACKAGE = 'ldmap', map, map_pos, target_pos, strict, progress)
 }
 
-parse_hap <- function(x) {
-    .Call('_ldmap_parse_hap', PACKAGE = 'ldmap', x)
+parse_hap <- function(x, stride = 2L) {
+    .Call('_ldmap_parse_hap', PACKAGE = 'ldmap', x, stride)
 }
 
 #' New vector of haplotypes
@@ -53,7 +81,7 @@ parse_hap <- function(x) {
 #' @param N sample size
 #' @return vector of (packed, dense) haplotypes
 #' @export
-new_ldmap_ht <- function(x) {
+new_ldmap_ht <- function(x = as.integer( c())) {
     .Call('_ldmap_new_ldmap_ht', PACKAGE = 'ldmap', x)
 }
 

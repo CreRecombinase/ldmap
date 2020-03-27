@@ -397,8 +397,16 @@ namespace ranges
     template<typename Rng>
     struct chunk_view : chunk_view_<Rng, (bool)forward_range<Rng>>
     {
-        using chunk_view::chunk_view_::chunk_view_;
+        chunk_view() = default;
+        constexpr chunk_view(Rng rng, range_difference_t<Rng> n)
+          : chunk_view_<Rng, (bool)forward_range<Rng>>(static_cast<Rng &&>(rng), n)
+        {}
     };
+
+    // Need to keep extra state for input_range, but forward_range is transparent
+    template<typename Rng>
+    RANGES_INLINE_VAR constexpr bool enable_safe_range<chunk_view<Rng>> =
+        enable_safe_range<Rng> && forward_range<Rng>;
 
 #if RANGES_CXX_DEDUCTION_GUIDES >= RANGES_CXX_DEDUCTION_GUIDES_17
     template<typename Rng>

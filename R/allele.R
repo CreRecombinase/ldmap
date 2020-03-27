@@ -152,3 +152,23 @@ format.ldmap_allele <- function(x, ...) {
 ldmap_allele <- function(x=raw()){
   as_ldmap_allele(x)
 }
+
+
+
+##' @title Are ref and alt reversed?
+##'
+##' @param x a factor as returned from `allele_match`
+##' @return a logical vector of length `length(x)`
+##' @export
+is_reversed <- function(x){
+    stopifnot(all.equal(levels(x),c("perfect_match",
+                                    "reverse_match",
+                                    "complement_match",
+                                    "reverse_complement_match",
+                                    "ambig_match",
+                                    "reverse_ambig_match",
+                                    "complement_ambig_match",
+                                    "reverse_complement_ambig_match")))
+    x %in% c("reverse_match",
+             "reverse_ambig_match")
+}

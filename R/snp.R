@@ -281,8 +281,6 @@ vec_cast.ldmap_snp.default <- function(x, to, ...) {
 vec_cast.ldmap_snp.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
   x
 
-
-
 #' @export vec_cast.ldmap_snp.double
 #' @export
 #' @method vec_cast.ldmap_snp double
@@ -316,6 +314,8 @@ vec_cast.character.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
 #' @method vec_cast.ldmap_snp character
 vec_cast.ldmap_snp.character <- function(x, to, ..., x_arg = "", to_arg = "")
     parse_ldmap_SNP(x)
+
+
 
 
 

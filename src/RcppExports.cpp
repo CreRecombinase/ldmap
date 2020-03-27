@@ -27,6 +27,84 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// open_bgzf
+SEXP open_bgzf(std::string fstr, bool read_only);
+RcppExport SEXP _ldmap_open_bgzf(SEXP fstrSEXP, SEXP read_onlySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type fstr(fstrSEXP);
+    Rcpp::traits::input_parameter< bool >::type read_only(read_onlySEXP);
+    rcpp_result_gen = Rcpp::wrap(open_bgzf(fstr, read_only));
+    return rcpp_result_gen;
+END_RCPP
+}
+// read_bgzf
+int read_bgzf(SEXP fpsexp);
+RcppExport SEXP _ldmap_read_bgzf(SEXP fpsexpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fpsexp(fpsexpSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_bgzf(fpsexp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// close_bgzf
+int close_bgzf(SEXP fpsexp);
+RcppExport SEXP _ldmap_close_bgzf(SEXP fpsexpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fpsexp(fpsexpSEXP);
+    rcpp_result_gen = Rcpp::wrap(close_bgzf(fpsexp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// num_bgzf_blocks
+int num_bgzf_blocks(SEXP fpsexp);
+RcppExport SEXP _ldmap_num_bgzf_blocks(SEXP fpsexpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fpsexp(fpsexpSEXP);
+    rcpp_result_gen = Rcpp::wrap(num_bgzf_blocks(fpsexp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// format_bgzf
+Rcpp::StringVector format_bgzf(SEXP fpsexp);
+RcppExport SEXP _ldmap_format_bgzf(SEXP fpsexpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fpsexp(fpsexpSEXP);
+    rcpp_result_gen = Rcpp::wrap(format_bgzf(fpsexp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_bgzf_data
+Rcpp::StringVector get_bgzf_data(SEXP fpsexp);
+RcppExport SEXP _ldmap_get_bgzf_data(SEXP fpsexpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fpsexp(fpsexpSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_bgzf_data(fpsexp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// readlines_chunk_bgzf
+Rcpp::StringVector readlines_chunk_bgzf(SEXP fpsexp);
+RcppExport SEXP _ldmap_readlines_chunk_bgzf(SEXP fpsexpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type fpsexp(fpsexpSEXP);
+    rcpp_result_gen = Rcpp::wrap(readlines_chunk_bgzf(fpsexp));
+    return rcpp_result_gen;
+END_RCPP
+}
 // interpolate_genetic_map
 Rcpp::NumericVector interpolate_genetic_map(const Rcpp::NumericVector& map, const Rcpp::IntegerVector map_pos, const Rcpp::IntegerVector target_pos, const bool strict, const bool progress);
 RcppExport SEXP _ldmap_interpolate_genetic_map(SEXP mapSEXP, SEXP map_posSEXP, SEXP target_posSEXP, SEXP strictSEXP, SEXP progressSEXP) {
@@ -58,13 +136,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // parse_hap
-Rcpp::List parse_hap(Rcpp::StringVector x);
-RcppExport SEXP _ldmap_parse_hap(SEXP xSEXP) {
+Rcpp::List parse_hap(Rcpp::StringVector x, int stride);
+RcppExport SEXP _ldmap_parse_hap(SEXP xSEXP, SEXP strideSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::StringVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(parse_hap(x));
+    Rcpp::traits::input_parameter< int >::type stride(strideSEXP);
+    rcpp_result_gen = Rcpp::wrap(parse_hap(x, stride));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -115,12 +194,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // cov_htm
-Rcpp::NumericMatrix cov_htm(Rcpp::List x, const bool cov_2_cor);
+Rcpp::NumericMatrix cov_htm(Rcpp::RObject x, const bool cov_2_cor);
 RcppExport SEXP _ldmap_cov_htm(SEXP xSEXP, SEXP cov_2_corSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::RObject >::type x(xSEXP);
     Rcpp::traits::input_parameter< const bool >::type cov_2_cor(cov_2_corSEXP);
     rcpp_result_gen = Rcpp::wrap(cov_htm(x, cov_2_cor));
     return rcpp_result_gen;
@@ -847,9 +926,16 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_parse_ldmap_region", (DL_FUNC) &_ldmap_parse_ldmap_region, 1},
     {"_ldmap_parse_ldmap_SNP", (DL_FUNC) &_ldmap_parse_ldmap_SNP, 1},
+    {"_ldmap_open_bgzf", (DL_FUNC) &_ldmap_open_bgzf, 2},
+    {"_ldmap_read_bgzf", (DL_FUNC) &_ldmap_read_bgzf, 1},
+    {"_ldmap_close_bgzf", (DL_FUNC) &_ldmap_close_bgzf, 1},
+    {"_ldmap_num_bgzf_blocks", (DL_FUNC) &_ldmap_num_bgzf_blocks, 1},
+    {"_ldmap_format_bgzf", (DL_FUNC) &_ldmap_format_bgzf, 1},
+    {"_ldmap_get_bgzf_data", (DL_FUNC) &_ldmap_get_bgzf_data, 1},
+    {"_ldmap_readlines_chunk_bgzf", (DL_FUNC) &_ldmap_readlines_chunk_bgzf, 1},
     {"_ldmap_interpolate_genetic_map", (DL_FUNC) &_ldmap_interpolate_genetic_map, 5},
     {"_ldmap_new_interpolate_genetic_map", (DL_FUNC) &_ldmap_new_interpolate_genetic_map, 5},
-    {"_ldmap_parse_hap", (DL_FUNC) &_ldmap_parse_hap, 1},
+    {"_ldmap_parse_hap", (DL_FUNC) &_ldmap_parse_hap, 2},
     {"_ldmap_new_ldmap_ht", (DL_FUNC) &_ldmap_new_ldmap_ht, 1},
     {"_ldmap_sum_ldmap_ht", (DL_FUNC) &_ldmap_sum_ldmap_ht, 1},
     {"_ldmap_dot_ht", (DL_FUNC) &_ldmap_dot_ht, 2},

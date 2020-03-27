@@ -24,6 +24,7 @@
 #include <range/v3/functional/compose.hpp>
 #include <range/v3/functional/concepts.hpp>
 #include <range/v3/functional/pipeable.hpp>
+#include <range/v3/functional/reference_wrapper.hpp>
 #include <range/v3/range/concepts.hpp>
 #include <range/v3/range/traits.hpp>
 #include <range/v3/utility/static_const.hpp>
@@ -56,7 +57,7 @@ namespace ranges
 
     // clang-format off
     template<typename Rng>
-    CPP_concept_fragment(simple_view_frag_, (Rng),
+    CPP_concept_fragment(simple_view_frag_, requires()(0) &&
         same_as<iterator_t<Rng>, iterator_t<Rng const>> &&
         same_as<sentinel_t<Rng>, sentinel_t<Rng const>>
     );
@@ -67,7 +68,7 @@ namespace ranges
         CPP_fragment(ranges::simple_view_frag_, Rng);
 
     template<typename ViewFn, typename Rng>
-    CPP_concept_fragment(invocable_view_closure_, (ViewFn, Rng),
+    CPP_concept_fragment(invocable_view_closure_, requires()(0) &&
         !derived_from<invoke_result_t<ViewFn, Rng>, detail::view_closure_base_>
     );
     template<typename ViewFn, typename Rng>

@@ -8,9 +8,129 @@
 #' @export format.ldmap_ht
 #' @method format ldmap_ht
 format.ldmap_ht <- function(x,...){
-
     ldmap:::format_ht(x)
 }
+
+
+
+#' @export
+as_ldmap_ht <- function(x) {
+  vec_cast(x, new_ldmap_ht())
+}
+
+
+#' @export vec_cast.ldmap_ht
+#' @method vec_cast ldmap_ht
+#' @export
+vec_cast.ldmap_ht <- function(x, to, ...) {
+  UseMethod("vec_cast.ldmap_ht")
+}
+
+
+#' @export vec_cast.ldmap_ht.default
+#' @method vec_cast.ldmap_ht default
+#' @export
+vec_cast.ldmap_ht.default <- function(x, to, ...) {
+  vec_default_cast(x, to)
+}
+
+
+
+
+
+#' @method vec_ptype2 ldmap_ht
+#' @export
+#' @export vec_ptype2.ldmap_ht
+#'
+vec_ptype2.ldmap_ht <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_ht", y)
+
+
+
+#' @method vec_ptype2 ldmap_ht
+#' @export
+#' @export vec_ptype2.ldmap_ht
+#'
+vec_ptype2.ldmap_ht <- function(x, y, ...) UseMethod("vec_ptype2.ldmap_ht", y)
+
+
+#' @method vec_ptype2.ldmap_ht ldmap_ht
+#' @export
+vec_ptype2.ldmap_ht.ldmap_ht <- function(x, y, ...) new_ldmap_ht(integer())
+
+#' @method vec_ptype2.ldmap_ht double
+#' @export
+vec_ptype2.ldmap_ht.double <- function(x, y, ...) double()
+
+#' @method vec_ptype2.double ldmap_ht
+#' @export
+vec_ptype2.double.ldmap_ht <- function(x, y, ...) double()
+
+
+
+#' @export vec_cast.ldmap_ht.ldmap_ht
+#' @export
+#' @method vec_cast.ldmap_ht ldmap_ht
+vec_cast.ldmap_ht.ldmap_ht <- function(x, to, ..., x_arg = "", to_arg = "")
+  x
+
+#' @export vec_cast.ldmap_ht.double
+#' @export
+#' @method vec_cast.ldmap_ht double
+vec_cast.ldmap_ht.double <- function(x, to, ..., x_arg = "", to_arg = "")
+    new_ldmap_snp(as.integer(x))
+
+
+#' @export vec_cast.double.ldmap_ht
+#' @export
+#' @method vec_cast.double ldmap_ht
+vec_cast.double.ldmap_ht <- function(x, to, ..., x_arg = "", to_arg = "")
+    as.double(ht2int(x))
+
+
+
+
+#' @export vec_cast.ldmap_ht.integer
+#' @export
+#' @method vec_cast.ldmap_ht integer
+vec_cast.ldmap_ht.integer <- function(x, to, ..., x_arg = "", to_arg = "")
+    new_ldmap_snp(x)
+
+
+#' @export vec_cast.integer.ldmap_ht
+#' @export
+#' @method vec_cast.integer ldmap_ht
+vec_cast.integer.ldmap_ht <- function(x, to, ..., x_arg = "", to_arg = "")
+    ht2int(x)
+
+
+
+
+#' @export vec_cast.integer64.ldmap_ht
+#' @export
+#' @method vec_cast.integer64 ldmap_ht
+vec_cast.integer64.ldmap_ht <- function(x, to, ..., x_arg = "", to_arg = "")
+    structure(unclass(x),class="integer64")
+
+
+#' @export vec_cast.character.ldmap_ht
+#' @export
+#' @method vec_cast.character ldmap_ht
+vec_cast.character.ldmap_ht <- function(x, to, ..., x_arg = "", to_arg = "")
+    format_ht(x)
+
+#' @export vec_cast.ldmap_ht.character
+#' @export
+#' @method vec_cast.ldmap_ht character
+vec_cast.ldmap_ht.character <- function(x, to, ..., x_arg = "", to_arg = "")
+    parse_hap(paste0(x, collapse = ""), 1)[[1]]
+
+
+
+
+
+
+
+
 
 
 
@@ -94,7 +214,9 @@ read_hap <- function(x, subset = NULL, ...) {
             return(function(x, index) parse_hap(x))
         }
     }
-    purrr::flatten(readr::read_lines_chunked(x,readr::ListCallback$new(subset_factory(subset), ...)))
+    structure(purrr::flatten(readr::read_lines_chunked(x,readr::ListCallback$new(subset_factory(subset), ...))),
+              class = c("vctrs_list_of","vctrs_vctr"),
+              ptype = new_ldmap_ht(integer()))
 }
 
 

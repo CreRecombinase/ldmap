@@ -32,35 +32,25 @@
 #include <range/v3/range/traits.hpp>
 
 #ifndef RANGES_NO_STD_FORWARD_DECLARATIONS
-// Non-portable forward declarations of standard containers
+// Non-portable forward declarations of standard library components
 RANGES_BEGIN_NAMESPACE_STD
-    RANGES_BEGIN_NAMESPACE_CONTAINER
-        template<typename Key,
-                 typename Compare /*= less<Key>*/,
-                 typename Alloc /*= allocator<Key>*/>
-        class set;
+    RANGES_BEGIN_NAMESPACE_VERSION
+        template<typename ElementType, size_t Extent>
+        class span;
 
-        template<typename Key,
-                 typename Compare /*= less<Key>*/,
-                 typename Alloc /*= allocator<Key>*/>
-        class multiset;
-
-        template<typename Key,
-                 typename Hash /*= hash<Key>*/,
-                 typename Pred /*= equal_to<Key>*/,
-                 typename Alloc /*= allocator<Key>*/>
-        class unordered_set;
-
-        template<typename Key,
-                 typename Hash /*= hash<Key>*/,
-                 typename Pred /*= equal_to<Key>*/,
-                 typename Alloc /*= allocator<Key>*/>
-        class unordered_multiset;
-    RANGES_END_NAMESPACE_CONTAINER
+        template<typename CharT, typename Traits>
+        class basic_string_view;
+    RANGES_END_NAMESPACE_VERSION
 RANGES_END_NAMESPACE_STD
 #else
-#include <set>
-#include <unordered_set>
+#ifdef __has_include
+#if __has_include(<span>)
+#include <span>
+#endif
+#if __has_include(<string_view>)
+#include <string_view>
+#endif
+#endif
 #endif
 
 #include <range/v3/detail/disable_warnings.hpp>
@@ -76,23 +66,22 @@ namespace ranges
 
     // clang-format off
     template<typename T>
-    CPP_concept_bool range_impl_ =
-        CPP_requires ((T &&) t) //
+    CPP_concept_fragment(_range_,
+        requires(T & t) //
         (
-            ranges::begin(CPP_fwd(t)), // not necessarily equality-preserving
-            ranges::end(CPP_fwd(t))
-        );
-
+            ranges::begin(t), // not necessarily equality-preserving
+            ranges::end(t)
+        ));
     template<typename T>
     CPP_concept_bool range =
-        range_impl_<T &>;
+        CPP_fragment(ranges::_range_, T);
 
     template<typename T>
-    CPP_concept_bool forwarding_range_ =
-        range<T> && range_impl_<T>;
+    CPP_concept_bool safe_range =
+        range<T> && detail::_safe_range<T>;
 
     template<typename T, typename V>
-    CPP_concept_fragment(output_range_, (T, V),
+    CPP_concept_fragment(output_range_, requires()(0) &&
         output_iterator<iterator_t<T>, V>
     );
     template<typename T, typename V>
@@ -100,7 +89,7 @@ namespace ranges
         range<T> && CPP_fragment(ranges::output_range_, T, V);
 
     template<typename T>
-    CPP_concept_fragment(input_range_, (T),
+    CPP_concept_fragment(input_range_, requires()(0) &&
         input_iterator<iterator_t<T>>
     );
     template<typename T>
@@ -108,7 +97,7 @@ namespace ranges
         range<T> && CPP_fragment(ranges::input_range_, T);
 
     template<typename T>
-    CPP_concept_fragment(forward_range_, (T),
+    CPP_concept_fragment(forward_range_, requires()(0) &&
         forward_iterator<iterator_t<T>>
     );
     template<typename T>
@@ -116,7 +105,7 @@ namespace ranges
         input_range<T> && CPP_fragment(ranges::forward_range_, T);
 
     template<typename T>
-    CPP_concept_fragment(bidirectional_range_, (T),
+    CPP_concept_fragment(bidirectional_range_, requires()(0) &&
         bidirectional_iterator<iterator_t<T>>
     );
     template<typename T>
@@ -124,7 +113,7 @@ namespace ranges
         forward_range<T> && CPP_fragment(ranges::bidirectional_range_, T);
 
     template<typename T>
-    CPP_concept_fragment(random_access_range_, (T),
+    CPP_concept_fragment(random_access_range_, requires()(0) &&
         random_access_iterator<iterator_t<T>>
     );
 
@@ -146,7 +135,7 @@ namespace ranges
 
     // clang-format off
     template<typename T>
-    CPP_concept_fragment(contiguous_range_, (T),
+    CPP_concept_fragment(contiguous_range_, requires()(0) &&
         contiguous_iterator<iterator_t<T>> &&
         same_as<detail::data_t<T>, std::add_pointer_t<iter_reference_t<iterator_t<T>>>>
     );
@@ -156,7 +145,7 @@ namespace ranges
         random_access_range<T> && CPP_fragment(ranges::contiguous_range_, T);
 
     template<typename T>
-    CPP_concept_fragment(common_range_, (T),
+    CPP_concept_fragment(common_range_, requires()(0) &&
         same_as<iterator_t<T>, sentinel_t<T>>
     );
 
@@ -171,106 +160,46 @@ namespace ranges
     /// \endcond
 
     template<typename T>
-    CPP_concept_fragment(sized_range_, (T),
+    CPP_concept_fragment(sized_range_,
+        requires(T & t) //
+        (
+            ranges::size(t)
+        ) &&
         detail::integer_like_<range_size_t<T>>
     );
-    #define CPP_noop
+
     template<typename T>
     CPP_concept_bool sized_range =
         range<T> &&
         !disable_sized_range<uncvref_t<T>> &&
-        CPP_requires ((T &) t) //
-        (
-            ranges::size(t)
-        ) &&
         CPP_fragment(ranges::sized_range_, T);
     // clang-format on
 
     /// \cond
-    namespace detail
+    namespace ext
     {
-        struct enable_view_helper_
-        {
-            bool result_;
-
-            template<typename T>
-            static constexpr auto test(T const *) -> CPP_ret(bool)( //
-                requires range<T> && range<T const>)
-            {
-                return RANGES_IS_SAME(iter_reference_t<iterator_t<T>>,
-                                      iter_reference_t<iterator_t<T const>>);
-            }
-            static constexpr auto test(void const *) -> bool
-            {
-                return true;
-            }
-            template<typename T>
-            constexpr enable_view_helper_(T const * p)
-              : result_(enable_view_helper_::test(p))
-            {}
-        };
-        constexpr bool enable_view_impl_(...)
-        {
-            return false;
-        }
-        constexpr bool enable_view_impl_(view_base const *)
-        {
-            return true;
-        }
-        constexpr bool enable_view_impl_(enable_view_helper_ ev)
-        {
-            return ev.result_;
-        }
         template<typename T>
-        constexpr bool enable_view_impl_(std::initializer_list<T> const *)
-        {
-            return false;
-        }
-        template<typename Key, typename Compare, typename Alloc>
-        constexpr bool enable_view_impl_(std::set<Key, Compare, Alloc> const *)
-        {
-            return false;
-        }
-        template<typename Key, typename Compare, typename Alloc>
-        constexpr bool enable_view_impl_(std::multiset<Key, Compare, Alloc> const *)
-        {
-            return false;
-        }
-        template<typename Key, typename Hash, typename Pred, typename Alloc>
-        constexpr bool enable_view_impl_(
-            std::unordered_set<Key, Hash, Pred, Alloc> const *)
-        {
-            return false;
-        }
-        template<typename Key, typename Hash, typename Pred, typename Alloc>
-        constexpr bool enable_view_impl_(
-            std::unordered_multiset<Key, Hash, Pred, Alloc> const *)
-        {
-            return false;
-        }
-        // BUGBUG TODO
-        // template<typename BidiIter, typename Alloc>
-        // constexpr bool enable_view_impl_(std::match_results<BidiIter, Alloc> const *)
-        // {
-        //     return false;
-        // }
-        template<typename T>
-        constexpr T const * nullptr_(int)
-        {
-            return nullptr;
-        }
-        template<typename T>
-        constexpr int nullptr_(long)
-        {
-            return 0;
-        }
+        struct enable_view
+          : std::is_base_of<view_base, T>
+        {};
     } // namespace detail
     /// \endcond
 
     // Specialize this if the default is wrong.
     template<typename T>
     RANGES_INLINE_VAR constexpr bool enable_view =
-        detail::enable_view_impl_(detail::nullptr_<T>(0));
+        ext::enable_view<T>::value;
+
+#if defined(__cpp_lib_string_view) && __cpp_lib_string_view > 0
+    template<typename Char, typename Traits>
+    RANGES_INLINE_VAR constexpr bool enable_view<std::basic_string_view<Char, Traits>> =
+        true;
+#endif
+
+#if defined(__cpp_lib_span) && __cpp_lib_span > 0
+    template<typename T, std::size_t N>
+    RANGES_INLINE_VAR constexpr bool enable_view<std::span<T, N>> = N + 1 < 2;
+#endif
 
     ///
     /// View concepts below
@@ -286,7 +215,7 @@ namespace ranges
     template<typename T>
     CPP_concept_bool viewable_range =
         range<T> &&
-        (forwarding_range_<T> || view_<detail::decay_t<T>>);
+        (safe_range<T> || view_<uncvref_t<T>>);
     // clang-format on
 
     ////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,7 +283,7 @@ namespace ranges
         CPP_concept range = CPP_defer(ranges::range, T);
 
         template<typename T>
-        CPP_concept forwarding_range_ = CPP_defer(ranges::forwarding_range_, T);
+        CPP_concept safe_range = CPP_defer(ranges::safe_range, T);
 
         template<typename T, typename V>
         CPP_concept output_range = CPP_defer(ranges::output_range, T, V);

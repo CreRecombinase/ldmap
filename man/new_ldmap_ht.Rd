@@ -4,7 +4,7 @@
 \alias{new_ldmap_ht}
 \title{New vector of haplotypes}
 \usage{
-new_ldmap_ht(x)
+new_ldmap_ht(x = as.integer(c()))
 }
 \arguments{
 \item{x}{data vector}

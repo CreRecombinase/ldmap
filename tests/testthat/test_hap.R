@@ -20,8 +20,8 @@ mymap_df <- read_1kg_maps(mymap)
 leg_df <- read_hap_legend(fs::path_package("EUR.chr19.legend.gz", package = "ldmap")) %>%
     assign_genetic_map(mymap_df)
 samp_df <- read_hap_samples(fs::path_package("EUR.chr19.samples", package = "ldmap"))
-hap_l <- read_hap(fs::path_package("EUR.chr19.hap", package = "ldmap"))
-thap <- matrix(scan(fs::path_package("EUR.chr19.hap", package = "ldmap"),
+hap_l <- read_hap(fs::path_package("EUR.chr19.hap.gz", package = "ldmap"))
+thap <- matrix(scan(fs::path_package("EUR.chr19.hap.gz", package = "ldmap"),
                     what = integer(),
                     sep = " "
                     ),
@@ -34,9 +34,38 @@ thap <- matrix(scan(fs::path_package("EUR.chr19.hap", package = "ldmap"),
 
 
 
-test_that("we can read haplegend data", {
+test_that("we can read  haplegend data", {
     expect_equal(nrow(leg_df), length(hap_l))
 })
+
+test_that("we can read subsets of haplotype data", {
+    leg_dir <- fs::path_package(package = "ldmap")
+    chap <- read_hap_blocks(hap_dir = leg_dir,
+                            hap_file_pattern = "EUR.chr{chrom}",
+                            ldmr = "chr19:264117_265084")
+    tleg <- dplyr::select(leg_df, -map) %>%
+        dplyr::mutate(hap = hap_l) %>%
+        tail()
+    expect_equal(tleg, chap, check.attributes = FALSE)
+})
+
+
+
+
+test_that("we can read subsets of haplotype data (by rsid)", {
+    leg_dir <- fs::path_package(package = "ldmap")
+    tleg <- dplyr::select(leg_df, -map) %>%
+        dplyr::mutate(hap = hap_l) %>%
+        tail()
+    chap <- read_hap_blocks(hap_dir = leg_dir,
+                            hap_file_pattern = "EUR.chr{chrom}",
+                            ldmr = "chr19:264117_265084")
+
+    expect_equal(tleg, chap, check.attributes = FALSE)
+})
+
+
+
 
 
 test_that("we can compute covariance", {
@@ -71,7 +100,6 @@ test_that("we can compute LDshrink like the toy R implementation", {
         SigHat <- ((1 - theta) * (1 - theta)) * S + eye
         return(stats::cov2cor(SigHat))
     }
-
     tLDR <- calcLDR(t(thap), leg_df$map)
     mLD <- ldmap:::ldshrink_S(hap_l, leg_df$map)
     expect_equal(mLD, tLDR, tolerance = 1e-4)

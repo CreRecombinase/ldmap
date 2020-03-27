@@ -62,48 +62,19 @@ namespace ranges
 
         // clang-format off
         template<typename Rng, typename T>
-        CPP_concept can_push_front_ =
-            CPP_requires ((Rng &&) rng, (T &&) t) //
+        CPP_concept_fragment(can_push_front_frag_,
+            requires(Rng && rng, T && t) //
             (
-                push_front(rng, CPP_fwd(t))
-            );
+                push_front(rng, (T &&) t)
+            )
+        );
+        template<typename Rng, typename T>
+        CPP_concept can_push_front_ =
+            CPP_fragment(adl_push_front_detail::can_push_front_frag_, Rng, T);
         // clang-format on
 
         struct push_front_fn
         {
-#ifdef RANGES_WORKAROUND_MSVC_OLD_LAMBDA
-        private:
-            template<typename T, std::size_t N>
-            struct lamduh
-            {
-                T (&val_)[N];
-
-                template<typename Rng>
-                auto operator()(Rng && rng) const
-                    -> invoke_result_t<push_front_fn, Rng, T (&)[N]>
-                {
-                    return push_front_fn{}(static_cast<Rng &&>(rng), val_);
-                }
-            };
-
-        public:
-            template<typename T, std::size_t N>
-            constexpr auto operator()(T (&val)[N]) const
-            {
-                return make_action_closure(lamduh<T, N>{val});
-            }
-#else  // ^^^ workaround / no workaround vvv
-            template<typename T, std::size_t N>
-            constexpr auto operator()(T (&val)[N]) const
-            {
-                return make_action_closure(
-                    [&val](auto && rng)
-                        -> invoke_result_t<push_front_fn, decltype(rng), T(&)[N]> {
-                        return push_front_fn{}(static_cast<decltype(rng)>(rng), val);
-                    });
-            }
-#endif // RANGES_WORKAROUND_MSVC_OLD_LAMBDA
-
             template<typename T>
             constexpr auto operator()(T && val) const
             {
@@ -115,6 +86,14 @@ namespace ranges
             constexpr auto operator()(std::initializer_list<T> val) const
             {
                 return make_action_closure(bind_back(push_front_fn{}, val));
+            }
+
+            template<typename T>
+            constexpr auto CPP_fun(operator())(T & t)( //
+                const requires range<T &>)
+            {
+                return make_action_closure(
+                    bind_back(push_front_fn{}, detail::reference_wrapper_<T>(t)));
             }
 
             template<typename Rng, typename T>
@@ -137,6 +116,15 @@ namespace ranges
                 push_front(rng, t);
                 return static_cast<Rng &&>(rng);
             }
+
+            /// \cond
+            template<typename Rng, typename T>
+            auto operator()(Rng && rng, detail::reference_wrapper_<T> r) const
+                -> invoke_result_t<push_front_fn, Rng, T &>
+            {
+                return (*this)(static_cast<Rng &&>(rng), r.get());
+            }
+            /// \endcond
         };
     } // namespace adl_push_front_detail
     /// \endcond

@@ -63,10 +63,25 @@
 #endif
 #endif
 
-#define CPP_PP_CHECK(...) CPP_PP_CHECK_N(__VA_ARGS__, 0,)
+#define CPP_PP_CAT_(X, ...)  X ## __VA_ARGS__
+#define CPP_PP_CAT(X, ...)   CPP_PP_CAT_(X, __VA_ARGS__)
+
+#define CPP_PP_EVAL_(X, ARGS) X ARGS
+#define CPP_PP_EVAL(X, ...) CPP_PP_EVAL_(X, (__VA_ARGS__))
+
+#define CPP_PP_EVAL2_(X, ARGS) X ARGS
+#define CPP_PP_EVAL2(X, ...) CPP_PP_EVAL2_(X, (__VA_ARGS__))
+
+#define CPP_PP_EXPAND(...) __VA_ARGS__
+#define CPP_PP_EAT(...)
+
+#define CPP_PP_CHECK(...) CPP_PP_EXPAND(CPP_PP_CHECK_N(__VA_ARGS__, 0,))
 #define CPP_PP_CHECK_N(x, n, ...) n
 #define CPP_PP_PROBE(x) x, 1,
 #define CPP_PP_PROBE_N(x, n) x, n,
+
+#define CPP_PP_IS_PAREN(x) CPP_PP_CHECK(CPP_PP_IS_PAREN_PROBE x)
+#define CPP_PP_IS_PAREN_PROBE(...) CPP_PP_PROBE(~)
 
 // CPP_CXX_VA_OPT
 #ifndef CPP_CXX_VA_OPT
@@ -78,28 +93,18 @@
 #endif
 #endif // CPP_CXX_VA_OPT
 
-#define CPP_PP_CAT_(X, ...)  X ## __VA_ARGS__
-#define CPP_PP_CAT(X, ...)   CPP_PP_CAT_(X, __VA_ARGS__)
-#define CPP_PP_CAT2_(X, ...) X ## __VA_ARGS__
-#define CPP_PP_CAT2(X, ...)  CPP_PP_CAT2_(X, __VA_ARGS__)
-
-#define CPP_PP_EVAL(X, ...) X(__VA_ARGS__)
-#define CPP_PP_EVAL2(X, ...) X(__VA_ARGS__)
-
-#define CPP_PP_EXPAND(...) __VA_ARGS__
-#define CPP_PP_EAT(...)
-
-#define CPP_PP_IS_PAREN(x) CPP_PP_CHECK(CPP_PP_IS_PAREN_PROBE x)
-#define CPP_PP_IS_PAREN_PROBE(...) CPP_PP_PROBE(~)
-
+// The final CPP_PP_EXPAND here is to avoid
+// https://stackoverflow.com/questions/5134523/msvc-doesnt-expand-va-args-correctly
 #define CPP_PP_COUNT(...)                                                       \
-    CPP_PP_COUNT_(__VA_ARGS__,                                                  \
-        50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,            \
-        30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,            \
-        10,9,8,7,6,5,4,3,2,1,)                                                  \
-        /**/
+    CPP_PP_EXPAND(CPP_PP_COUNT_(__VA_ARGS__,                                    \
+        50, 49, 48, 47, 46, 45, 44, 43, 42, 41,                                 \
+        40, 39, 38, 37, 36, 35, 34, 33, 32, 31,                                 \
+        30, 29, 28, 27, 26, 25, 24, 23, 22, 21,                                 \
+        20, 19, 18, 17, 16, 15, 14, 13, 12, 11,                                 \
+        10, 9, 8, 7, 6, 5, 4, 3, 2, 1,))                                        \
+    /**/
 #define CPP_PP_COUNT_(                                                          \
-    _1, _2, _3, _4, _5, _6, _7, _8, _9, _10,                                    \
+    _01, _02, _03, _04, _05, _06, _07, _08, _09, _10,                           \
     _11, _12, _13, _14, _15, _16, _17, _18, _19, _20,                           \
     _21, _22, _23, _24, _25, _26, _27, _28, _29, _30,                           \
     _31, _32, _33, _34, _35, _36, _37, _38, _39, _40,                           \
@@ -151,8 +156,11 @@
 
 #define CPP_PP_PROBE_EMPTY()
 #define CPP_PP_IS_NOT_EMPTY(...)                                                \
-    CPP_PP_CHECK(CPP_PP_CAT(CPP_PP_PROBE_EMPTY_PROBE_,                          \
-        CPP_PP_PROBE_EMPTY __VA_ARGS__ ()))                                     \
+    CPP_PP_EVAL(                                                                \
+        CPP_PP_CHECK,                                                           \
+        CPP_PP_CAT(                                                             \
+            CPP_PP_PROBE_EMPTY_PROBE_,                                          \
+            CPP_PP_PROBE_EMPTY __VA_ARGS__ ()))                                 \
     /**/
 
 #define CPP_assert(...)                                                         \
@@ -215,8 +223,11 @@
     __VA_ARGS__
 #define CPP_literal(...) \
     __VA_ARGS__
-#define CPP_concept_fragment(NAME, ARGS, ...) \
-    META_CONCEPT NAME = __VA_ARGS__
+#define CPP_concept_fragment(NAME, ...) \
+    META_CONCEPT NAME = CPP_PP_CAT(CPP_concept_fragment_reqs_, __VA_ARGS__)
+#define CPP_concept_fragment_reqs_requires(...) \
+    requires(__VA_ARGS__) CPP_concept_fragment_reqs_
+#define CPP_concept_fragment_reqs_(...) { __VA_ARGS__ ; }
 #define CPP_fragment(NAME, ...) \
     NAME<__VA_ARGS__>
 #else
@@ -259,16 +270,29 @@
     /**/
 #define CPP_defer(CONCEPT, ...)\
     CPP_defer_(CONCEPT, CPP_PP_FOR_EACH(CPP_type_, __VA_ARGS__))
-#define CPP_concept_fragment(NAME, ARGS, ...) \
-    std::enable_if_t<__VA_ARGS__, ::concepts::detail::true_type> \
-    CPP_PP_CAT(NAME, CPP_concept_fragment_)( \
-        ::concepts::detail::tag<CPP_PP_EXPAND ARGS> *); \
-    ::concepts::detail::false_type \
-    CPP_PP_CAT(NAME, CPP_concept_fragment_)(void *) \
+#define CPP_concept_fragment(NAME, ...) \
+    auto NAME ## CPP_concept_fragment_impl_ \
+        CPP_concept_fragment_reqs_ ## __VA_ARGS__> {} \
+    template<typename... As>\
+    char NAME ## CPP_concept_fragment_(\
+        ::concepts::detail::tag<As...> *, \
+        decltype(&NAME ## CPP_concept_fragment_impl_<As...>)); \
+    char (&NAME ## CPP_concept_fragment_(...))[2] \
     /**/
+#if defined(_MSC_VER) && !defined(__clang__)
+#define CPP_concept_fragment_true(...) \
+    ::concepts::detail::true_<decltype(__VA_ARGS__, void())>()
+#else
+#define CPP_concept_fragment_true(...) \
+    !(decltype(__VA_ARGS__, void(), false){})
+#endif
+#define CPP_concept_fragment_reqs_requires(...) \
+    (__VA_ARGS__) -> std::enable_if_t<CPP_concept_fragment_reqs_2_
+#define CPP_concept_fragment_reqs_2_(...) \
+    CPP_concept_fragment_true(__VA_ARGS__)
 #define CPP_fragment(NAME, ...) \
-    decltype(CPP_PP_CAT(NAME, CPP_concept_fragment_)(\
-        (::concepts::detail::tag<__VA_ARGS__> *) nullptr))::value() \
+    (1u==sizeof(NAME ## CPP_concept_fragment_(\
+        static_cast<::concepts::detail::tag<__VA_ARGS__> *>(nullptr), nullptr))) \
     /**/
 #endif
 
@@ -345,8 +369,11 @@
     CPP_PP_CAT(CPP_CTOR_SFINAE_PROBE_NOEXCEPT_, FIRST)                          \
     /**/
 #define CPP_CTOR_SFINAE_REQUIRES(...)                                           \
-    CPP_PP_CAT(CPP_CTOR_SFINAE_REQUIRES_,                                       \
-    CPP_PP_CHECK(CPP_CTOR_SFINAE_MAKE_PROBE(__VA_ARGS__,)))(__VA_ARGS__)        \
+    CPP_PP_CAT(                                                                 \
+        CPP_CTOR_SFINAE_REQUIRES_,                                              \
+        CPP_PP_EVAL(                                                            \
+            CPP_PP_CHECK,                                                       \
+            CPP_CTOR_SFINAE_MAKE_PROBE(__VA_ARGS__,)))(__VA_ARGS__)             \
     /**/
 // No noexcept-clause:
 #define CPP_CTOR_SFINAE_REQUIRES_0(...)                                         \
@@ -359,11 +386,13 @@
     > = {})                                                                     \
     CPP_PP_IGNORE_CXX2A_COMPAT_END                                              \
     /**/
+
 // Yes noexcept-clause:
 #define CPP_CTOR_SFINAE_REQUIRES_1(...)                                         \
     std::enable_if_t<                                                           \
         CPP_FORCE_TO_BOOL(                                                      \
-            CPP_PP_CAT(CPP_TEMPLATE_SFINAE_AUX_3_,                              \
+            CPP_PP_EVAL(CPP_PP_CAT, \
+                CPP_TEMPLATE_SFINAE_AUX_3_,                              \
                 CPP_PP_CAT(CPP_CTOR_SFINAE_EAT_NOEXCEPT_, __VA_ARGS__)          \
             ) && CPP_INSTANCE(CPP_true(::concepts::detail::xNil{}))             \
         ),                                                                      \
@@ -403,7 +432,7 @@
     /**/
 #else // ^^^ workaround / no workaround vvv
 #define CPP_broken_friend_member                                                \
-    template<std::true_type (&CPP_true)(::concepts::detail::xNil) =             \
+    template<::concepts::detail::boolean_true_t (&CPP_true)(::concepts::detail::xNil) = \
         ::concepts::detail::CPP_true>                                           \
     /**/
 #endif // CPP_WORKAROUND_MSVC_779763
@@ -436,12 +465,15 @@
     /**/
 
 #define CPP_FUN_IMPL_REQUIRES(...)                                              \
-    CPP_FUN_IMPL_SELECT_CONST_(__VA_ARGS__,)(__VA_ARGS__)                       \
+    CPP_PP_EVAL2_(                                                              \
+        CPP_FUN_IMPL_SELECT_CONST_,                                             \
+        (__VA_ARGS__,)                                                          \
+    )(__VA_ARGS__)                                                              \
     /**/
 
 #define CPP_FUN_IMPL_SELECT_CONST_(MAYBE_CONST, ...)                            \
     CPP_PP_CAT(CPP_FUN_IMPL_SELECT_CONST_,                                      \
-        CPP_PP_CHECK(CPP_PP_CAT(                                                \
+        CPP_PP_EVAL(CPP_PP_CHECK, CPP_PP_CAT(                                   \
             CPP_PP_PROBE_CONST_PROBE_, MAYBE_CONST)))                           \
     /**/
 
@@ -456,7 +488,7 @@
 
 #define CPP_FUN_IMPL_SELECT_CONST_NOEXCEPT_(MAYBE_NOEXCEPT, ...)                \
     CPP_PP_CAT(CPP_FUN_IMPL_SELECT_CONST_NOEXCEPT_,                             \
-        CPP_PP_CHECK(CPP_PP_CAT(                                                \
+        CPP_PP_EVAL2(CPP_PP_CHECK, CPP_PP_CAT(                                                \
             CPP_PP_PROBE_NOEXCEPT_PROBE_, MAYBE_NOEXCEPT)))                     \
     /**/
 
@@ -465,7 +497,10 @@
 #define CPP_FUN_IMPL_SELECT_CONST_NOEXCEPT_0(...)                               \
     std::enable_if_t<                                                           \
         CPP_FORCE_TO_BOOL(                                                      \
-            CPP_PP_CAT(CPP_FUN_IMPL_EAT_REQUIRES_, __VA_ARGS__) &&              \
+            CPP_PP_EVAL(\
+                CPP_PP_CAT, \
+                CPP_FUN_IMPL_EAT_REQUIRES_, \
+                __VA_ARGS__) &&              \
             CPP_INSTANCE(CPP_true(::concepts::detail::xNil{}))                  \
         ),                                                                      \
         ::concepts::detail::Nil                                                 \
@@ -476,7 +511,8 @@
 #define CPP_FUN_IMPL_SELECT_CONST_NOEXCEPT_1(...)                               \
     std::enable_if_t<                                                           \
         CPP_FORCE_TO_BOOL(                                                      \
-            CPP_PP_CAT(                                                         \
+            CPP_PP_EVAL(\
+                CPP_PP_CAT,                                                         \
                 CPP_FUN_IMPL_EAT_REQUIRES_,                                     \
                 CPP_PP_CAT(CPP_FUN_IMPL_EAT_NOEXCEPT_, __VA_ARGS__)             \
             ) && CPP_INSTANCE(CPP_true(::concepts::detail::xNil{}))             \
@@ -493,12 +529,15 @@
     /**/
 
 #define CPP_FUN_IMPL_SELECT_CONST_0(...)                                        \
-    CPP_FUN_IMPL_SELECT_NONCONST_NOEXCEPT_(__VA_ARGS__,)(__VA_ARGS__)           \
+    CPP_PP_EVAL_(                                                               \
+        CPP_FUN_IMPL_SELECT_NONCONST_NOEXCEPT_,                                 \
+        (__VA_ARGS__,)                                                          \
+    )(__VA_ARGS__)                                                              \
     /**/
 
 #define CPP_FUN_IMPL_SELECT_NONCONST_NOEXCEPT_(MAYBE_NOEXCEPT, ...)             \
     CPP_PP_CAT(CPP_FUN_IMPL_SELECT_NONCONST_NOEXCEPT_,                          \
-          CPP_PP_CHECK(CPP_PP_CAT(                                              \
+          CPP_PP_EVAL2(CPP_PP_CHECK, CPP_PP_CAT(                                \
             CPP_PP_PROBE_NOEXCEPT_PROBE_, MAYBE_NOEXCEPT)))                     \
     /**/
 
@@ -516,7 +555,8 @@
 #define CPP_FUN_IMPL_SELECT_NONCONST_NOEXCEPT_1(...)                            \
     std::enable_if_t<                                                           \
         CPP_FORCE_TO_BOOL(                                                      \
-            CPP_PP_CAT(                                                         \
+            CPP_PP_EVAL(                                                        \
+                CPP_PP_CAT,                                                     \
                 CPP_FUN_IMPL_EAT_REQUIRES_,                                     \
                 CPP_PP_CAT(CPP_FUN_IMPL_EAT_NOEXCEPT_, __VA_ARGS__)             \
             ) &&                                                                \
@@ -554,11 +594,14 @@
 #define CPP_auto_fun(X) X CPP_AUTO_FUN_IMPL_
 #define CPP_AUTO_FUN_IMPL_(...) (__VA_ARGS__) CPP_AUTO_FUN_RETURNS_
 #define CPP_AUTO_FUN_RETURNS_(...)                                              \
-    CPP_AUTO_FUN_SELECT_RETURNS_(__VA_ARGS__,)(__VA_ARGS__)                     \
+    CPP_PP_EVAL2_(                                                              \
+        CPP_AUTO_FUN_SELECT_RETURNS_,                                           \
+        (__VA_ARGS__,)                                                          \
+    )(__VA_ARGS__)                                                              \
     /**/
 #define CPP_AUTO_FUN_SELECT_RETURNS_(MAYBE_CONST, ...)                          \
     CPP_PP_CAT(CPP_AUTO_FUN_RETURNS_CONST_,                                     \
-        CPP_PP_CHECK(CPP_PP_CAT(                                                \
+        CPP_PP_EVAL(CPP_PP_CHECK, CPP_PP_CAT(                                   \
             CPP_PP_PROBE_CONST_MUTABLE_PROBE_, MAYBE_CONST)))                   \
     /**/
 #define CPP_PP_PROBE_CONST_MUTABLE_PROBE_const CPP_PP_PROBE_N(~, 1)
@@ -647,6 +690,12 @@ namespace concepts
             static constexpr bool value() noexcept { return true; }
         };
 
+        template<class>
+        constexpr bool true_()
+        {
+            return true;
+        }
+
         template<typename...>
         struct tag;
 
@@ -697,20 +746,14 @@ namespace concepts
             return true;
         }
 
-        struct boolean
-        {
-            friend bool operator&&(boolean, bool) = delete;
-            friend bool operator&&(bool, boolean) = delete;
-            friend bool operator||(boolean, bool) = delete;
-            friend bool operator||(bool, boolean) = delete;
-        };
         template<typename T, typename U>
         struct and_;
         template<typename T, typename U>
         struct or_;
         template<typename T>
-        struct not_ : boolean
+        struct not_
         {
+            using _cpp_boolean_t = not_;
             constexpr operator bool() const noexcept
             {
                 return !(bool) T{};
@@ -720,20 +763,21 @@ namespace concepts
                 return T{};
             }
             template<typename That>
-            constexpr and_<not_, That> operator&&(That) const noexcept
+            constexpr and_<not_, typename That::_cpp_boolean_t> operator&&(That) const noexcept
             {
                 return {};
             }
             template<typename That>
-            constexpr or_<not_, That> operator||(That) const noexcept
+            constexpr or_<not_, typename That::_cpp_boolean_t> operator||(That) const noexcept
             {
                 return {};
             }
         };
 
         template<typename T, typename U>
-        struct and_ : boolean
+        struct and_
         {
+            using _cpp_boolean_t = and_;
             static constexpr bool impl(std::false_type) noexcept
             {
                 return false;
@@ -751,28 +795,21 @@ namespace concepts
                 return not_<and_>{};
             }
             template<typename That>
-            constexpr and_<and_, That> operator&&(That) const noexcept
+            constexpr and_<and_, typename That::_cpp_boolean_t> operator&&(That) const noexcept
             {
-                static_assert(
-                    !META_IS_SAME(That, bool),
-                    "All expressions in a conjunction should be "
-                    "defer:: concepts");
                 return {};
             }
             template<typename That>
-            constexpr or_<and_, That> operator||(That) const noexcept
+            constexpr or_<and_, typename That::_cpp_boolean_t> operator||(That) const noexcept
             {
-                static_assert(
-                    !META_IS_SAME(That, bool),
-                    "All expressions in a disjunction should be "
-                    "defer:: concepts");
                 return {};
             }
         };
 
         template<typename T, typename U>
-        struct or_ : boolean
+        struct or_
         {
+            using _cpp_boolean_t = or_;
             static constexpr bool impl(std::true_type) noexcept
             {
                 return true;
@@ -790,28 +827,21 @@ namespace concepts
                 return {};
             }
             template<typename That>
-            constexpr and_<or_, That> operator&&(That) const noexcept
+            constexpr and_<or_, typename That::_cpp_boolean_t> operator&&(That) const noexcept
             {
-                static_assert(
-                    !META_IS_SAME(That, bool),
-                    "All expressions in a disjunction should be "
-                    "defer:: concepts");
                 return {};
             }
             template<typename That>
-            constexpr or_<or_, That> operator||(That) const noexcept
+            constexpr or_<or_, typename That::_cpp_boolean_t> operator||(That) const noexcept
             {
-                static_assert(
-                    !META_IS_SAME(That, bool),
-                    "All expressions in a disjunction should be "
-                    "defer:: concepts");
                 return {};
             }
         };
 
         template<class Fn>
-        struct boolean_ : boolean
+        struct boolean_
         {
+            using _cpp_boolean_t = boolean_;
             boolean_() = default;
             constexpr boolean_(decltype(nullptr)) noexcept {}
             template<bool = true>
@@ -824,21 +854,13 @@ namespace concepts
                 return {};
             }
             template<typename That>
-            constexpr and_<boolean_, That> operator&&(That) const noexcept
+            constexpr and_<boolean_, typename That::_cpp_boolean_t> operator&&(That) const noexcept
             {
-                static_assert(
-                    !META_IS_SAME(That, bool),
-                    "All expressions in a disjunction should be "
-                    "defer:: concepts");
                 return {};
             }
             template<typename That>
-            constexpr or_<boolean_, That> operator||(That) const noexcept
+            constexpr or_<boolean_, typename That::_cpp_boolean_t> operator||(That) const noexcept
             {
-                static_assert(
-                    !META_IS_SAME(That, bool),
-                    "All expressions in a disjunction should be "
-                    "defer:: concepts");
                 return {};
             }
         };
@@ -848,16 +870,26 @@ namespace concepts
         struct Nil
         {};
 
+        struct _true_fn
+        {
+            std::true_type operator()(int) const noexcept
+            {
+                return {};
+            }
+        };
+
+        using boolean_true_t = boolean_<_true_fn>;
+
 #ifdef CPP_WORKAROUND_MSVC_779763
         enum class xNil {};
 
         struct CPP_true_t
         {
-            constexpr std::true_type operator()(Nil) const noexcept
+            constexpr boolean_true_t operator()(Nil) const noexcept
             {
                 return {};
             }
-            constexpr std::true_type operator()(xNil) const noexcept
+            constexpr boolean_true_t operator()(xNil) const noexcept
             {
                 return {};
             }
@@ -865,7 +897,7 @@ namespace concepts
 
         CPP_INLINE_VAR constexpr CPP_true_t CPP_true_{};
 
-        constexpr std::true_type CPP_true(xNil)
+        constexpr boolean_true_t CPP_true(xNil)
         {
             return {};
         }
@@ -873,7 +905,7 @@ namespace concepts
         using xNil = Nil;
 #endif
 
-        constexpr std::true_type CPP_true(Nil)
+        constexpr boolean_true_t CPP_true(Nil)
         {
             return {};
         }
@@ -886,14 +918,17 @@ namespace concepts
         CPP_DIAGNOSTIC_IGNORE_FLOAT_EQUAL
 
         template<typename T, typename U>
-        CPP_concept_bool weakly_equality_comparable_with_ =
-            CPP_requires ((detail::as_cref_t<T>) t, (detail::as_cref_t<U>) u) //
+        CPP_concept_fragment(weakly_equality_comparable_with_frag_,
+            requires(detail::as_cref_t<T> t, detail::as_cref_t<U> u) //
             (
                 (t == u) ? 1 : 0,
                 (t != u) ? 1 : 0,
                 (u == t) ? 1 : 0,
                 (u != t) ? 1 : 0
-            );
+            ));
+        template<typename T, typename U>
+        CPP_concept_bool weakly_equality_comparable_with_ =
+            CPP_fragment(detail::weakly_equality_comparable_with_frag_, T, U);
 
         CPP_DIAGNOSTIC_POP
     } // namespace detail
@@ -945,11 +980,15 @@ namespace concepts
             std::is_convertible<std::add_rvalue_reference_t<From>, To>::value;
 
         template<typename From, typename To>
-        CPP_concept_bool explicitly_convertible_to =
-            CPP_requires_ ((CPP_type(From)(*)()) from) //
+        CPP_concept_fragment(explicitly_convertible_to_,
+            requires(From(*from)()) //
             (
                 static_cast<To>(from())
-            );
+            )
+        );
+        template<typename From, typename To>
+        CPP_concept_bool explicitly_convertible_to =
+            CPP_fragment(concepts::explicitly_convertible_to_, From, To);
         /// \endcond
 
         template<typename From, typename To>
@@ -958,7 +997,7 @@ namespace concepts
             explicitly_convertible_to<From, To>;
 
         template<typename T, typename U>
-        CPP_concept_fragment(derived_from_, (T, U),
+        CPP_concept_fragment(derived_from_, requires()(0) &&
             convertible_to<T const volatile *, U const volatile *>
         );
         template<typename T, typename U>
@@ -967,7 +1006,7 @@ namespace concepts
             CPP_fragment(concepts::derived_from_, T, U);
 
         template<typename T, typename U>
-        CPP_concept_fragment(common_reference_with_, (T, U),
+        CPP_concept_fragment(common_reference_with_, requires()(0) &&
             same_as<common_reference_t<T, U>,
                     common_reference_t<U, T>> &&
             convertible_to<T, common_reference_t<T, U>> &&
@@ -978,7 +1017,7 @@ namespace concepts
             CPP_fragment(concepts::common_reference_with_, T, U);
 
         template<typename T, typename U>
-        CPP_concept_fragment(common_with_, (T, U),
+        CPP_concept_fragment(common_with_, requires()(0) &&
             same_as<common_type_t<T, U>,
                     common_type_t<U, T>> &&
             convertible_to<T, common_type_t<T, U>> &&
@@ -1011,31 +1050,40 @@ namespace concepts
             !signed_integral<T>;
 
         template<typename T, typename U>
-        CPP_concept_bool assignable_from =
-            std::is_lvalue_reference<T>::value &&
-            CPP_requires ((T) t, (U &&) u) //
+        CPP_concept_fragment(assignable_from_,
+            requires(T t, U && u) //
             (
                 t = (U &&) u,
                 requires_<same_as<T, decltype(t = (U &&) u)>>
-            );
+            ));
+        template<typename T, typename U>
+        CPP_concept_bool assignable_from =
+            std::is_lvalue_reference<T>::value &&
+            CPP_fragment(defs::assignable_from_, T, U);
 
         template<typename T>
-        CPP_concept_bool swappable =
-            CPP_requires ((T &) t, (T &) u) //
+        CPP_concept_fragment(swappable_,
+            requires(T & t, T & u) //
             (
                 concepts::swap(t, u)
-            );
+            ));
+        template<typename T>
+        CPP_concept_bool swappable =
+            CPP_fragment(defs::swappable_, T);
 
+        template<typename T, typename U>
+        CPP_concept_fragment(swappable_with_,
+            requires(T && t, U && u) //
+            (
+                concepts::swap((T &&) t, (T &&) t),
+                concepts::swap((U &&) u, (U &&) u),
+                concepts::swap((U &&) u, (T &&) t),
+                concepts::swap((T &&) t, (U &&) u)
+            ));
         template<typename T, typename U>
         CPP_concept_bool swappable_with =
             common_reference_with<detail::as_cref_t<T>, detail::as_cref_t<U>> &&
-            CPP_requires ((T &&) t, (U &&) u) //
-            (
-                concepts::swap(CPP_fwd(t), CPP_fwd(t)),
-                concepts::swap(CPP_fwd(u), CPP_fwd(u)),
-                concepts::swap(CPP_fwd(u), CPP_fwd(t)),
-                concepts::swap(CPP_fwd(t), CPP_fwd(u))
-            );
+            CPP_fragment(defs::swappable_with_, T, U);
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // Comparison concepts
@@ -1046,7 +1094,7 @@ namespace concepts
             detail::weakly_equality_comparable_with_<T, T>;
 
         template<typename T, typename U>
-        CPP_concept_fragment(equality_comparable_with_, (T, U),
+        CPP_concept_fragment(equality_comparable_with_, requires()(0) &&
             equality_comparable<
                 common_reference_t<detail::as_cref_t<T>, detail::as_cref_t<U>>>
         );
@@ -1059,24 +1107,22 @@ namespace concepts
             CPP_fragment(concepts::equality_comparable_with_, T, U);
 
         template<typename T>
-        CPP_concept_bool totally_ordered =
-            equality_comparable<T> &&
-            CPP_requires ((detail::as_cref_t<T>) t, (detail::as_cref_t<T>) u) //
+        CPP_concept_fragment(totally_ordered_,
+            requires(detail::as_cref_t<T> t, detail::as_cref_t<T> u) //
             (
                 t < u ? 1 : 0,
                 t > u ? 1 : 0,
                 u <= t ? 1 : 0,
                 u >= t ? 1 : 0
-            );
+            ));
+        template<typename T>
+        CPP_concept_bool totally_ordered =
+            equality_comparable<T> &&
+            CPP_fragment(defs::totally_ordered_, T);
 
         template<typename T, typename U>
-        CPP_concept_fragment(totally_ordered_with_, (T, U),
-            totally_ordered<
-                common_reference_t<detail::as_cref_t<T>, detail::as_cref_t<U>>>
-        );
-        template<typename T, typename U>
-        CPP_concept_bool totally_ordered_with =
-            CPP_requires ((detail::as_cref_t<T>) t, (detail::as_cref_t<U>) u) //
+        CPP_concept_fragment(totally_ordered_with_,
+            requires(detail::as_cref_t<T> t, detail::as_cref_t<U> u) //
             (
                 t < u ? 1 : 0,
                 t > u ? 1 : 0,
@@ -1087,6 +1133,11 @@ namespace concepts
                 u <= t ? 1 : 0,
                 u >= t ? 1 : 0
             ) &&
+            totally_ordered<
+                common_reference_t<detail::as_cref_t<T>, detail::as_cref_t<U>>>
+        );
+        template<typename T, typename U>
+        CPP_concept_bool totally_ordered_with =
             totally_ordered<T> &&
             totally_ordered<U> &&
             equality_comparable_with<T, U> &&
@@ -1116,27 +1167,42 @@ namespace concepts
             convertible_to<T, T>;
 
         template<typename T>
-        CPP_concept_bool copy_constructible =
-            move_constructible<T> &&
+        CPP_concept_fragment(copy_constructible_,
+            requires()(0) &&
             constructible_from<T, T &> &&
             constructible_from<T, T const &> &&
             constructible_from<T, T const> &&
             convertible_to<T &, T> &&
             convertible_to<T const &, T> &&
-            convertible_to<T const, T>;
+            convertible_to<T const, T>
+        );
+        template<typename T>
+        CPP_concept_bool copy_constructible =
+            move_constructible<T> &&
+            CPP_fragment(concepts::copy_constructible_, T);
 
+        template<typename T>
+        CPP_concept_fragment(move_assignable_,
+            requires()(0) &&
+            assignable_from<T &, T>
+        );
         template<typename T>
         CPP_concept_bool movable =
             std::is_object<T>::value &&
             move_constructible<T> &&
-            assignable_from<T &, T> &&
+            CPP_fragment(concepts::move_assignable_, T) &&
             swappable<T>;
 
+        template<typename T>
+        CPP_concept_fragment(copy_assignable_,
+            requires()(0) &&
+            assignable_from<T &, T const &>
+        );
         template<typename T>
         CPP_concept_bool copyable =
             copy_constructible<T> &&
             movable<T> &&
-            assignable_from<T &, T const &>;
+            CPP_fragment(concepts::copy_assignable_, T);
 
         template<typename T>
         CPP_concept_bool semiregular =

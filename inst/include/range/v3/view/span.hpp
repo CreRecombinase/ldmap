@@ -118,7 +118,7 @@ namespace ranges
 
     // clang-format off
     template<typename Rng, typename T>
-    CPP_concept_fragment(span_compatible_range_, (Rng, T),
+    CPP_concept_fragment(span_compatible_range_, requires()(0) &&
         detail::is_convertible<detail::element_t<Rng>(*)[], T(*)[]>::value
     );
     template<typename Rng, typename T>
@@ -364,6 +364,9 @@ namespace ranges
     private:
         T * data_ = nullptr;
     };
+
+    template<typename T, detail::span_index_t N>
+    RANGES_INLINE_VAR constexpr bool enable_safe_range<span<T, N>> = true;
 
     template<typename T, detail::span_index_t N>
     constexpr detail::span_index_t span<T, N>::extent;

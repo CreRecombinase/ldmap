@@ -114,15 +114,16 @@ namespace ranges
 
         // clang-format off
         template<typename I>
-        CPP_concept_bool has_member_arrow_ =
-            CPP_requires ((I) i) //
+        CPP_concept_fragment(has_member_arrow_,
+            requires(I i) //
             (
                 i.operator->()
-            );
+            ));
 
         template<typename I>
         CPP_concept_bool has_arrow_ =
-            input_iterator<I> && (std::is_pointer<I>::value || has_member_arrow_<I>);
+            input_iterator<I> &&
+            (std::is_pointer<I>::value || CPP_fragment(detail::has_member_arrow_, I));
         // clang-format on
     } // namespace detail
     /// \endcond
@@ -487,7 +488,7 @@ namespace ranges
         // of concepts changes
         // clang-format off
         template<typename Rng>
-        CPP_concept_fragment(joinable_range_, (Rng),
+        CPP_concept_fragment(joinable_range_, requires()(0) &&
             input_range<range_reference_t<Rng>> &&
             (std::is_reference<range_reference_t<Rng>>::value ||
                 view_<range_reference_t<Rng>>)
@@ -498,7 +499,7 @@ namespace ranges
             CPP_fragment(views::joinable_range_, Rng);
 
         template<typename Rng, typename ValRng>
-        CPP_concept_fragment(joinable_with_range_, (Rng, ValRng),
+        CPP_concept_fragment(joinable_with_range_, requires()(0) &&
             common_with<range_value_t<ValRng>, range_value_t<range_reference_t<Rng>>> &&
             semiregular<
                 common_type_t<
@@ -553,6 +554,15 @@ namespace ranges
             {
                 return {all(static_cast<Rng &&>(rng)), all(static_cast<ValRng &&>(val))};
             }
+
+            /// \cond
+            template<typename Rng, typename T>
+            auto operator()(Rng && rng, detail::reference_wrapper_<T> r) const
+                -> invoke_result_t<join_base_fn, Rng, T &>
+            {
+                return (*this)(static_cast<Rng &&>(rng), r.get());
+            }
+            /// \endcond
         };
 
         struct join_bind_fn
@@ -563,36 +573,12 @@ namespace ranges
             {
                 return make_view_closure(bind_back(join_base_fn{}, static_cast<T &&>(t)));
             }
-#ifdef RANGES_WORKAROUND_MSVC_OLD_LAMBDA
-            template<typename T, std::size_t N>
-            struct lamduh
+            template<typename T>
+            constexpr auto CPP_fun(operator())(T & t)(const //
+                requires(!joinable_range<T &>) && range<T &>)
             {
-                T (&val_)[N];
-
-                template<typename Rng>
-                auto operator()(Rng && rng) const
-                    -> invoke_result_t<join_base_fn, Rng, T (&)[N]>
-                {
-                    return join_base_fn{}(static_cast<Rng &&>(rng), val_);
-                }
-            };
-
-            template<typename T, std::size_t N>
-            constexpr view_closure<lamduh<T, N>> operator()(T (&val)[N]) const
-            {
-                return view_closure<lamduh<T, N>>{lamduh<T, N> { val }};
+                return make_view_closure(bind_back(join_base_fn{}, detail::reference_wrapper_<T>(t)));
             }
-#else  // ^^^ workaround / no workaround vvv
-            template<typename T, std::size_t N>
-            constexpr auto operator()(T (&val)[N]) const
-            {
-                return make_view_closure(
-                    [&val](
-                        auto && rng) -> invoke_result_t<join_base_fn, decltype(rng), T(&)[N]> {
-                        return join_base_fn{}(static_cast<decltype(rng)>(rng), val);
-                    });
-            }
-#endif // RANGES_WORKAROUND_MSVC_OLD_LAMBDA
         };
 
         struct RANGES_EMPTY_BASES join_fn

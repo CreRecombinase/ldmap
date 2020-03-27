@@ -91,10 +91,9 @@ namespace ranges
             {
                 // keep range bound
                 // Sized Bidi O(N)
-                return (random_access_range<Rng> && view_<Rng> && sized_range<Rng> &&
-                        view_<Rng>) ||
+                return (random_access_range<Rng> && view_<Rng> && sized_range<Rng>) ||
                                (bidirectional_range<Rng> && view_<Rng> &&
-                                common_range<Rng> && view_<Rng>)    //
+                                common_range<Rng>)
                            ? mode_enum::bidi                        //
                            : sized_range<Rng> && view_<Rng>         //
                                  ? mode_enum::sized                 //
@@ -131,8 +130,8 @@ namespace ranges
                            : range_cardinality<Rng>::value> // finite at best
     {
         CPP_assert(
-            (random_access_range<Rng> && view_<Rng> && sized_range<Rng> && view_<Rng>) ||
-            (bidirectional_range<Rng> && view_<Rng> && common_range<Rng> && view_<Rng>));
+            (random_access_range<Rng> && view_<Rng> && sized_range<Rng>) ||
+            (bidirectional_range<Rng> && view_<Rng> && common_range<Rng>));
 
     private:
         friend range_access;
@@ -324,6 +323,9 @@ namespace ranges
             return rng_;
         }
     };
+
+    template<typename Rng, typename T>
+    RANGES_INLINE_VAR constexpr bool enable_safe_range<drop_last_view<Rng, T>> = enable_safe_range<Rng>;
 
 #if RANGES_CXX_DEDUCTION_GUIDES >= RANGES_CXX_DEDUCTION_GUIDES_17
     template<typename Rng>
