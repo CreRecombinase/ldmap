@@ -2,16 +2,20 @@
 % Please edit documentation in R/plink.R
 \name{read_plink_bed}
 \alias{read_plink_bed}
-\title{Read plink bed file into a (relatively) tidy format}
+\title{read plink bed file}
 \usage{
-read_plink_bed(f, return_fam = FALSE)
+read_plink_bed(f, N = NA, p = NA, subset = NULL)
 }
 \arguments{
-\item{f}{path to plink \code{.bed} file}
+\item{f}{path to bed file (or prefix)}
+
+\item{N}{number of samples (optional, will read the fam file to figure it out)}
+
+\item{p}{number of variants (optional will read the bim file to figure it out)}
 }
 \value{
-
+list_of ldmap_gt
 }
 \description{
-Read plink bed file into a (relatively) tidy format
+read plink bed file
 }

@@ -1,8 +1,10 @@
 
 readlines_bgz <- function(filename){
     if(is.character(filename)){
+        isf <- TRUE
         fd <- open_bgzf(filename)
     }else{
+        isf <- FALSE
         stopifnot(typeof(filename) == "externalptr")
         fd <- filename
     }
@@ -11,6 +13,8 @@ readlines_bgz <- function(filename){
         read_bgzf(fd)
         return(readlines_chunk_bgzf(fd))
     })
-    close_bgzf(fd)
+    if(isf){
+        close_bgzf(fd)
+    }
     return(retl)
 }

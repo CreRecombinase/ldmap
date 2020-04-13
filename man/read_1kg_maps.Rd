@@ -4,12 +4,12 @@
 \alias{read_1kg_maps}
 \title{Read 1000 genomes genetic map file}
 \usage{
-read_1kg_maps(map_files, chromosomes = seq_along(map_files))
+read_1kg_maps(map_files, map_chromosomes = seq_along(map_files))
 }
 \arguments{
 \item{map_files}{path to one or more genetic map files}
 
-\item{chromosomes}{chromosome corresponding to each genetic map file (default is seq_along(map_files))}
+\item{map_chromosomes}{chromosome corresponding to each genetic map file (default is seq_along(map_files))}
 }
 \value{
 dataframe with column \code{snp} with ldmap_snp (no alleles) and \code{map} with cumulative genetic map values

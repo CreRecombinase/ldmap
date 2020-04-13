@@ -11,7 +11,7 @@ test_that("can read plink genotype data", {
                                 col_names = names(fam_cols()$cols),
                                 col_types = fam_cols())
     expect_equal(nrow(fam_df), 6)
-    plink_df <- read_plink_bed(plinkf)
+    plink_df <- read_plink(plinkf)
     fc <- file(plinkf, open = "rb", raw = TRUE)
     dv <- readBin(plinkf, what = raw(), 9)
     nv <- readBin(fc, what = raw(), n = 3)
@@ -27,10 +27,70 @@ test_that("can read plink genotype data", {
     expect_equal(data_dv[5:6], vctrs::vec_data(gt[[3]]))
 })
 
+test_that("can read plink bed slices", {
+    plinkf <- fs::path_package("plink.bed", package = "ldmap")
+    famf <- fs::path_package("plink.fam", package = "ldmap")
+    bimf <- fs::path_package("plink.bim", package = "ldmap")
+
+    fam_df <- readr::read_delim(famf,
+                                delim = " ",
+                                col_names = names(fam_cols()$cols),
+                                col_types = fam_cols())
+    plink_df <- read_plink(plinkf)
+
+    sub_bed_l <- ldmap:::read_plink_bed_idx(plinkf, c(1,3), nrow(fam_df))
+    expect_equal(sub_bed_l,plink_df$genotypes[c(1,3)])
+})
+
+
+
+test_that("can write genotype data", {
+    plinkf <- fs::path_package("plink.bed", package = "ldmap")
+    famf <- fs::path_package("plink.fam", package = "ldmap")
+    bimf <- fs::path_package("plink.bim", package = "ldmap")
+
+    fam_df <- read_plink_fam(famf)
+    bim_df <- read_plink_bim(bimf)
+    ofile <- fs::file_temp(ext="fam")
+    write_plink_fam(fam_df, ofile)
+    cfam_df <- read_plink_fam(ofile)
+    expect_equal(cfam_df, fam_df)
+
+    obim <- fs::path_ext_set(ofile, ext = "bim")
+
+    write_plink_bim(bim_df,obim)
+    rb <- read_plink_bim(obim)
+    gl <- read_plink_bed(plinkf)
+    obed <- fs::path_ext_set(ofile, ext = "bed")
+
+    write_plink_bed(gl,obed)
+    rgl <- read_plink_bed(obed)
+
+    expect_equal(rgl,gl)
+    file.remove(obed)
+    write_plink_bed(gl[c(1,2)],obed,TRUE)
+    tgl <- read_plink_bed(obed,nrow(fam_df),2)
+    expect_equal(tgl,gl[1:2])
+    write_plink_bed(gl[3],obed,TRUE)
+    rgl <- read_plink_bed(obed)
+    expect_equal(rgl,gl)
+
+
+
+
+    fam_df <- readr::read_delim(famf,
+                                delim = " ",
+                                col_names = names(fam_cols()$cols),
+                                col_types = fam_cols())
+})
+
+
+
+
 
 test_that("can compute allele frequencies", {
     plinkf <- fs::path_package("plink.bed", package = "ldmap")
-    plink_df <- read_plink_bed(plinkf)
+    plink_df <- read_plink(plinkf)
     tgt <- plink_df$genotypes[[1]]
     (af_1 <- calc_AF(plink_df$genotypes[[1]]))
     expect_true(is.na(af_1))
@@ -46,7 +106,7 @@ test_that("can compute allele frequencies", {
 test_that("can compute LD", {
 
     bigplink <- "/run/media/nwknoblauch/c67d20d8-a8bf-4ab9-91af-978fa311014a/1kg/1000G_EUR_Phase3_plink/1000G.EUR.QC.21.bed"
-    plink_df <- read_plink_bed(bigplink)
+    plink_df <- read_plink(bigplink)
     ld_df <- read.table("../../inst/test_ld.tsv.gz", header = TRUE, stringsAsFactors = FALSE) %>%
         tibble::as_tibble()
 

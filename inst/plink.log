@@ -1,0 +1,28 @@
+PLINK v1.90p 64-bit (21 Jan 2020)
+Options in effect:
+  --file test
+  --make-bed
+
+Hostname: helab
+Working directory: /home/nwknoblauch/Dropbox/Repos/ldmap/inst
+Start time: Thu Feb 13 18:56:29 2020
+
+Random number seed: 1581641789
+31945 MB RAM detected; reserving 15972 MB for main workspace.
+Scanning .ped file... done.
+Performing single-pass .bed write (3 variants, 6 people).
+--file: plink-temporary.bed + plink-temporary.bim + plink-temporary.fam
+written.
+3 variants loaded from .bim file.
+6 people (4 males, 2 females) loaded from .fam.
+3 phenotype values loaded from .fam.
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 4 founders and 2 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.777778.
+3 variants and 6 people pass filters and QC.
+Among remaining phenotypes, 3 are cases and 0 are controls.  (3 phenotypes are
+missing.)
+--make-bed to plink.bed + plink.bim + plink.fam ... done.
+
+End time: Thu Feb 13 18:56:29 2020

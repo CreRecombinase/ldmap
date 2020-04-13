@@ -53,6 +53,7 @@ public:
   Rcpp::RawVector operator()(Rcpp::CharacterVector i) const;
   Rcpp::RawVector operator()(Rcpp::LogicalVector i) const;
   Rcpp::RawVector operator()(Rcpp::NumericVector i) const;
+  Rcpp::RawVector dosage(const bool na_rm) const;
   double cov(const GT_view &other)const;
 
   int sum(bool na_rm) const;

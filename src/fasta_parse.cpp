@@ -1,19 +1,29 @@
 #include <Rcpp.h>
 #include "ctre.hpp"
 #include "alleles.hpp"
+#include <fstream>
 #include "fmt/format.h"
 #include <zlib.h>
 #include <charconv>
 #include <filesystem>
 #include <range/v3/core.hpp>
 #include <range/v3/view/split.hpp>
+#include <range/v3/view/split_when.hpp>
 #include <range/v3/view/counted.hpp>
+#include "range/v3/algorithm/for_each.hpp"
 #include "range/v3/view/common.hpp"
 #include "range/v3/view/c_str.hpp"
 #include "htslib/bgzf.h"
+#include "range/v3/view/join.hpp"
 #include "range/v3/view/transform.hpp"
+#include <range/v3/action/push_back.hpp>
 
 
+
+void close_wrapper( BGZF* fp){
+  int ret  = bgzf_close(fp);
+}
+using R_BGZF = Rcpp::XPtr<BGZF, Rcpp::PreserveStorage, &close_wrapper, false>;
 
 // [[Rcpp::plugins(cpp17)]]
 
@@ -76,8 +86,55 @@ std::optional<SNP> parse_SNP(std::string_view sr){
 }
 
 
+struct starts_with_header
+    {
+        template<typename I, typename S>
+        std::pair<bool, I> operator()(I b, S) const
+        {
+          return {b->front() == ">", b};
+        }
+    };
 
 
+//[[Rcpp::export]]
+Rcpp::List read_fasta_file(std::string filename){
+
+  if(!std::filesystem::exists(filename)){
+    Rcpp::stop(filename+" does not exist in read_fasta_file");
+  }
+  using namespace ranges;
+  std::ifstream sin(filename,std::ios_base::in);
+  std::vector<std::string> names;
+  std::vector<std::vector<Rbyte>> fastas;
+  std::string line;
+  int fbmax=0;
+  std::getline(sin,line);
+    if(line.front()!='>'){
+    Rcpp::stop(" this isn't a fasta file because the header line is: '"+line+"'");
+    }
+    while(sin){
+      names.emplace_back(line.begin()+1,line.end());
+      std::vector<Rbyte> &fb = fastas.emplace_back();
+      fb.reserve(fbmax);
+      std::getline(sin,line);
+      while(line.front() != '>' && !sin.eof()){
+        fb |= ranges::action::push_back(line | ranges::view::transform([](const char x) -> Rbyte {
+                                                                         return ascii2Nuc(x);
+                                                                       }));
+        std::getline(sin,line);
+      }
+    }
+
+    Rcpp::List retl = Rcpp::List::import_transform(fastas.begin(),fastas.end(),[](const std::vector<Rbyte>& x) -> Rcpp::RawVector{
+                                                                                 Rcpp::RawVector rx = Rcpp::wrap(x);
+                                                                                 rx.attr("class")=Rcpp::StringVector::create("ldmap_allele","vctrs_vctr");
+
+                                                                                 return rx;
+                                                                               });
+    retl.attr("names") = Rcpp::StringVector(Rcpp::wrap(names));
+    return retl;
+
+}
 
 //' Creation of new ldmap_region vector from character
 //'
@@ -140,17 +197,17 @@ SEXP open_bgzf(std::string fstr,bool read_only = true) {
         if (ret <0)
           Rcpp::warning("error loading index...");
       }
-      return Rcpp::XPtr<BGZF>(fp);
+      return R_BGZF(fp);
     }else{
       Rcpp::stop("file not found: "+fstr);
     }
   }
-  return Rcpp::XPtr<BGZF>(bgzf_open(fstr.c_str(),"w"));
+  return R_BGZF(bgzf_open(fstr.c_str(),"w"));
 }
 
 //[[Rcpp::export]]
 int read_bgzf(SEXP fpsexp){
-  Rcpp::XPtr<BGZF> xfp(fpsexp);
+  R_BGZF xfp(fpsexp);
   BGZF* fp = xfp;
   auto ir = bgzf_read_block(fp);
   if(ir!=0)
@@ -160,15 +217,13 @@ int read_bgzf(SEXP fpsexp){
 
 //[[Rcpp::export]]
 int close_bgzf(SEXP fpsexp){
-  Rcpp::XPtr<BGZF> xfp(fpsexp);
-  BGZF* fp = xfp;
-  return bgzf_close(fp);
+  return 1;
 }
 
 //[[Rcpp::export]]
 int num_bgzf_blocks(SEXP fpsexp){
 
-  Rcpp::XPtr<BGZF> xfp(fpsexp);
+  R_BGZF xfp(fpsexp);
   BGZF* fp = xfp;
 
   // auto iw = fp->is_write;
@@ -198,7 +253,7 @@ int num_bgzf_blocks(SEXP fpsexp){
 
 //[[Rcpp::export]]
 Rcpp::StringVector format_bgzf(SEXP fpsexp){
-  Rcpp::XPtr<BGZF> xfp(fpsexp);
+  R_BGZF xfp(fpsexp);
   const BGZF* fp = xfp;
   // auto iw = fp->is_write;
   // auto ic = fp->is_compressed;
@@ -218,7 +273,7 @@ Rcpp::StringVector format_bgzf(SEXP fpsexp){
 
 //[[Rcpp::export]]
 Rcpp::StringVector get_bgzf_data(SEXP fpsexp){
-  Rcpp::XPtr<BGZF> xfp(fpsexp);
+  R_BGZF xfp(fpsexp);
   BGZF* fp = xfp;
   if(fp->uncompressed_block != nullptr){
     const char* rp = static_cast<const char*>(fp->uncompressed_block);
@@ -230,9 +285,12 @@ Rcpp::StringVector get_bgzf_data(SEXP fpsexp){
 
 
 
+
+
+
 //[[Rcpp::export]]
 Rcpp::StringVector readlines_chunk_bgzf(SEXP fpsexp){
-  Rcpp::XPtr<BGZF> xfp(fpsexp);
+  R_BGZF xfp(fpsexp);
   BGZF* fp = xfp;
   using namespace ranges;
   if(fp->uncompressed_block != nullptr){
@@ -241,7 +299,6 @@ Rcpp::StringVector readlines_chunk_bgzf(SEXP fpsexp){
     auto cs = views::c_str(rv.c_str());
     std::string_view rpv(rv);
     auto dv = views::split(rpv,'\n') | views::common;
-
     std::string tstring;
     return Rcpp::StringVector::import_transform(dv.begin(),dv.end(),[&](auto el) -> Rcpp::String {
                                                                       tstring.clear();
@@ -252,3 +309,25 @@ Rcpp::StringVector readlines_chunk_bgzf(SEXP fpsexp){
   }
   return Rcpp::StringVector::create();
 }
+
+// Rcpp::DataFrame readlines_df_bgzf(SEXP fpsexp,Rcpp::IntegerVector rsid){
+//   R_BGZF xfp(fpsexp);
+//   BGZF* fp = xfp;
+//   using namespace ranges;
+//   // Rcpp::DataFrame::
+//   if(fp->uncompressed_block != nullptr){
+//     const char* rp = static_cast<char*>(fp->uncompressed_block);
+//     std::string rv(rp,fp->block_length);
+//     auto cs = views::c_str(rv.c_str());
+//     std::string_view rpv(rv);
+//     auto dv = views::split(rpv,'\n') | views::common;
+//     std::string tstring;
+//     return Rcpp::StringVector::import_transform(dv.begin(),dv.end(),[&](auto el) -> Rcpp::String {
+//                                                                       tstring.clear();
+//                                                                       std::copy_n(begin(el),distance(el),std::back_inserter(tstring));
+//                                                                       return Rcpp::String(tstring);
+//                                                                     });
+
+//   }
+//   return Rcpp::StringVector::create();
+// }

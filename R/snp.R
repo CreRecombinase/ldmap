@@ -62,6 +62,26 @@ rsid2int <- function(x){
 
 
 
+##' @title quickly convert a vector of rsids from integer to string representation
+##'
+##'
+##' @param x vector of rsids
+##' @return
+##' @export
+int2rsid <- function(x){
+    if(is.character(x)){
+        return(x)
+    }
+    if(is.integer(x)){
+        return(paste0("rs",x))
+    }
+    stop("type :",typeof(x)," cannot be converted to rsid")
+}
+
+
+
+
+
 #'
 #' @method vec_duplicate_id ldmap_snp
 #' @export

@@ -21,11 +21,11 @@ jitter_map <- function(map,min_diff = 10 * .Machine$double.eps) {
 ##'
 ##'
 ##' @param map_files path to one or more genetic map files
-##' @param chromosomes chromosome corresponding to each genetic map file (default is seq_along(map_files))
+##' @param map_chromosomes chromosome corresponding to each genetic map file (default is seq_along(map_files))
 ##' @return dataframe with column `snp` with ldmap_snp (no alleles) and `map` with cumulative genetic map values
 ##' @export
-read_1kg_maps <- function(map_files,chromosomes=seq_along(map_files)) {
-    stopifnot(length(map_files) == length(chromosomes))
+read_1kg_maps <- function(map_files, map_chromosomes = seq_along(map_files)) {
+    stopifnot(length(map_files) == length(map_chromosomes))
     rc <- readr::cols(
                      position = readr::col_double(),
                      rate = readr::col_skip(),
@@ -38,15 +38,22 @@ read_1kg_maps <- function(map_files,chromosomes=seq_along(map_files)) {
         read_fun <- vroom::vroom
     }
 
-    purrr::map2_dfr(map_files, chromosomes, function(tmap, chr) {
-        tmap_df <- read_fun(tmap,
-                                col_names = c("position", "rate", "map", "filtered"),
-                                col_types = rc,
-                                skip = 1) %>%
+    purrr::map2_dfr(map_files, map_chromosomes, function(tmap, chr) {
+        idf <- read_fun(tmap, delim = "\t",
+                        col_names = c("position", "rate", "map", "filtered"),
+                        col_types = rc,
+                        skip = 1)
+
+        tmap_df <- idf %>%
             dplyr::filter(filtered != 1) %>%
             dplyr::transmute(snp = new_ldmap_snp(chrom = chr,
                                                  pos = as.integer(position)),
                              map = map)
+        if(any(is.na(tmap_df$snp)|is.na(tmap_df$map))){
+            print(head(idf))
+            stop("for file: ",tmap," chr: ",chr)
+        }
+        return(tmap_df)
     })
 
 }

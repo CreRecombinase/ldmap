@@ -18,9 +18,6 @@ size_t num_bits(const int N){
   return std::ceil(static_cast<double>(N)/static_cast<double>(sizeof(double)*8));
 }
 
-//static_assert('1'==0b110001);
-
-
 template< class Rng>
 double pack_range(Rng inp){
   using namespace ranges;
@@ -138,6 +135,9 @@ int dot_ht(Rcpp::NumericVector x,Rcpp::NumericVector y){
   });
   return retval;
 }
+
+
+
 
 //[[Rcpp::export]]
 double cov_ht(Rcpp::NumericVector x,Rcpp::NumericVector y){

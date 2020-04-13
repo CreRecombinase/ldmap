@@ -9,7 +9,8 @@ test_that("we can open and close bgzf files",{
     rl <- purrr::flatten_chr(ldmap:::readlines_bgz(fd))
     ldmap:::format_bgzf(fd)
 
-    ldmap:::close_bgzf(fd)
+    rgz <- gzfile(bgzff)
+
 
     ir <- ldmap:::read_bgzf(fd)
     ldmap:::format_bgzf(fd)

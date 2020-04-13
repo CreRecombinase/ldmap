@@ -5,6 +5,17 @@
 
 using namespace Rcpp;
 
+// read_fasta_file
+Rcpp::List read_fasta_file(std::string filename);
+RcppExport SEXP _ldmap_read_fasta_file(SEXP filenameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type filename(filenameSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_fasta_file(filename));
+    return rcpp_result_gen;
+END_RCPP
+}
 // parse_ldmap_region
 Rcpp::NumericVector parse_ldmap_region(Rcpp::StringVector input);
 RcppExport SEXP _ldmap_parse_ldmap_region(SEXP inputSEXP) {
@@ -240,6 +251,31 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(format_ht(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// write_plink_bed_f
+void write_plink_bed_f(Rcpp::List x, std::string file_name, bool append);
+RcppExport SEXP _ldmap_write_plink_bed_f(SEXP xSEXP, SEXP file_nameSEXP, SEXP appendSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type x(xSEXP);
+    Rcpp::traits::input_parameter< std::string >::type file_name(file_nameSEXP);
+    Rcpp::traits::input_parameter< bool >::type append(appendSEXP);
+    write_plink_bed_f(x, file_name, append);
+    return R_NilValue;
+END_RCPP
+}
+// read_plink_bed_idx
+Rcpp::ListOf<Rcpp::RawVector> read_plink_bed_idx(std::string file_name, Rcpp::IntegerVector id, size_t N);
+RcppExport SEXP _ldmap_read_plink_bed_idx(SEXP file_nameSEXP, SEXP idSEXP, SEXP NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type file_name(file_nameSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type id(idSEXP);
+    Rcpp::traits::input_parameter< size_t >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(read_plink_bed_idx(file_name, id, N));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -924,6 +960,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_ldmap_read_fasta_file", (DL_FUNC) &_ldmap_read_fasta_file, 1},
     {"_ldmap_parse_ldmap_region", (DL_FUNC) &_ldmap_parse_ldmap_region, 1},
     {"_ldmap_parse_ldmap_SNP", (DL_FUNC) &_ldmap_parse_ldmap_SNP, 1},
     {"_ldmap_open_bgzf", (DL_FUNC) &_ldmap_open_bgzf, 2},
@@ -944,6 +981,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_ldshrink_S", (DL_FUNC) &_ldmap_ldshrink_S, 6},
     {"_ldmap_ht2int", (DL_FUNC) &_ldmap_ht2int, 1},
     {"_ldmap_format_ht", (DL_FUNC) &_ldmap_format_ht, 1},
+    {"_ldmap_write_plink_bed_f", (DL_FUNC) &_ldmap_write_plink_bed_f, 3},
+    {"_ldmap_read_plink_bed_idx", (DL_FUNC) &_ldmap_read_plink_bed_idx, 3},
     {"_ldmap_read_plink_bed_l", (DL_FUNC) &_ldmap_read_plink_bed_l, 3},
     {"_ldmap_gt_subset", (DL_FUNC) &_ldmap_gt_subset, 2},
     {"_ldmap_gt_af", (DL_FUNC) &_ldmap_gt_af, 2},

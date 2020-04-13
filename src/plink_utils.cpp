@@ -1,6 +1,7 @@
 #include <Rcpp.h>
 #include <bitset>
 #include "ldmap.hpp"
+#include <filesystem>
 #include <string_view>
 #include <fstream>
 #include <range/v3/core.hpp>
@@ -34,8 +35,11 @@ size_t num_bytes(const int N){
   return std::ceil(static_cast<double>(N)/4.0);
 }
 
-Rcpp::RawVector new_ldmap_gt(const int N){
+Rcpp::RawVector new_ldmap_gt(const int N,const bool init=false){
   Rcpp::RawVector retvec =Rcpp::no_init(num_bytes(N));
+  if(init){
+    std::fill_n(retvec.begin(),num_bytes(N),0);
+  }
   retvec.attr("N")=Rcpp::IntegerVector::create(N);
   retvec.attr("class")=Rcpp::StringVector::create("ldmap_gt","vctrs_vctr");
   return retvec;
@@ -46,9 +50,75 @@ Rcpp::RawVector new_ldmap_gt(const int N){
 // static_assert(!has_na_gt(0b11111111));
 
 //[[Rcpp::export]]
+void write_plink_bed_f(Rcpp::List x,std::string file_name,bool append=false){
+
+  auto open_type = std::ios::binary;
+  const bool fe = std::filesystem::exists(file_name);
+  if(append and fe){
+    open_type |= std::ios::app;
+  }
+
+  std::ofstream osf(file_name, open_type);
+
+  if(!append or !fe){
+    Rbyte h[3] = {0x6c,0x1b,0x01};
+    osf.write((char*) &h, sizeof(h));
+  }
+
+  const size_t p = x.size();
+  std::for_each(x.begin(),x.end(),[&](SEXP tx){
+    Rcpp::RawVector x(tx);
+    Rbyte* xb = &x[0];
+    osf.write((char*) xb, x.size());
+  });
+}
+
+//[[Rcpp::export]]
+Rcpp::ListOf<Rcpp::RawVector> read_plink_bed_idx(std::string file_name,Rcpp::IntegerVector id, size_t N){
+
+  //  std::FILE* f = std::fopen(file_name.c_str(), "rb");
+  if(!std::filesystem::exists(file_name))
+    Rcpp::stop("file_name: "+file_name+" does not exist");
+
+  std::ifstream f(file_name,std::ios_base::binary);
+  std::vector<Rbyte> magic_b(3);
+  if(magic_b.size()!=3){
+    Rcpp::stop("I don't get how initialization works...");
+  }
+  f.read(reinterpret_cast<char*>(magic_b.data()), magic_b.size());
+  std::array<Rbyte,3> magic_t = {0x6c, 0x1b, 0x01};
+  if(!std::equal(begin(magic_b),end(magic_b),begin(magic_t),end(magic_t))){
+    Rcpp::Rcerr<<"magic sequence should be: "<<std::hex<<0x6c<<","<<0x1b<<","<<0x01<<std::endl;
+    Rcpp::Rcerr<<"magic sequence is: ";
+    for(unsigned char tb : magic_b){
+      Rcpp::Rcerr<<std::hex<<static_cast<int>(tb)<<",";
+    }
+    Rcpp::Rcerr<<std::endl;
+    Rcpp::stop(file_name+" is not a valid plink bed file");
+  }
+  using namespace ranges;
+  auto vec_sizes = num_bytes(N);
+  Rcpp::List ret_l = Rcpp::List::import_transform(id.begin(),id.end(),[&](int i){
+                                                                        f.seekg(3+(i-1)*vec_sizes);
+                                                                        auto rd = new_ldmap_gt(N);
+                                                                        Rbyte* trd = &rd[0];
+                                                                        f.read(reinterpret_cast<char*>(trd),vec_sizes);
+                                                                        return rd;
+                                                                      });
+  ret_l.attr("class")=Rcpp::StringVector::create("vctrs_list_of","vctrs_vctr");
+  ret_l.attr("ptype")=new_ldmap_gt(N,true);
+  return ret_l;
+
+}
+
+
+//[[Rcpp::export]]
 Rcpp::ListOf<Rcpp::RawVector> read_plink_bed_l(std::string file_name,const  int p,const size_t N){
 
+
   //  std::basic_ifstream<unsigned char> ifs(file_name, std::ios_base::binary);
+  if(!std::filesystem::exists(file_name))
+    Rcpp::stop("file_name: "+file_name+" does not exist");
   std::FILE* f = std::fopen(file_name.c_str(), "rb");
   std::vector<Rbyte> magic_b(3);
   if(magic_b.size()!=3){
@@ -75,7 +145,7 @@ Rcpp::ListOf<Rcpp::RawVector> read_plink_bed_l(std::string file_name,const  int 
                                                                           return rd;
                                                                         });
   ret_l.attr("class")=Rcpp::StringVector::create("vctrs_list_of","vctrs_vctr");
-  ret_l.attr("ptype")=new_ldmap_gt(N);
+  ret_l.attr("ptype")=new_ldmap_gt(N,true);
   return ret_l;
 }
 
@@ -111,12 +181,25 @@ std::string format_bitset(const Rbyte x){
 //[[Rcpp::export]]
 Rcpp::RawVector gt_subset(Rcpp::RawVector x, SEXP i){
   //We're assuming this was called by our overload for `[` so that
-
   GT_view gtv(x);
   auto index_v = get_index_variant(i);
   return std::visit(gtv,index_v);
 }
 
+
+
+// double cov_gt(Rcpp::RawVector x,Rcpp::RawVector y){
+//   double sample_size = get_N(x);
+//   if( (get_N(y)!=sample_size) or (x.size()!=y.size()) ){
+//       Rcpp::stop("x and y must have the same size");
+//   }
+//   double tret = dot_ht(x,y);
+//   double pop_x = sum_ldmap_ht(x);
+//   double pop_y = sum_ldmap_ht(y);
+
+//   double mret=(sample_size * tret - pop_x * pop_y)/(sample_size * (sample_size-1.0));
+//   return mret;
+// }
 
 
 
@@ -296,7 +379,7 @@ static_assert(pack_bytes(1, 1, 1, 1) == 0b01010101);
 
 template<bool NA_RM=false>
 struct CT {
-  constexpr CT() : arr(),n_missing(),re_encode(),popcnt2_arr() {
+  constexpr CT() : arr(),n_missing(),re_encode(),popcnt2_arr(),dosage_arr() {
     std::array<int,4> dosage{0,0,1,2};
     std::array<Rbyte,4> recode{0,0,1,2};
     std::array<char,4> neg_encode{-1,0,0,1};
@@ -308,6 +391,7 @@ struct CT {
             arr[pack_bytes(i,j,k,l)]=dosage[i]+dosage[j]+dosage[k]+dosage[l];
             re_encode[pack_bytes(i,j,k,l)]=pack_bytes(recode[i],recode[j],recode[k],recode[l]);
             popcnt2_arr[pack_bytes(i,j,k,l)]=i+j+k+l;
+            dosage_arr[pack_bytes(i,j,k,l)] = pack_bytes(dosage[i],dosage[j],dosage[k],dosage[l]);
           }
         }
       }
@@ -331,14 +415,13 @@ struct CT {
   // }
 
   char popcnt2_arr[256];
+  Rbyte dosage_arr[256];
   char arr[256];
   char n_missing[256];
   int re_encode[256];
 };
 
 int GT_view::sum(const bool na_rm=false) const {
-
-
   int retv=0;
   int tN=N;
   if(na_rm){
@@ -359,6 +442,22 @@ int GT_view::sum(const bool na_rm=false) const {
   }
   return retv;
 }
+
+
+Rcpp::RawVector GT_view::dosage(const bool na_rm=false) const {
+  Rcpp::RawVector result = Rcpp::clone(x);
+  if(!na_rm){
+    Rcpp::Rcerr<<"na_rm is currently ignored..."<<std::endl;
+  }
+  constexpr CT<true> ctv;
+  for(int i=0; i<p; i++){
+    result[i]=ctv.dosage_arr[*(begin_x+i)];
+  }
+  result.attr("N")=Rcpp::IntegerVector::create(N);
+  result.attr("class")=Rcpp::StringVector::create("ldmap_dosage","vctrs_vctr");
+  return result;
+}
+
 
 double GT_view::af(const bool na_rm=false) const {
   static_assert(std::numeric_limits<Rbyte>::max()==255);
