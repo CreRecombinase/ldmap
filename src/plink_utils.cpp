@@ -290,6 +290,60 @@ constexpr double byte_2_gt(const Rbyte x){
 }
 
 
+int get_N(Rcpp::List x){
+  if(x.hasAttribute("ptype")){
+    Rcpp::RObject tx = x.attr("ptype");
+    if(tx.hasAttribute("N")){
+      Rcpp::IntegerVector n=tx.attr("N");
+      return n[0];
+    }
+    else
+      Rcpp::stop("I don't think x is a ldmap_gt or ldmap_ht");
+  }
+  Rcpp::RObject tx = x[0];
+  if(tx.hasAttribute("N")){
+    Rcpp::IntegerVector n=tx.attr("N");
+    return n[0];
+  }else
+    Rcpp::stop("I don't think x is a ldmap_gt or ldmap_ht");
+  return NA_INTEGER;
+}
+
+
+//' Convert list of ldmap_gt to numeric matrix
+//'
+//' @param x a vector of type ldmap_gt
+//' @export
+//[[Rcpp::export]]
+Rcpp::NumericMatrix gt2matrix(const Rcpp::List x){
+
+  const size_t p = x.size();
+  const size_t N = get_N(x);
+  Rcpp::NumericMatrix x_mat(N,p);
+  const size_t full_size=N/4;
+  for(int i=0; i<p; i++){
+    Rcpp::RawVector tx= x[i];
+    int j=0;
+    for(int k=0; k<full_size; k++){
+      const Rbyte rb=tx(k);
+      x_mat(j++,i)=byte_2_gt<0>(rb);
+      x_mat(j++,i)=byte_2_gt<1>(rb);
+      x_mat(j++,i)=byte_2_gt<2>(rb);
+      x_mat(j++,i)=byte_2_gt<3>(rb);
+    }
+  if (full_size<p){
+    const Rbyte rb=tx(full_size);
+    x_mat(j++,i)=byte_2_gt<0>(rb);
+    if(j<N){
+      x_mat(j++,i)=byte_2_gt<1>(rb);
+      if(j<N){
+        x_mat(j++,i)=byte_2_gt<2>(rb);
+      }
+    }
+  }
+  }
+  return x_mat;
+}
 
 //' Convert ldmap_gt to numeric vector
 //'
@@ -413,7 +467,6 @@ struct CT {
   //   char w = ((x^y) & (0xaa-z))|z;
   //   return popcnt2_arr[w];
   // }
-
   char popcnt2_arr[256];
   Rbyte dosage_arr[256];
   char arr[256];
@@ -484,8 +537,6 @@ double GT_view::af(const bool na_rm=false) const {
   }
   return *c_af;
 }
-
-
 
 Rbyte pack_bytes(const std::vector<Rbyte> &rb){
 

@@ -145,6 +145,14 @@ format_strings <- function(x) {
     .Call('_ldmap_format_strings', PACKAGE = 'ldmap', x)
 }
 
+#' Convert list of ldmap_gt to numeric matrix
+#'
+#' @param x a vector of type ldmap_gt
+#' @export
+gt2matrix <- function(x) {
+    .Call('_ldmap_gt2matrix', PACKAGE = 'ldmap', x)
+}
+
 #' Convert ldmap_gt to numeric vector
 #'
 #' @param x a vector of type ldmap_gt

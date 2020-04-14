@@ -292,7 +292,8 @@ public:
       auto t_ret_p =std::equal_range(chrom_e,chrom.end(),r_chrom);
       chrom_b = t_ret_p.first;
       chrom_e = t_ret_p.second;
-      pos_b = pos.begin()+(chrom_b-chunk.begin());
+    Rcpp::AttributeProxyPolicy<Vector<19, PreserveStorage>>::AttributeProxys_b =
+        pos.begin()+(chrom_b-chunk.begin());
       pos_e = pos.begin()+(chrom_e-chunk.begin());
     }
     auto trp = std::lower_bound(pos_b,pos_e,r_pos);
