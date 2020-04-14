@@ -1,0 +1,12 @@
+
+AC_PREREQ([2.69])
+AC_INIT([LDMAP], [1.5.2], [nwknoblauch@gmail.com])
+
+PKG_CHECK_MODULES(HTS, htslib >= 1.10,[AC_SUBST(HAVE_HTS,1)],[AC_SUBST(HAVE_HTS,0)])
+
+
+AC_SUBST(HTS_CFLAGS)
+AC_SUBST(HTS_LIBS)
+
+AC_CONFIG_FILES([src/Makevars])
+AC_OUTPUT

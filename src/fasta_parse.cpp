@@ -13,17 +13,23 @@
 #include "range/v3/algorithm/for_each.hpp"
 #include "range/v3/view/common.hpp"
 #include "range/v3/view/c_str.hpp"
+#if HAVE_HTS
 #include "htslib/bgzf.h"
+#endif
 #include "range/v3/view/join.hpp"
 #include "range/v3/view/transform.hpp"
 #include <range/v3/action/push_back.hpp>
 
 
 
+#if HAVE_HTS
 void close_wrapper( BGZF* fp){
   int ret  = bgzf_close(fp);
 }
 using R_BGZF = Rcpp::XPtr<BGZF, Rcpp::PreserveStorage, &close_wrapper, false>;
+
+
+#endif
 
 // [[Rcpp::plugins(cpp17)]]
 
@@ -189,6 +195,7 @@ Rcpp::NumericVector parse_ldmap_SNP(Rcpp::StringVector input){
 //[[Rcpp::export]]
 SEXP open_bgzf(std::string fstr,bool read_only = true) {
 
+  #if HAVE_HTS
   if(read_only){
     if(std::filesystem::exists(fstr)){
       auto fp = bgzf_open(fstr.c_str(),"r");
@@ -203,26 +210,42 @@ SEXP open_bgzf(std::string fstr,bool read_only = true) {
     }
   }
   return R_BGZF(bgzf_open(fstr.c_str(),"w"));
+  #else
+  Rcpp::stop("htslib functions not available, please install htslib and then reinstall ldmap");
+  return NILSXP;
+#endif
 }
 
 //[[Rcpp::export]]
 int read_bgzf(SEXP fpsexp){
+#if HAVE_HTS
   R_BGZF xfp(fpsexp);
   BGZF* fp = xfp;
   auto ir = bgzf_read_block(fp);
   if(ir!=0)
     return ir;
   return(fp->block_length !=0 ? ir : -1);
+  #else
+  Rcpp::stop("htslib functions not available, please install htslib and then reinstall ldmap");
+  return NILSXP;
+#endif
 }
 
 //[[Rcpp::export]]
 int close_bgzf(SEXP fpsexp){
+#if HAVE_HTS
   return 1;
+#else
+    Rcpp::stop("htslib functions not available, please install htslib and then reinstall ldmap");
+  return NILSXP;
+#endif
+
 }
 
 //[[Rcpp::export]]
 int num_bgzf_blocks(SEXP fpsexp){
 
+  #if HAVE_HTS
   R_BGZF xfp(fpsexp);
   BGZF* fp = xfp;
 
@@ -249,10 +272,15 @@ int num_bgzf_blocks(SEXP fpsexp){
     }
     return i;
   }
+  #else
+  Rcpp::stop("htslib functions not available, please install htslib and then reinstall ldmap");
+  return NILSXP;
+#endif
 }
 
 //[[Rcpp::export]]
 Rcpp::StringVector format_bgzf(SEXP fpsexp){
+  #if HAVE_HTS
   R_BGZF xfp(fpsexp);
   const BGZF* fp = xfp;
   // auto iw = fp->is_write;
@@ -269,10 +297,15 @@ Rcpp::StringVector format_bgzf(SEXP fpsexp){
                          fp->is_write, num_blocks, fp->block_length,
                          fp->block_clength, fp->block_offset,fp->block_address,fp->uncompressed_address,fp->uncompressed_block);
   return Rcpp::wrap(ret);
+    #else
+  Rcpp::stop("htslib functions not available, please install htslib and then reinstall ldmap");
+  return NILSXP;
+#endif
 }
 
 //[[Rcpp::export]]
 Rcpp::StringVector get_bgzf_data(SEXP fpsexp){
+  #if HAVE_HTS
   R_BGZF xfp(fpsexp);
   BGZF* fp = xfp;
   if(fp->uncompressed_block != nullptr){
@@ -281,6 +314,10 @@ Rcpp::StringVector get_bgzf_data(SEXP fpsexp){
     return Rcpp::wrap(rv);
   }
   return Rcpp::StringVector::create();
+    #else
+  Rcpp::stop("htslib functions not available, please install htslib and then reinstall ldmap");
+  return NILSXP;
+#endif
 }
 
 
@@ -290,6 +327,7 @@ Rcpp::StringVector get_bgzf_data(SEXP fpsexp){
 
 //[[Rcpp::export]]
 Rcpp::StringVector readlines_chunk_bgzf(SEXP fpsexp){
+  #if HAVE_HTS
   R_BGZF xfp(fpsexp);
   BGZF* fp = xfp;
   using namespace ranges;
@@ -308,6 +346,10 @@ Rcpp::StringVector readlines_chunk_bgzf(SEXP fpsexp){
 
   }
   return Rcpp::StringVector::create();
+    #else
+  Rcpp::stop("htslib functions not available, please install htslib and then reinstall ldmap");
+  return NILSXP;
+#endif
 }
 
 // Rcpp::DataFrame readlines_df_bgzf(SEXP fpsexp,Rcpp::IntegerVector rsid){
