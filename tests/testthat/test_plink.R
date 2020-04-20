@@ -27,14 +27,30 @@ test_that("can read plink genotype data", {
     expect_equal(data_dv[5:6], vctrs::vec_data(gt[[3]]))
 })
 
+# test_that("plink gt conversion", {
+#     plinkf <- fs::path_package("plink.bed", package = "ldmap")
+#     famf <- fs::path_package("plink.fam", package = "ldmap")
+#     bimf <- fs::path_package("plink.bim", package = "ldmap")
+#     bim_df <- read_plink_bim(bimf)
+#     fam_df <- readr::read_delim(famf,
+#                                 delim = " ",
+#                                 col_names = names(fam_cols()$cols),
+#                                 col_types = fam_cols())
+#     gl <- read_plink_bed(plinkf,p=nrow(bim_df),N=nrow(fam_df))
+#     tgm <- do.call(cbind,gl)
+# 
+#     })
+
+
 
 test_that("can do plink conversion to numeric", {
+    library(ldmap)
     plinkf <- fs::path_package("plink.bed", package = "ldmap")
     gl <- read_plink_bed(plinkf)
     glm <- gt2matrix(gl)
-tglm <- structure(c(0, 2, NaN, 2, 2, 2, 2, NaN, 1, 2, 2, 2, 2, 1, 1,
+    tglm <- structure(c(0, 2, NaN, 2, 2, 2, 2, NaN, 1, 2, 2, 2, 2, 1, 1,
                     NaN, NaN, 0), .Dim = c(6L, 3L))
-    expect_equal(glm, tglm)
+    testthat::expect_equal(glm, tglm)
     })
 
 test_that("can read plink bed slices", {

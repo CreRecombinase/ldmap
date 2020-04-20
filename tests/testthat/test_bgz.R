@@ -18,10 +18,10 @@ test_that("we can open and close bgzf files",{
     gdl <- ldmap:::readlines_chunk_bgzf(fd)
     tgd <- strsplit(gd,split="\n")[[1]]
     expect_equal(tgd,gdl)
-    ir <- ldmap:::read_bgzf(fd)
-    ngd <- ldmap:::get_bgzf_data(fd)
-    ngdl <-ldmap:::readlines_chunk_bgzf(fd)
-    expect_equal(ir, 0)
+    # ir <- ldmap:::read_bgzf(fd)
+    # ngd <- ldmap:::get_bgzf_data(fd)
+    # ngdl <-ldmap:::readlines_chunk_bgzf(fd)
+    # expect_equal(ir, 0)
 
 
 })

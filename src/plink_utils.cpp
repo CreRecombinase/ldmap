@@ -8,7 +8,9 @@
 #include <range/v3/view/for_each.hpp>
 #include <range/v3/view/iota.hpp>
 
-
+constexpr Rbyte pack_bytes(Rbyte a,Rbyte b,Rbyte c,Rbyte d){
+  return a|(b<<2)|(c<<4)|(d<<6);
+}
 
 template<int N>
 constexpr std::string_view extract_bits(const Rbyte x){
@@ -269,9 +271,7 @@ template<int N>
 constexpr double byte_2_gt(const Rbyte x){
   constexpr std::array<double, 4> plink_values{0, std::numeric_limits<double>::quiet_NaN(), 1.0, 2.0};
   static_assert(N>=0);
-
   static_assert(N<4);
-
   if constexpr(N==0){
     constexpr Rbyte bitma1= 0b00000011u;
     return plink_values[x&bitma1];
@@ -310,40 +310,160 @@ int get_N(Rcpp::List x){
 }
 
 
+constexpr Rbyte byte_encode(int a) noexcept{
+  if(a==0)
+    return 0;
+  if(a==1)
+    return 2;
+  if(a==2)
+    return 3;
+  return 1;
+}
+
+
+
+Rbyte* copy_int_gt(const int* b,const int *e, Rbyte* d,const int N) {
+
+  const size_t check_n = e-b;
+  if(check_n!=N){
+    Rcpp::stop("check_n!=N");
+  }
+  const int full_bytes = (N/4);
+  const int full_n = (N/4)*4;
+  static_assert(pack_bytes(byte_encode(0),byte_encode(2),byte_encode(3),byte_encode(2))==0xdc);
+  const int* rb=b;
+  Rbyte* d_e = d+full_bytes;
+  for(int i=0; i<full_bytes; i++){
+    *d++=pack_bytes(byte_encode(*rb),
+                    byte_encode(*(rb+1)),
+                    byte_encode(*(rb+2)),
+                    byte_encode(*(rb+3)));
+    rb+=4;
+  }
+  const int N_rel = N%4;
+  if(N_rel==1){
+    *d++=pack_bytes(byte_encode(*rb),
+                    byte_encode(5),
+                    byte_encode(5),
+                    byte_encode(5));
+  }
+  if(N_rel==2){
+    *d++=pack_bytes(byte_encode(*rb),
+                    byte_encode(*(rb+1)),
+                    byte_encode(5),
+                    byte_encode(5));
+  }
+  if(N_rel==3){
+    *d++=pack_bytes(byte_encode(*rb),
+                    byte_encode(*(rb+1)),
+                    byte_encode(*(rb+2)),
+                    byte_encode(5));
+  }
+  return d;
+}
+
+
+double* copy_gt_double(const Rbyte* b,const Rbyte *e,double* d,const int N) {
+
+  const size_t nb = e-b;
+  const int full_s = N/4;
+
+  const Rbyte* rb=b;
+  double* d_e = d+N;
+  const Rbyte* e_full = rb + full_s;
+  double* d_p=d;
+  while(rb<e_full){
+    *d++=byte_2_gt<0>(*rb);
+    *d++=byte_2_gt<1>(*rb);
+    *d++=byte_2_gt<2>(*rb);
+    *d++=byte_2_gt<3>(*rb);
+    rb++;
+  }
+  if(d<d_e)
+    *d++=byte_2_gt<0>(*rb);
+  if(d<d_e)
+    *d++=byte_2_gt<1>(*rb);
+  if(d<d_e)
+    *d++=byte_2_gt<2>(*rb);
+  if(d<d_e){
+    Rcpp::Rcerr<<"d-d_p: "<<d-d_p<<" which is != "<<N<<std::endl;
+    Rcpp::stop("bug in copy_gt_double");
+  }
+  return d;
+}
+
+int* copy_gt_int(const Rbyte* b,const Rbyte *e,int* d,const int N) {
+
+  const size_t nb = e-b;
+  const int full_s = N/4;
+
+  const Rbyte* rb=b;
+  int* d_e = d+N;
+  const Rbyte* e_full = rb + full_s;
+  int* d_p=d;
+  while(rb<e_full){
+    *d++=byte_2_gt<0>(*rb);
+    *d++=byte_2_gt<1>(*rb);
+    *d++=byte_2_gt<2>(*rb);
+    *d++=byte_2_gt<3>(*rb);
+    rb++;
+  }
+  if(d<d_e)
+    *d++=byte_2_gt<0>(*rb);
+  if(d<d_e)
+    *d++=byte_2_gt<1>(*rb);
+  if(d<d_e)
+    *d++=byte_2_gt<2>(*rb);
+  if(d<d_e){
+    Rcpp::Rcerr<<"d-d_p: "<<d-d_p<<" which is != "<<N<<std::endl;
+    Rcpp::stop("bug in copy_gt_double");
+  }
+  return d;
+}
+
+
 //' Convert list of ldmap_gt to numeric matrix
 //'
 //' @param x a vector of type ldmap_gt
 //' @export
 //[[Rcpp::export]]
-Rcpp::NumericMatrix gt2matrix(const Rcpp::List x){
+SEXP gt2matrix(const Rcpp::List x){
 
   const size_t p = x.size();
   const size_t N = get_N(x);
-  Rcpp::NumericMatrix x_mat(N,p);
+  Rcpp::NumericVector x_mat= Rcpp::no_init(N*p);
   const size_t full_size=N/4;
+  const size_t vec_size=num_bytes(N);
+  double* dest_p = &x_mat[0];
   for(int i=0; i<p; i++){
     Rcpp::RawVector tx= x[i];
-    int j=0;
-    for(int k=0; k<full_size; k++){
-      const Rbyte rb=tx(k);
-      x_mat(j++,i)=byte_2_gt<0>(rb);
-      x_mat(j++,i)=byte_2_gt<1>(rb);
-      x_mat(j++,i)=byte_2_gt<2>(rb);
-      x_mat(j++,i)=byte_2_gt<3>(rb);
-    }
-  if (full_size<p){
-    const Rbyte rb=tx(full_size);
-    x_mat(j++,i)=byte_2_gt<0>(rb);
-    if(j<N){
-      x_mat(j++,i)=byte_2_gt<1>(rb);
-      if(j<N){
-        x_mat(j++,i)=byte_2_gt<2>(rb);
-      }
-    }
+    const Rbyte* xb = &tx[0];
+    const Rbyte* xe = xb+tx.size();
+    dest_p = copy_gt_double(xb,xe,dest_p,N);
   }
-  }
+  x_mat.attr("dim")=Rcpp::IntegerVector::create(N,p);
   return x_mat;
 }
+
+
+
+//' Convert integer vector to ldmap_gt
+//'
+//' @param x a vector of type integer
+//' @export
+//[[Rcpp::export]]
+Rcpp::RawVector int2gt(const Rcpp::IntegerVector x){
+
+  const int N=x.size();
+  auto retvec = new_ldmap_gt(N);
+  const auto num_full = (N/4)*4;
+  const int* xb = &x[0];
+  const int* xe = xb+N;
+  Rbyte* rx = &retvec[0];
+  copy_int_gt(xb,xe,rx,N);
+  return retvec;
+}
+
 
 //' Convert ldmap_gt to numeric vector
 //'
@@ -414,9 +534,9 @@ Rbyte GT_view::operator()(const int i) const noexcept{
   const int offset= i%4;
   return (ret_x&bit_mask(offset))>>(2*offset);
 }
-constexpr Rbyte pack_bytes(Rbyte a,Rbyte b,Rbyte c,Rbyte d){
-  return a|(b<<2)|(c<<4)|(d<<6);
-}
+
+
+
 
 constexpr int num_missing(Rbyte a,Rbyte b,Rbyte c,Rbyte d){
   int ina = a==1 ? -1 : 0;

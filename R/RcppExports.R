@@ -153,6 +153,14 @@ gt2matrix <- function(x) {
     .Call('_ldmap_gt2matrix', PACKAGE = 'ldmap', x)
 }
 
+#' Convert integer vector to ldmap_gt
+#'
+#' @param x a vector of type integer
+#' @export
+int2gt <- function(x) {
+    .Call('_ldmap_int2gt', PACKAGE = 'ldmap', x)
+}
+
 #' Convert ldmap_gt to numeric vector
 #'
 #' @param x a vector of type ldmap_gt

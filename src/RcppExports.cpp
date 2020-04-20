@@ -340,13 +340,24 @@ BEGIN_RCPP
 END_RCPP
 }
 // gt2matrix
-Rcpp::NumericMatrix gt2matrix(const Rcpp::List x);
+SEXP gt2matrix(const Rcpp::List x);
 RcppExport SEXP _ldmap_gt2matrix(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Rcpp::List >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(gt2matrix(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// int2gt
+Rcpp::RawVector int2gt(const Rcpp::IntegerVector x);
+RcppExport SEXP _ldmap_int2gt(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(int2gt(x));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1000,6 +1011,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ldmap_gt_afs", (DL_FUNC) &_ldmap_gt_afs, 2},
     {"_ldmap_format_strings", (DL_FUNC) &_ldmap_format_strings, 1},
     {"_ldmap_gt2matrix", (DL_FUNC) &_ldmap_gt2matrix, 1},
+    {"_ldmap_int2gt", (DL_FUNC) &_ldmap_int2gt, 1},
     {"_ldmap_gt2double", (DL_FUNC) &_ldmap_gt2double, 1},
     {"_ldmap_nldmap_region", (DL_FUNC) &_ldmap_nldmap_region, 3},
     {"_ldmap_distance_ldmap_region_ldmap_region", (DL_FUNC) &_ldmap_distance_ldmap_region_ldmap_region, 2},
