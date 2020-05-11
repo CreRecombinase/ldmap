@@ -30,12 +30,47 @@ You can install the development version of ldmap from
 devtools::install_github("CreRecombinase/ldmap")
 ```
 
-## Read genomic intervals from a bed file
+# Some cool things you can do with ldmap
+
+## Read and manipulate genomic intervals
 
 ```r
 
+rawbed <- r"(track name=pairedReads description="Clone Paired Reads" useScore=1
+chr22	1000	5001
+chr22	2000	6000)" 
+ft <- fs::file_temp()
+write(rawbed, ft)
+bed_data <- ldmap::read_bed(ft)
+dplyr::filter(bed_data, widths(ldmap_region) == 4000)
+```
 
 
+## calculate LD for a region of the genome from plink files
+
+```r
+
+dl_url <- "https://data.broadinstitute.org/alkesgroup/LDSCORE/1kg_eur.tar.bz2" #example file with chromosome 22
+dest_f <- fs::file_temp("1kg_eur", ext = ".tar.bz2")
+download.file(
+    dl_url,
+    dest_f
+) # The Price are kind enough to host the 1000G Phase3 genotypes for EUR
+temp_d <- fs::path_dir(dest_f)
+dest_d <- utils::untar(dest_f, exdir = fs::path_dir(dest_f))
+dest_files <- fs::dir_ls(fs::path(temp_d, "1kg_eur"))
+bim_file <- fs::path(temp_d, "1kg_eur","22",ext="bim")
+bed_file <- fs::path_ext_set(bim_file, "bed")
+bim_df <- ldmap::read_plink_bim(bim_file) # read plink bim file into a dataframe
+bim_subset <- which(dplyr::between(
+                               ldmap::positions(bim_df$snp_struct),
+                               left = 16896762,
+                               right = 18966860
+))
+plink_geno_l <- ldmap::read_plink_bed(bed_file, subset = bim_subset)
+geno_matrix <- ldmap::gt2matrix(plink_geno_l)
+R <- cor(geno_matrix)
+image(R)
 ```
 
 
