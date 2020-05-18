@@ -1230,6 +1230,7 @@ Rcpp::IntegerVector rank_snps(Rcpp::NumericVector struct_vec){
 //' @export
 //[[Rcpp::export]]
 Rcpp::IntegerVector chromosomes(Rcpp::NumericVector struct_vec){
+
   using namespace Rcpp;
   IntegerVector ret = no_init(struct_vec.size());
   if(!(struct_vec.inherits("ldmap_snp") || struct_vec.inherits("ldmap_region"))){

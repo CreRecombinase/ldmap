@@ -69,8 +69,11 @@ bim_subset <- which(dplyr::between(
 ))
 plink_geno_l <- ldmap::read_plink_bed(bed_file, subset = bim_subset)
 geno_matrix <- ldmap::gt2matrix(plink_geno_l)
-R <- cor(geno_matrix)
+R <- cor(geno_matrix) ## calculate LD using boring old pearson correlation
 image(R)
+map_data <- bim_df$map[bim_subset]
+R_ldshrink <- ldshrink::ldshrink(geno_matrix, map_data, isGeno = TRUE)
+image(scale(R_ldshrink - R, center = FALSE, scale = TRUE))
 ```
 
 
