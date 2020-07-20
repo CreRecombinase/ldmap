@@ -251,6 +251,45 @@ vec_cast.ldmap_region.ldmap_snp <- function(x, to, ..., x_arg = "", to_arg = "")
     new_ldmap_region(chrom = chromosomes(x),start = positions(x),end = positions(x)+1)
 
 
+#' @export vec_cast.ldmap_region.GRanges
+#' @method vec_cast.ldmap_region GRanges
+#' @export
+vec_cast.ldmap_region.GRanges <- function(x, to, ..., x_arg = "", to_arg = "") {
+        if (!requireNamespace("GenomicRanges", quietly = TRUE)) {
+                stop("Package \"GenomicRanges\" needed for this function to work",
+                        ", please install it ",
+                        "`(remotes::install_bioc(\"GenomicRanges\")`)",
+                        call. = FALSE
+                )
+        }
+        parse_ldmap_region(as.character(x))
+        ## as_ldmap_
+        ## new_ldmap_region(
+        ##         chrom = as.character(GenomicRanges::seqnames(x)),
+        ##         start = GenomicRanges::start(x),
+        ##         end = GenomicRanges::end(x)
+        ## )
+}
+
+
+
+
+
+
+gr2ldmr <- function(gr){
+  if (!requireNamespace("GenomicRanges", quietly = TRUE)) {
+      stop("Package \"GenomicRanges\" needed for this function to work",
+           ", please install it ",
+           "`(remotes::install_bioc(\"GenomicRanges\")`)", call. = FALSE)
+  }
+  stopifnot(inherits(gr,"GRanges"))
+  as.data.frame(gr) %>% 
+    dplyr::select(-width) %>% 
+    compact_ldmap_region(chrom = "seqnames") %>% 
+    tibble::as_tibble()
+}
+
+
 
 #' @export vec_cast.double.ldmap_region
 #' @export
@@ -444,49 +483,55 @@ overlaps <- function(x,y){
   dplyr::if_else(chromosomes(x)==chromosomes(y),starts(x)<= ends(y) & starts(y) <= ends(x),FALSE)
 }
 
-
+#'
 #' @export
 `%overlaps%` <- function(x,y){
     UseMethod("%overlaps%", x)
 }
 
-#' @export `%overlaps%.ldmap_region`
-#' @method `%overlaps%` ldmap_region
+#' @export %overlaps%.ldmap_region
+#' @method %overlaps% ldmap_region
+#' @export
 `%overlaps%.ldmap_region` <- function(x,y){
     UseMethod("%overlaps%.ldmap_region",y)
 }
 
-#' @export `%overlaps%.ldmap_snp`
-#' @method `%overlaps%` ldmap_snp
+#' @export %overlaps%.ldmap_snp
+#' @method %overlaps% ldmap_snp
 `%overlaps%.ldmap_snp` <- function(x,y){
     UseMethod("%overlaps%.ldmap_snp",y)
 }
 
-#' @export `%overlaps%.ldmap_region.ldmap_region`
-#' @method `%overlaps%.ldmap_region` ldmap_region
+#' @export %overlaps%.ldmap_region.ldmap_region
+#' @method %overlaps%.ldmap_region ldmap_region
+#' @export
 `%overlaps%.ldmap_region.ldmap_region` <- function(x,y){
     !is.na(region_in_region(x,y,TRUE))
 }
 
-#' @export `%overlaps%.ldmap_region.ldmap_snp`
-#' @method `%overlaps%.ldmap_region` ldmap_snp
+#' @export %overlaps%.ldmap_region.ldmap_snp
+#' @method %overlaps%.ldmap_region ldmap_snp
+#' @export
 `%overlaps%.ldmap_region.ldmap_snp` <- function(x,y){
     !is.na(region_overlap_snp(x,y))
 }
 
 
-#' @export `%overlaps%.ldmap_snp.ldmap_region`
-#' @method `%overlaps%.ldmap_snp` ldmap_region
+#' @export %overlaps%.ldmap_snp.ldmap_region
+#' @method %overlaps%.ldmap_snp ldmap_region
+#' @export
 `%overlaps%.ldmap_snp.ldmap_region` <- function(x,y){
     !is.na(snp_in_region(x,y))
 }
 
 
-#' @export `%overlaps%.ldmap_snp.ldmap_snp`
-#' @method `%overlaps%.ldmap_snp` ldmap_snp
+#' @export %overlaps%.ldmap_snp.ldmap_snp
+#' @method %overlaps%.ldmap_snp ldmap_snp
 `%overlaps%.ldmap_snp.ldmap_snp` <- function(x,y){
     !is.na(snp_overlap_snp(x,y))
 }
+
+
 
 
 

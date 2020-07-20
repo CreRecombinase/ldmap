@@ -272,6 +272,8 @@ test_that("snps 'overlap' with themselves (reversed)",{
     snp_b <- as_ldmap_snp(c("chr1:701835_C_T"))
 
     testthat::expect_equal(snp_in_snp(snp_a,snp_b), 1)
+    
+    expect_true(snp_a %overlaps% snp_b)
 
 
     snp_a <- ldmap::as_ldmap_snp(c("chr1:701835_T_C",
@@ -290,8 +292,11 @@ testthat::test_that("snp overlap works correctly on boundary",{
     sldmr <- c("chr1:1_1892607", "chr1:1892607_3582736", "chr1:3582736_4380811",
               "chr1:4380811_5913893", "chr1:5913893_7247335", "chr1:7247335_9365199")
 
+    
     csnp <- structure(c(2.05244501193512e-289, 2.0524450157272e-289, 2.05244502199874e-289
                         ), class = c("ldmap_snp", "vctrs_vctr"))
+    
+    
 
     testthat::expect_equal(ldmap::snp_in_region(csnp, sldmr),c(4,5,5))
 

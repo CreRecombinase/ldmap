@@ -760,29 +760,90 @@ std::vector<T> vec_concatenate_sort(T* beg1,T* end1,T* beg2,T* end2){
 
 template<typename T>
 Rcpp::NumericVector split_ldmap_regions_set(T* xb, T* xe){
-  std::array<boost::icl::split_interval_set<uint64_t>,23> sets;
+  //  std::array<boost::icl::split_interval_set<uint64_t>,23> sets;
+  Rcpp::stop("split_ldmap_regions is currently out of order, please use GenomicRanges::disjoint for now");
+  // std::array<std::vector<int>,23> starts;
+  // std::array<std::vector<int>,23> adj_starts;
+  // std::array<std::vector<int>,23> adj_ends;
+  // std::array<std::vector<int>,23> ends;
+  // std::array<int,23> adj_ps{};
 
-  std::for_each(xb,xe,[&sets](const double& tx){
-                        auto reg = Region::make_Region(bit_cast<uint64_t>(tx));
-                        auto chr = reg.chrom()-1;
-                        auto &set_it =sets[chr];
-                        set_it.insert(reg.interval());
-                      });
 
-  size_t ret_size = 0;
-  for(int i=0; i<23; i++){
-    ret_size+=sets[i].iterative_size();
-  }
+  // std::for_each(xb,xe,[&](const double& tx){
+  //                       auto reg = Region::make_Region(bit_cast<uint64_t>(tx));
+  //                       auto chr = reg.chrom()-1;
 
-  int i=0;
-  Rcpp::NumericVector ret=Rcpp::no_init(ret_size);
-  for(unsigned char chrom=1; chrom<24; chrom++){
-    const auto& set_el = sets[chrom-1];
-    for(auto &el : set_el){
-      ret[i++]=bit_cast<double>(make_ldmap_region(chrom,el.lower(),el.upper()));
-    }
-  }
-  ret.attr("class")=Rcpp::StringVector::create("ldmap_region","vctrs_vctr");
+  //                       starts[chr].push_back(reg.start());
+  //                       ends[chr].push_back(reg.end());
+  //                       // auto &set_it =sets[chr];
+  //                       // set_it.insert(reg.interval());
+  //                     });
+  // int i=0;
+  // int adj_p=0;
+  // std::for_each(starts.begin(), starts.end(), [&](std::vector<int> &x) mutable{
+  //   std::sort(x.begin(), x.end());
+  //   auto last = std::unique(x.begin(), x.end());
+  //   x.erase(last, x.end());
+
+  //   std::copy(x.begin(),x.end(),adj_starts[i].begin());
+  //   std::transform(x.begin(),x.end(),adj_ends[i].begin(),[](int y){
+  //                                                          return(y-1);
+  //                                                        });
+
+  //   i++;
+  // });
+
+  // i=0;
+  // std::for_each(ends.begin(),ends.end(),[&](std::vector<int>& x){
+  //                                         std::sort(x.begin(),x.end());
+  //                                         auto last = std::unique(x.begin(), x.end());
+  //                                         x.erase(last,x.end());
+  //                                         std::copy(x.begin(),x.end(),adj_ends[i].begin());
+  //                                         std::transform(x.begin(),x.end(),adj_starts[i].begin(),[](int y){
+  //                                                                                                return(y+1);
+  //                                                                                              });
+
+  //                                         i++;
+  //                                       });
+  // i=0;
+  // std::for_each(adj_ends.begin(),adj_ends.end(),[&](std::vector<int>& x){
+  //                                                 std::sort(x.begin(),x.end());
+  //                                                 auto last = std::unique(x.begin(), x.end());
+  //                                                 x.erase(last,x.end());
+  //                                                 adj_ps[i]=x.size();
+  //                                                 i++;
+  //                                               });
+  // i=0;
+  // std::for_each(adj_starts.begin(),adj_starts.end(),[&](std::vector<int>& x){
+  //                                                     std::sort(x.begin(),x.end());
+  //                                                     auto last = std::unique(x.begin(), x.end());
+  //                                                     x.erase(last,x.end());
+  //                                                     adj_ps[i]=std::max(adj_ps[i],static_cast<int>(x.size()));
+  //                                                     i++;
+  //                                                   });
+
+  // i=0;
+  // for(i=0; i<23; i++){
+
+
+
+
+
+
+  // size_t ret_size = 0;
+  // for(int i=0; i<23; i++){
+  //   ret_size+=sets[i].iterative_size();
+  // }
+
+
+  Rcpp::NumericVector ret=Rcpp::no_init(xe-xb);
+  // for(unsigned char chrom=1; chrom<24; chrom++){
+  //   const auto& set_el = sets[chrom-1];
+  //   for(auto &el : set_el){
+  //     ret[i++]=bit_cast<double>(make_ldmap_region(chrom,el.lower(),el.upper()));
+  //   }
+  // }
+  // ret.attr("class")=Rcpp::StringVector::create("ldmap_region","vctrs_vctr");
   return ret;
 }
 

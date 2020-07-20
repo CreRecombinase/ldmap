@@ -137,6 +137,7 @@ distance <- function(from, to) {
 
 #' @export distance.ldmap_snp
 #' @method distance ldmap_snp
+#' @export
 distance.ldmap_snp <- function(from, to) {
   UseMethod("distance.ldmap_snp",to)
 }

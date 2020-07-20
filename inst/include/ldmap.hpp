@@ -1,3 +1,4 @@
+#pragma once
 #include "alleles.hpp"
 #include "range/v3/detail/range_access.hpp"
 #include "range/v3/range_fwd.hpp"

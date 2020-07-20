@@ -108,8 +108,8 @@ test_that("overlap operators work", {
 
 
 test_that("overlap check works",{
-
-    treg <- as_ldmap_region("chr1:1796266_1898735")
+    lds <- "chr1:1796266_1898735"
+    treg <- as_ldmap_region(lds)
     treg_2 <- as_ldmap_region("chr3:128148270_128262028")
     hld <- head(ldetect_EUR)
     ohld <- ldetect_EUR[chromosomes(ldetect_EUR)==3]
