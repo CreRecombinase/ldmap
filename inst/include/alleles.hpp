@@ -682,7 +682,7 @@ public:
   }
   constexpr SNP end_SNP() const noexcept{
     auto p = pos()+1;
-    return SNP{.snp=clear_alleles(set_pos(snp,pos()+1))};
+    return SNP{clear_alleles(set_pos(snp,pos()+1))};
   }
 
   double to_double() const{

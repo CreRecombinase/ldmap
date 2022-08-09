@@ -2,8 +2,8 @@
 #' @method is.na ldmap_allele
 #' @export
 #' @export is.na.ldmap_allele
-is.na.ldmap_allele <- function(x,...){
-    vctrs::vec_data(x)==as.raw(0)
+is.na.ldmap_allele <- function(x, ...) {
+  vctrs::vec_data(x) == as.raw(0)
 }
 
 
@@ -67,21 +67,24 @@ vec_cast.ldmap_allele.ldmap_allele <- function(x, to, ..., x_arg = "", to_arg = 
 #' @export vec_cast.ldmap_allele.raw
 #' @export
 #' @method vec_cast.ldmap_allele raw
-vec_cast.ldmap_allele.raw <- function(x, to, ..., x_arg = "", to_arg = "")
-    structure(vctrs::vec_data(x), class = c("ldmap_allele", "vctrs_vctr"))
+vec_cast.ldmap_allele.raw <- function(x, to, ..., x_arg = "", to_arg = "") {
+  structure(vctrs::vec_data(x), class = c("ldmap_allele", "vctrs_vctr"))
+}
 
 
 #' @export vec_cast.raw.ldmap_allele
 #' @export
 #' @method vec_cast.raw ldmap_allele
-vec_cast.raw.ldmap_allele <- function(x, to, ..., x_arg = "", to_arg = "")
-    vctrs::vec_data(x)
+vec_cast.raw.ldmap_allele <- function(x, to, ..., x_arg = "", to_arg = "") {
+  vctrs::vec_data(x)
+}
 
 #' @export vec_cast.character.ldmap_allele
 #' @export
 #' @method vec_cast.character ldmap_allele
-vec_cast.character.ldmap_allele <- function(x, to, ..., x_arg = "", to_arg = "")
-    format_ldmap_allele(x)
+vec_cast.character.ldmap_allele <- function(x, to, ..., x_arg = "", to_arg = "") {
+  format_ldmap_allele(x)
+}
 
 
 
@@ -149,7 +152,7 @@ format.ldmap_allele <- function(x, ...) {
 #' @return ldmap_allele vector
 #' @export
 #'
-ldmap_allele <- function(x=raw()){
+ldmap_allele <- function(x = raw()) {
   as_ldmap_allele(x)
 }
 
@@ -160,15 +163,19 @@ ldmap_allele <- function(x=raw()){
 ##' @param x a factor as returned from `allele_match`
 ##' @return a logical vector of length `length(x)`
 ##' @export
-is_reversed <- function(x){
-    stopifnot(all.equal(levels(x),c("perfect_match",
-                                    "reverse_match",
-                                    "complement_match",
-                                    "reverse_complement_match",
-                                    "ambig_match",
-                                    "reverse_ambig_match",
-                                    "complement_ambig_match",
-                                    "reverse_complement_ambig_match")))
-    x %in% c("reverse_match",
-             "reverse_ambig_match")
+is_reversed <- function(x) {
+  stopifnot(all.equal(levels(x), c(
+    "perfect_match",
+    "reverse_match",
+    "complement_match",
+    "reverse_complement_match",
+    "ambig_match",
+    "reverse_ambig_match",
+    "complement_ambig_match",
+    "reverse_complement_ambig_match"
+  )))
+  x %in% c(
+    "reverse_match",
+    "reverse_ambig_match"
+  )
 }
