@@ -23,7 +23,7 @@
 #include <range/v3/iterator/traits.hpp>
 #include <range/v3/utility/static_const.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -38,15 +38,15 @@ namespace ranges
             Val & val_;
 
             template<typename T>
-            bool operator()(T && t) const
+            constexpr bool operator()(T && t) const
             {
                 return invoke(pred_, static_cast<T &&>(t), val_);
             }
         };
 
         template<typename Pred, typename Val>
-        lower_bound_predicate<Pred, Val> make_lower_bound_predicate(Pred & pred,
-                                                                    Val & val)
+        constexpr lower_bound_predicate<Pred, Val> make_lower_bound_predicate(Pred & pred,
+                                                                              Val & val)
         {
             return {pred, val};
         }
@@ -57,11 +57,14 @@ namespace ranges
     {
         struct lower_bound_n_fn
         {
-            template<typename I, typename V, typename C = less, typename P = identity>
-            auto operator()(I first, iter_difference_t<I> d, V const & val, C pred = C{},
-                            P proj = P{}) const -> CPP_ret(I)( //
-                requires forward_iterator<I> &&
+            template(typename I, typename V, typename C = less, typename P = identity)(
+                requires forward_iterator<I> AND
                     indirect_strict_weak_order<C, V const *, projected<I, P>>)
+            constexpr I operator()(I first,
+                                   iter_difference_t<I> d,
+                                   V const & val,
+                                   C pred = C{},
+                                   P proj = P{}) const
             {
                 return partition_point_n(std::move(first),
                                          d,
@@ -74,6 +77,6 @@ namespace ranges
     } // namespace aux
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

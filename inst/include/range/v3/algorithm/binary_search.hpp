@@ -29,7 +29,7 @@
 #include <range/v3/range/traits.hpp>
 #include <range/v3/utility/static_const.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -41,29 +41,27 @@ namespace ranges
         /// range-based version of the \c binary_search std algorithm
         ///
         /// \pre `Rng` is a model of the `range` concept
-        template<typename I,
+        template(typename I,
                  typename S,
                  typename V,
                  typename C = less,
-                 typename P = identity>
-        auto RANGES_FUNC(binary_search)(
-            I first, S last, V const & val, C pred = C{}, P proj = P{})
-            ->CPP_ret(bool)( //
-                requires forward_iterator<I> && sentinel_for<S, I> &&
+                 typename P = identity)(
+            requires forward_iterator<I> AND sentinel_for<S, I> AND
                 indirect_strict_weak_order<C, V const *, projected<I, P>>)
+        constexpr bool RANGES_FUNC(binary_search)(
+            I first, S last, V const & val, C pred = C{}, P proj = P{})
         {
             first =
-                lower_bound(std::move(first), last, val, std::ref(pred), std::ref(proj));
+                lower_bound(std::move(first), last, val, ranges::ref(pred), ranges::ref(proj));
             return first != last && !invoke(pred, val, invoke(proj, *first));
         }
 
         /// \overload
-        template<typename Rng, typename V, typename C = less, typename P = identity>
-        auto RANGES_FUNC(binary_search)(
-            Rng && rng, V const & val, C pred = C{}, P proj = P{}) //
-            ->CPP_ret(bool)(                                       //
-                requires forward_range<Rng> &&
+        template(typename Rng, typename V, typename C = less, typename P = identity)(
+            requires forward_range<Rng> AND
                 indirect_strict_weak_order<C, V const *, projected<iterator_t<Rng>, P>>)
+        constexpr bool RANGES_FUNC(binary_search)(
+            Rng && rng, V const & val, C pred = C{}, P proj = P{}) //
         {
             static_assert(!is_infinite<Rng>::value,
                           "Trying to binary search an infinite range");
@@ -78,6 +76,6 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

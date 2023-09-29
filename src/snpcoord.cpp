@@ -1,14 +1,16 @@
 #include <numeric>
 #include "R_ext/Arith.h"
 #include "alleles.hpp"
-#include "ldmap.hpp"
+
 #include <Rcpp.h>
 #include <random>
 #include <algorithm>
 #include <iterator>
 #include <limits>
 #include <progress.hpp>
+#include "result_of.hpp"
 #include <RcppParallel.h>
+#include "ldmap.hpp"
 #include <string>
 #include <unordered_map>
 //[[Rcpp::depends(RcppParallel)]]
@@ -276,8 +278,8 @@ Rcpp::IntegerVector distance_t(Rcpp::NumericVector query,Rcpp::NumericVector tar
   const size_t larger_p = std::max(p,target_p);
   RcppParallel::RVector<double> input_region_query(query);
   RcppParallel::RVector<double> input_region_target(target);
-  auto irq = cycle_n(subrange(input_region_query.begin(),input_region_query.end()),larger_p);
-  auto irt = cycle_n(subrange(input_region_target.begin(),input_region_target.end()),larger_p);
+  auto irq = cycle_n(make_subrange(input_region_query.begin(),input_region_query.end()),larger_p);
+  auto irt = cycle_n(make_subrange(input_region_target.begin(),input_region_target.end()),larger_p);
 
   Rcpp::IntegerVector retvec = Rcpp::no_init(larger_p);
   RcppParallel::RVector<int> output_region(retvec);
@@ -364,7 +366,8 @@ Rcpp::IntegerVector group_regions(Rcpp::NumericVector query){
   RcppParallel::RVector<double> input_region_query(query);
 
   if(!std::is_sorted(input_region_query.begin(),input_region_query.end(),[](double &ra, double rb){
-    return Region::make_Region(ra)<Region::make_Region(rb);
+
+    return Region::make_Region(bit_cast<uint64_t>(ra))<Region::make_Region(bit_cast<uint64_t>(rb));
   }))
     Rcpp::stop("query must be sorted");
 
@@ -376,17 +379,18 @@ Rcpp::IntegerVector group_regions(Rcpp::NumericVector query){
   auto ob=output_v.begin();
   const auto rqe = input_region_query.end();
 
-  Region qr(*rqb);
+  Region qr(bit_cast<uint64_t>(*rqb));
 
-  std::transform(input_region_query.begin(),input_region_query.end(),output_v.begin(),[&](Region r) mutable {
-                                                                                        if(r.overlap(qr)){
-                                                                                          qr|=r;
-                                                                                          return grp;
-                                                                                        }else{
-                                                                                          qr=r;
-                                                                                          return ++grp;
-                                                                                        }
-                                                                                      });
+  std::transform(input_region_query.begin(),input_region_query.end(),output_v.begin(),[&](const auto &tr) mutable {
+    Region r(bit_cast<uint64_t>(tr));
+    if(r.overlap(qr)){
+      qr|=r;
+      return grp;
+    }else{
+      qr=r;
+      return ++grp;
+    }
+  });
 
   return ret;
 }
@@ -1104,9 +1108,9 @@ Rcpp::IntegerVector sample_interval(Rcpp::IntegerVector n,Rcpp::IntegerVector be
   const auto bs = beginv.size();
   const auto es = endv.size();
 
-  auto begin_region = subrange(beginpv.begin(),beginpv.end());
-  auto end_region = subrange(endpv.begin(),endpv.end());
-  auto n_region = subrange(npv.begin(),npv.end());
+  auto begin_region = make_subrange(beginpv.begin(),beginpv.end());
+  auto end_region = make_subrange(endpv.begin(),endpv.end());
+  auto n_region = make_subrange(npv.begin(),npv.end());
 
   const auto p = size(n_region);
 
@@ -1304,7 +1308,7 @@ Rcpp::IntegerVector chromosomes(Rcpp::NumericVector struct_vec){
                                                                    });
   else
     std::transform(struct_vec.begin(),struct_vec.end(),ret.begin(),[](double x){
-                                                                     auto ret = static_cast<int>(Region::make_Region(x).chrom());
+      auto ret = static_cast<int>(Region::make_Region(bit_cast<uint64_t>(x)).chrom());
                                                                      return(ret==0?NA_INTEGER:ret);
                                                                    });
   return ret;
@@ -1325,7 +1329,7 @@ Rcpp::IntegerVector starts(Rcpp::NumericVector ldmap_region){
   }
   if(!ldmap_region.inherits("ldmap_snp"))
     std::transform(ldmap_region.begin(),ldmap_region.end(),ret.begin(),[](double x){
-                                                                       auto ret = static_cast<int>(Region::make_Region(x).start());
+      auto ret = static_cast<int>(Region::make_Region(bit_cast<uint64_t>(x)).start());
                                                                        return(ret ==0 ? NA_INTEGER : ret);
                                                                      });
   else
@@ -1404,7 +1408,7 @@ Rcpp::IntegerVector ends(Rcpp::NumericVector ldmap_region){
   }
   if(ldmap_region.inherits("ldmap_region"))
     std::transform(ldmap_region.begin(),ldmap_region.end(),ret.begin(),[](double x){
-      return(static_cast<int>(Region::make_Region(x).end()));
+      return(static_cast<int>(Region::make_Region(bit_cast<uint64_t>(x)).end()));
     });
   else
     std::transform(ldmap_region.begin(),ldmap_region.end(),ret.begin(),[](double x){

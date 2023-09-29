@@ -36,7 +36,8 @@
 #include <range/v3/view/take_while.hpp>
 #include <range/v3/view/view.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/config.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -84,10 +85,10 @@ namespace ranges
                 #ifndef _MSC_VER
                 using basic_mixin<cursor>::basic_mixin;
                 #else
-                explicit constexpr mixin(cursor && cur)
+                constexpr explicit mixin(cursor && cur)
                   : basic_mixin<cursor>(static_cast<cursor &&>(cur))
                 {}
-                explicit constexpr mixin(cursor const & cur)
+                constexpr explicit mixin(cursor const & cur)
                   : basic_mixin<cursor>(cur)
                 {}
                 #endif
@@ -97,10 +98,18 @@ namespace ranges
                 }
             };
 
-            auto read() const -> subrange<iterator_t<Rng>>
+            #ifdef _MSC_VER
+            template<typename I = iterator_t<Rng>>
+            subrange<I> read() const
             {
                 return {cur_, next_cur_};
             }
+            #else
+            subrange<iterator_t<Rng>> read() const
+            {
+                return {cur_, next_cur_};
+            }
+            #endif
             void next()
             {
                 cur_ = next_cur_;
@@ -152,8 +161,8 @@ namespace ranges
     };
 
 #if RANGES_CXX_DEDUCTION_GUIDES >= RANGES_CXX_DEDUCTION_GUIDES_17
-    CPP_template(typename Rng, typename Fun)( //
-        requires copy_constructible<Fun>)     //
+    template(typename Rng, typename Fun)(
+        requires copy_constructible<Fun>)
         group_by_view(Rng &&, Fun)
             ->group_by_view<views::all_t<Rng>, Fun>;
 #endif
@@ -162,11 +171,14 @@ namespace ranges
     {
         struct group_by_base_fn
         {
-            template<typename Rng, typename Fun>
-            constexpr auto operator()(Rng && rng, Fun fun) const
-                -> CPP_ret(group_by_view<all_t<Rng>, Fun>)( //
-                    requires viewable_range<Rng> && forward_range<Rng> &&
-                        indirect_relation<Fun, iterator_t<Rng>>)
+            template(typename Rng, typename Fun)(
+                requires viewable_range<Rng> AND forward_range<Rng> AND
+                    indirect_relation<Fun, iterator_t<Rng>>)
+                RANGES_DEPRECATED(
+                    "views::group_by is deprecated. Please use views::chunk_by instead. "
+                    "Note that views::chunk_by evaluates the predicate between adjacent "
+                    "elements.")
+            constexpr group_by_view<all_t<Rng>, Fun> operator()(Rng && rng, Fun fun) const
             {
                 return {all(static_cast<Rng &&>(rng)), std::move(fun)};
             }
@@ -177,6 +189,10 @@ namespace ranges
             using group_by_base_fn::operator();
 
             template<typename Fun>
+            RANGES_DEPRECATED(
+                "views::group_by is deprecated. Please use views::chunk_by instead. "
+                "Note that views::chunk_by evaluates the predicate between adjacent "
+                "elements.")
             constexpr auto operator()(Fun fun) const
             {
                 return make_view_closure(bind_back(group_by_base_fn{}, std::move(fun)));
@@ -190,7 +206,7 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 #include <range/v3/detail/satisfy_boost_range.hpp>
 RANGES_SATISFY_BOOST_RANGE(::ranges::group_by_view)
 

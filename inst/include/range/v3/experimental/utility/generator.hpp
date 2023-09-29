@@ -18,7 +18,7 @@
 #include <atomic>
 #include <cstddef>
 #include <exception>
-#include <experimental/coroutine>
+#include RANGES_COROUTINES_HEADER
 #include <utility>
 
 #include <meta/meta.hpp>
@@ -50,7 +50,7 @@
 #endif
 #endif // RANGES_SILENCE_COROUTINE_WARNINGS
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -81,7 +81,7 @@ namespace ranges
     /// \cond
     namespace detail
     {
-        inline void resume(std::experimental::coroutine_handle<> coro)
+        inline void resume(RANGES_COROUTINES_NS::coroutine_handle<> coro)
         {
             // Pre: coro refers to a suspended coroutine.
             RANGES_EXPECT(coro);
@@ -109,18 +109,18 @@ namespace ranges
         // An owning coroutine_handle
         template<typename Promise>
         struct RANGES_EMPTY_BASES coroutine_owner
-          : private std::experimental::coroutine_handle<Promise>
+          : private RANGES_COROUTINES_NS::coroutine_handle<Promise>
           , private detail::coroutine_owner_::adl_hook
         {
             CPP_assert(derived_from<Promise, enable_coroutine_owner>);
-            using base_t = std::experimental::coroutine_handle<Promise>;
+            using base_t = RANGES_COROUTINES_NS::coroutine_handle<Promise>;
 
             using base_t::operator bool;
             using base_t::done;
             using base_t::promise;
 
             coroutine_owner() = default;
-            explicit constexpr coroutine_owner(base_t coro) noexcept
+            constexpr explicit coroutine_owner(base_t coro) noexcept
               : base_t(coro)
             {}
             coroutine_owner(coroutine_owner && that) noexcept
@@ -171,7 +171,7 @@ namespace ranges
             }
 
         private:
-            std::atomic<bool> copied_{false};
+            mutable std::atomic<bool> copied_{false};
 
             base_t & base() noexcept
             {
@@ -195,11 +195,11 @@ namespace ranges
             {
                 return this;
             }
-            std::experimental::suspend_always initial_suspend() const noexcept
+            RANGES_COROUTINES_NS::suspend_always initial_suspend() const noexcept
             {
                 return {};
             }
-            std::experimental::suspend_always final_suspend() const noexcept
+            RANGES_COROUTINES_NS::suspend_always final_suspend() const noexcept
             {
                 return {};
             }
@@ -210,17 +210,16 @@ namespace ranges
                 except_ = std::current_exception();
                 RANGES_EXPECT(except_);
             }
-            template<typename Arg>
-            auto yield_value(Arg && arg) noexcept(
+            template(typename Arg)(
+                requires convertible_to<Arg, Reference> AND
+                        std::is_assignable<semiregular_box_t<Reference> &, Arg>::value) //
+            RANGES_COROUTINES_NS::suspend_always yield_value(Arg && arg) noexcept(
                 std::is_nothrow_assignable<semiregular_box_t<Reference> &, Arg>::value)
-                -> CPP_ret(std::experimental::suspend_always)( //
-                    requires convertible_to<Arg, Reference> &&
-                        std::is_assignable<semiregular_box_t<Reference> &, Arg>::value)
             {
                 ref_ = std::forward<Arg>(arg);
                 return {};
             }
-            std::experimental::suspend_never await_transform(
+            RANGES_COROUTINES_NS::suspend_never await_transform(
                 experimental::generator_size) const noexcept
             {
                 RANGES_ENSURE_MSG(false,
@@ -244,12 +243,12 @@ namespace ranges
             {
                 return this;
             }
-            std::experimental::suspend_never initial_suspend() const noexcept
+            RANGES_COROUTINES_NS::suspend_never initial_suspend() const noexcept
             {
                 // sized_generator doesn't suspend at its initial suspend point because...
                 return {};
             }
-            std::experimental::suspend_always await_transform(
+            RANGES_COROUTINES_NS::suspend_always await_transform(
                 experimental::generator_size size) noexcept
             {
                 // ...we need the coroutine set the size of the range first by
@@ -289,7 +288,7 @@ namespace ranges
         private:
             friend range_access;
             friend struct sized_generator<Reference, Value>;
-            using handle = std::experimental::coroutine_handle<promise_type>;
+            using handle = RANGES_COROUTINES_NS::coroutine_handle<promise_type>;
             coroutine_owner<promise_type> coro_;
 
             struct cursor
@@ -337,7 +336,7 @@ namespace ranges
         struct sized_generator : generator<Reference, Value>
         {
             using promise_type = detail::sized_generator_promise<Reference>;
-            using handle = std::experimental::coroutine_handle<promise_type>;
+            using handle = RANGES_COROUTINES_NS::coroutine_handle<promise_type>;
 
             constexpr sized_generator() noexcept = default;
             sized_generator(promise_type * p)
@@ -362,7 +361,7 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif // RANGES_CXX_COROUTINES >= RANGES_CXX_COROUTINES_TS1
 

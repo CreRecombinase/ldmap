@@ -19,7 +19,7 @@
 
 #include <range/v3/detail/config.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -40,25 +40,24 @@ namespace ranges
         // MSVC laughs at your silly micro-optimizations and implements
         // conditional_t, enable_if_t, is_object_v, and is_integral_v in the
         // compiler.
-        template<bool B, typename T, typename U>
-        using if_then_t = std::conditional_t<B, T, U>;
+        using std::conditional_t;
         using std::enable_if;
         using std::enable_if_t;
 #else  // ^^^ MSVC / not MSVC vvv
         template<bool>
-        struct if_then
+        struct _cond
         {
             template<typename, typename U>
-            using apply = U;
+            using invoke = U;
         };
         template<>
-        struct if_then<true>
+        struct _cond<true>
         {
             template<typename T, typename>
-            using apply = T;
+            using invoke = T;
         };
         template<bool B, typename T, typename U>
-        using if_then_t = typename if_then<B>::template apply<T, U>;
+        using conditional_t = typename _cond<B>::template invoke<T, U>;
 
         template<bool>
         struct enable_if
@@ -67,10 +66,10 @@ namespace ranges
         struct enable_if<true>
         {
             template<typename T>
-            using apply = T;
+            using invoke = T;
         };
         template<bool B, typename T = void>
-        using enable_if_t = typename enable_if<B>::template apply<T>;
+        using enable_if_t = typename enable_if<B>::template invoke<T>;
 
 #ifndef __clang__
         // NB: insufficient for MSVC, which (non-conformingly) allows function
@@ -146,11 +145,11 @@ namespace ranges
         template<typename T>
         struct incrementable_traits_1_<T *>
 #ifdef __clang__
-          : if_then_t<__is_object(T), with_difference_type_<std::ptrdiff_t>, nil_>
+          : conditional_t<__is_object(T), with_difference_type_<std::ptrdiff_t>, nil_>
 #elif defined(_MSC_VER) && !defined(__EDG__)
-          : std::conditional_t<std::is_object_v<T>, with_difference_type_<std::ptrdiff_t>, nil_>
+          : conditional_t<std::is_object_v<T>, with_difference_type_<std::ptrdiff_t>, nil_>
 #else // ^^^ MSVC / not MSVC vvv
-          : if_then_t<is_object_<T>(0), with_difference_type_<std::ptrdiff_t>, nil_>
+          : conditional_t<is_object_<T>(0), with_difference_type_<std::ptrdiff_t>, nil_>
 #endif // detect MSVC
         {};
 
@@ -233,11 +232,11 @@ namespace ranges
     // * For class types with both member value_type and element_type, value_type is
     //   preferred (see ericniebler/stl2#299).
     template<typename T>
-    struct readable_traits : detail::readable_traits_1_<T>
+    struct indirectly_readable_traits : detail::readable_traits_1_<T>
     {};
 
     template<typename T>
-    struct readable_traits<T const> : readable_traits<T>
+    struct indirectly_readable_traits<T const> : indirectly_readable_traits<T>
     {};
 
     /// \cond
@@ -266,12 +265,23 @@ namespace ranges
         template<typename I>
         char is_std_iterator_traits_specialized_impl_(void *);
 #elif defined(_LIBCPP_VERSION)
-        template<typename I, bool B>
-        char (
-            &is_std_iterator_traits_specialized_impl_(std::__iterator_traits<I, B> *))[2];
+        // In older versions of libc++, the base template inherits from std::__iterator_traits<typename, bool>.
+        template<template<typename, bool> class IteratorTraitsBase, typename I, bool B>
+        char (&libcpp_iterator_traits_base_impl(IteratorTraitsBase<I, B> *))[2];
+        template<template<typename, bool> class IteratorTraitsBase, typename I>
+        char libcpp_iterator_traits_base_impl(void *);
+
+        // In newer versions, the base template has only one template parameter and provides the
+        // __primary_template typedef which aliases the iterator_traits specialization.
+        template<template<typename> class, typename I>
+        char (&libcpp_iterator_traits_base_impl(typename std::iterator_traits<I>::__primary_template *))[2];
+        template<template<typename> class, typename I>
+        char libcpp_iterator_traits_base_impl(void *);
+
         template<typename I>
-        char is_std_iterator_traits_specialized_impl_(void *);
-#elif defined(_MSVC_STL_VERSION)
+        auto is_std_iterator_traits_specialized_impl_(std::iterator_traits<I>* traits)
+            -> decltype(libcpp_iterator_traits_base_impl<std::__iterator_traits, I>(traits));
+#elif defined(_MSVC_STL_VERSION) || defined(_IS_WRS)
         template<typename I>
         char (&is_std_iterator_traits_specialized_impl_(
             std::_Iterator_traits_base<I> *))[2];
@@ -288,18 +298,17 @@ namespace ranges
         RANGES_INLINE_VAR constexpr bool is_std_iterator_traits_specialized_v =
             1 == sizeof(is_std_iterator_traits_specialized_impl_<I>(
                      static_cast<std::iterator_traits<I> *>(nullptr)));
-
+#endif
         // The standard iterator_traits<T *> specialization(s) do not count
         // as user-specialized. This will no longer be necessary in C++20.
         // This helps with `T volatile*` and `void *`.
         template<typename T>
         RANGES_INLINE_VAR constexpr bool is_std_iterator_traits_specialized_v<T *> =
             false;
-#endif
     } // namespace detail
     /// \endcond
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

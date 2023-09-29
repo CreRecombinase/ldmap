@@ -18,7 +18,7 @@
 #include <range/v3/detail/config.hpp>
 #include <range/v3/functional/invoke.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -49,7 +49,7 @@ namespace ranges
         auto CPP_auto_fun(operator())(Args &&... args)(const)
         (
             return invoke((Fn1 const &)first_,
-                          invoke((Fn2 const &)second_, static_cast<Args &&>(args)...))
+                          invoke((Fn2 const &)second_, static_cast<Args &&>(args))...)
         )
         // clang-format on
     };
@@ -69,6 +69,6 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

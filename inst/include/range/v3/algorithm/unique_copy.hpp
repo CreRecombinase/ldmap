@@ -29,7 +29,7 @@
 #include <range/v3/range/traits.hpp>
 #include <range/v3/utility/static_const.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -43,9 +43,13 @@ namespace ranges
     namespace detail
     {
         template<typename I, typename S, typename O, typename C, typename P>
-        unique_copy_result<I, O> unique_copy_impl(I first, S last, O out, C pred, P proj,
-                                                  std::input_iterator_tag,
-                                                  std::false_type)
+        constexpr unique_copy_result<I, O> unique_copy_impl(I first, 
+                                                            S last, 
+                                                            O out, 
+                                                            C pred, 
+                                                            P proj,
+                                                            std::input_iterator_tag,
+                                                            std::false_type)
         {
             if(first != last)
             {
@@ -70,9 +74,13 @@ namespace ranges
         }
 
         template<typename I, typename S, typename O, typename C, typename P>
-        unique_copy_result<I, O> unique_copy_impl(I first, S last, O out, C pred, P proj,
-                                                  std::forward_iterator_tag,
-                                                  std::false_type)
+        constexpr unique_copy_result<I, O> unique_copy_impl(I first, 
+                                                            S last, 
+                                                            O out, 
+                                                            C pred, 
+                                                            P proj,
+                                                            std::forward_iterator_tag,
+                                                            std::false_type)
         {
             if(first != last)
             {
@@ -94,8 +102,12 @@ namespace ranges
         }
 
         template<typename I, typename S, typename O, typename C, typename P>
-        unique_copy_result<I, O> unique_copy_impl(I first, S last, O out, C pred, P proj,
-                                                  std::input_iterator_tag, std::true_type)
+        constexpr unique_copy_result<I, O> unique_copy_impl(I first, 
+                                                            S last, 
+                                                            O out, 
+                                                            C pred, 
+                                                            P proj,
+                                                            std::input_iterator_tag, std::true_type)
         {
             if(first != last)
             {
@@ -122,19 +134,18 @@ namespace ranges
         /// \pre `Rng` is a model of the `input_range` concept
         /// \pre `O` is a model of the `weakly_incrementable` concept
         /// \pre `C` is a model of the `relation` concept
-        template<typename I,
+        template(typename I,
                  typename S,
                  typename O,
                  typename C = equal_to,
-                 typename P = identity>
-        auto RANGES_FUNC(unique_copy)(
-            I first, S last, O out, C pred = C{}, P proj = P{}) //
-            ->CPP_ret(unique_copy_result<I, O>)(                //
-                requires input_iterator<I> && sentinel_for<S, I> &&
-                indirect_relation<C, projected<I, P>> && weakly_incrementable<O> &&
-                indirectly_copyable<I, O> &&
+                 typename P = identity)(
+            requires input_iterator<I> AND sentinel_for<S, I> AND
+                indirect_relation<C, projected<I, P>> AND weakly_incrementable<O> AND
+                indirectly_copyable<I, O> AND
                 (forward_iterator<I> || forward_iterator<O> ||
-                 indirectly_copyable_storable<I, O>))
+                 indirectly_copyable_storable<I, O>)) //
+        constexpr unique_copy_result<I, O> RANGES_FUNC(unique_copy)(
+            I first, S last, O out, C pred = C{}, P proj = P{}) //
         {
             return detail::unique_copy_impl(std::move(first),
                                             std::move(last),
@@ -146,14 +157,14 @@ namespace ranges
         }
 
         /// \overload
-        template<typename Rng, typename O, typename C = equal_to, typename P = identity>
-        auto RANGES_FUNC(unique_copy)(Rng && rng, O out, C pred = C{}, P proj = P{}) //
-            ->CPP_ret(unique_copy_result<safe_iterator_t<Rng>, O>)(                  //
-                requires input_range<Rng> &&
-                indirect_relation<C, projected<iterator_t<Rng>, P>> &&
-                weakly_incrementable<O> && indirectly_copyable<iterator_t<Rng>, O> &&
+        template(typename Rng, typename O, typename C = equal_to, typename P = identity)(
+            requires input_range<Rng> AND
+                indirect_relation<C, projected<iterator_t<Rng>, P>> AND
+                weakly_incrementable<O> AND indirectly_copyable<iterator_t<Rng>, O> AND
                 (forward_iterator<iterator_t<Rng>> || forward_iterator<O> ||
-                 indirectly_copyable_storable<iterator_t<Rng>, O>))
+                 indirectly_copyable_storable<iterator_t<Rng>, O>)) //
+        constexpr unique_copy_result<borrowed_iterator_t<Rng>, O> //
+        RANGES_FUNC(unique_copy)(Rng && rng, O out, C pred = C{}, P proj = P{}) //
         {
             return detail::unique_copy_impl(begin(rng),
                                             end(rng),
@@ -174,6 +185,6 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

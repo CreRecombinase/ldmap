@@ -18,7 +18,7 @@
 
 #include <range/v3/functional/invoke.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -27,29 +27,39 @@ namespace ranges
 
     // clang-format off
     // WORKAROUND mysterious msvc bug
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
+    /// \concept invocable
+    /// \brief The \c invocable concept
     template<typename Fun, typename... Args>
-    CPP_concept_bool invocable =
+    CPP_concept invocable =
         std::is_invocable_v<Fun, Args...>;
 #else
+    /// \concept invocable_
+    /// \brief The \c invocable_ concept
     template<typename Fun, typename... Args>
-    CPP_concept_fragment(invocable_,
+    CPP_requires(invocable_,
         requires(Fun && fn) //
         (
             invoke((Fun &&) fn, std::declval<Args>()...)
         ));
+    /// \concept invocable
+    /// \brief The \c invocable concept
     template<typename Fun, typename... Args>
-    CPP_concept_bool invocable =
-        CPP_fragment(ranges::invocable_, Fun, Args...);
+    CPP_concept invocable =
+        CPP_requires_ref(ranges::invocable_, Fun, Args...);
 #endif
 
+    /// \concept regular_invocable
+    /// \brief The \c regular_invocable concept
     template<typename Fun, typename... Args>
-    CPP_concept_bool regular_invocable =
+    CPP_concept regular_invocable =
         invocable<Fun, Args...>;
         // Axiom: equality_preserving(invoke(f, args...))
 
+    /// \concept predicate_
+    /// \brief The \c predicate_ concept
     template<typename Fun, typename... Args>
-    CPP_concept_fragment(predicate_,
+    CPP_requires(predicate_,
         requires(Fun && fn) //
         (
             concepts::requires_<
@@ -57,41 +67,28 @@ namespace ranges
                     decltype(invoke((Fun &&) fn, std::declval<Args>()...)),
                     bool>>
         ));
+    /// \concept predicate
+    /// \brief The \c predicate concept
     template<typename Fun, typename... Args>
-    CPP_concept_bool predicate =
+    CPP_concept predicate =
         regular_invocable<Fun, Args...> &&
-        CPP_fragment(ranges::predicate_, Fun, Args...);
+        CPP_requires_ref(ranges::predicate_, Fun, Args...);
 
+    /// \concept relation
+    /// \brief The \c relation concept
     template<typename R, typename T, typename U>
-    CPP_concept_bool relation =
+    CPP_concept relation =
         predicate<R, T, T> &&
         predicate<R, U, U> &&
         predicate<R, T, U> &&
         predicate<R, U, T>;
 
+    /// \concept strict_weak_order
+    /// \brief The \c strict_weak_order concept
     template<typename R, typename T, typename U>
-    CPP_concept_bool strict_weak_order =
+    CPP_concept strict_weak_order =
         relation<R, T, U>;
     // clang-format on
-
-    namespace defer
-    {
-        template<typename Fun, typename... Args>
-        CPP_concept invocable = CPP_defer_(ranges::invocable, CPP_type(Fun), Args...);
-
-        template<typename Fun, typename... Args>
-        CPP_concept regular_invocable = CPP_defer_(ranges::regular_invocable,
-                                                   CPP_type(Fun), Args...);
-
-        template<typename Fun, typename... Args>
-        CPP_concept predicate = CPP_defer_(ranges::predicate, CPP_type(Fun), Args...);
-
-        template<typename R, typename T, typename U>
-        CPP_concept relation = CPP_defer(ranges::relation, R, T, U);
-
-        template<typename R, typename T, typename U>
-        CPP_concept strict_weak_order = CPP_defer(ranges::strict_weak_order, R, T, U);
-    } // namespace defer
 
     namespace cpp20
     {
@@ -104,6 +101,6 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

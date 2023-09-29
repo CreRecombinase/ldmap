@@ -20,6 +20,7 @@
 #include <meta/meta.hpp>
 
 #include <concepts/concepts.hpp>
+#include <concepts/compare.hpp>
 
 #include <range/v3/detail/config.hpp>
 #include <range/v3/utility/static_const.hpp>
@@ -57,7 +58,7 @@
 /// \defgroup group-numerics Numerics
 /// Numeric utilities
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 RANGES_DIAGNOSTIC_PUSH
 RANGES_DIAGNOSTIC_IGNORE_CXX17_COMPAT
@@ -168,7 +169,11 @@ namespace ranges
     struct iter_size_fn;
 
     template<typename T>
-    struct readable_traits;
+    struct indirectly_readable_traits;
+
+    template<typename T>
+    using readable_traits RANGES_DEPRECATED("Please use ranges::indirectly_readable_traits")
+     = indirectly_readable_traits<T>;
 
     template<typename T>
     struct incrementable_traits;
@@ -195,7 +200,7 @@ namespace ranges
     template<typename T>
     using value_type RANGES_DEPRECATED(
         "ranges::value_type<T>::type is deprecated. Use "
-        "ranges::readable_traits<T>::value_type instead.") = detail::value_type_<T>;
+        "ranges::indirectly_readable_traits<T>::value_type instead.") = detail::value_type_<T>;
 
     template<typename T>
     struct size_type;
@@ -292,52 +297,142 @@ namespace ranges
         struct priority_tag<0>
         {};
 
-        template<typename T>
-        using is_trivial = meta::bool_<
-#if META_CXX_TRAIT_VARIABLE_TEMPLATES
-            std::is_trivially_copyable_v<T> &&
-            std::is_trivially_default_constructible_v<T>>;
-#else
-            std::is_trivially_copyable<T>::value &&
-            std::is_trivially_default_constructible<T>::value>;
-#endif
-
 #if defined(__clang__) && !defined(_LIBCPP_VERSION)
         template<typename T, typename... Args>
-        using is_trivially_constructible =
-            meta::bool_<__is_trivially_constructible(T, Args...)>;
+        RANGES_INLINE_VAR constexpr bool is_trivially_constructible_v =
+            __is_trivially_constructible(T, Args...);
         template<typename T>
-        using is_trivially_default_constructible = is_trivially_constructible<T>;
+        RANGES_INLINE_VAR constexpr bool is_trivially_default_constructible_v =
+            is_trivially_constructible_v<T>;
         template<typename T>
-        using is_trivially_copy_constructible = is_trivially_constructible<T, T const &>;
+        RANGES_INLINE_VAR constexpr bool is_trivially_copy_constructible_v =
+            is_trivially_constructible_v<T, T const &>;
         template<typename T>
-        using is_trivially_move_constructible = is_trivially_constructible<T, T>;
+        RANGES_INLINE_VAR constexpr bool is_trivially_move_constructible_v =
+            is_trivially_constructible_v<T, T>;
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_trivially_copyable_v =
+            __is_trivially_copyable(T);
         template<typename T, typename U>
-        using is_trivially_assignable = meta::bool_<__is_trivially_assignable(T, U)>;
+        RANGES_INLINE_VAR constexpr bool is_trivially_assignable_v =
+            __is_trivially_assignable(T, U);
         template<typename T>
-        using is_trivially_copy_assignable = is_trivially_assignable<T &, T const &>;
+        RANGES_INLINE_VAR constexpr bool is_trivially_copy_assignable_v =
+            is_trivially_assignable_v<T &, T const &>;
         template<typename T>
-        using is_trivially_move_assignable = is_trivially_assignable<T &, T>;
+        RANGES_INLINE_VAR constexpr bool is_trivially_move_assignable_v =
+            is_trivially_assignable_v<T &, T>;
+
+        template<typename T, typename... Args>
+        struct is_trivially_constructible
+          : meta::bool_<is_trivially_constructible_v<T, Args...>>
+        {};
         template<typename T>
-        using is_trivially_copyable = meta::bool_<__is_trivially_copyable(T)>;
+        struct is_trivially_default_constructible
+          : meta::bool_<is_trivially_default_constructible_v<T>>
+        {};
+        template<typename T>
+        struct is_trivially_copy_constructible
+          : meta::bool_<is_trivially_copy_constructible_v<T>>
+        {};
+        template<typename T>
+        struct is_trivially_move_constructible
+          : meta::bool_<is_trivially_move_constructible_v<T>>
+        {};
+        template<typename T>
+        struct is_trivially_copyable
+          : meta::bool_<is_trivially_copyable_v<T>>
+        {};
+        template<typename T, typename U>
+        struct is_trivially_assignable
+          : meta::bool_<is_trivially_assignable_v<T, U>>
+        {};
+        template<typename T>
+        struct is_trivially_copy_assignable
+          : meta::bool_<is_trivially_copy_assignable_v<T>>
+        {};
+        template<typename T>
+        struct is_trivially_move_assignable
+          : meta::bool_<is_trivially_move_assignable_v<T>>
+        {};
 #else
-        template<typename T>
-        using is_trivially_default_constructible = std::is_trivially_constructible<T>;
+        using std::is_trivially_constructible;
+        using std::is_trivially_default_constructible;
         using std::is_trivially_copy_assignable;
         using std::is_trivially_copy_constructible;
         using std::is_trivially_copyable;
+        using std::is_trivially_assignable;
         using std::is_trivially_move_assignable;
         using std::is_trivially_move_constructible;
+#if META_CXX_TRAIT_VARIABLE_TEMPLATES
+        using std::is_trivially_constructible_v;
+        using std::is_trivially_default_constructible_v;
+        using std::is_trivially_copy_assignable_v;
+        using std::is_trivially_copy_constructible_v;
+        using std::is_trivially_copyable_v;
+        using std::is_trivially_assignable_v;
+        using std::is_trivially_move_assignable_v;
+        using std::is_trivially_move_constructible_v;
+#else
+        template<typename T, typename... Args>
+        RANGES_INLINE_VAR constexpr bool is_trivially_constructible_v =
+            is_trivially_constructible<T, Args...>::value;
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_trivially_default_constructible_v =
+            is_trivially_default_constructible<T>::value;
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_trivially_copy_constructible_v =
+            is_trivially_copy_constructible<T>::value;
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_trivially_move_constructible_v =
+            is_trivially_move_constructible<T>::value;
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_trivially_copyable_v =
+            is_trivially_copyable<T>::value;
+        template<typename T, typename U>
+        RANGES_INLINE_VAR constexpr bool is_trivially_assignable_v =
+            is_trivially_assignable<T, U>::value;
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_trivially_copy_assignable_v =
+            is_trivially_copy_assignable<T>::value;
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_trivially_move_assignable_v =
+            is_trivially_move_assignable<T>::value;
 #endif
+#endif
+
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_trivial_v =
+            is_trivially_copyable_v<T> &&
+            is_trivially_default_constructible_v<T>;
+
+        template<typename T>
+        struct is_trivial
+          : meta::bool_<is_trivial_v<T>>
+        {};
 
 #if RANGES_CXX_LIB_IS_FINAL > 0
 #if defined(__clang__) && !defined(_LIBCPP_VERSION)
         template<typename T>
-        using is_final = meta::bool_<__is_final(T)>;
+        RANGES_INLINE_VAR constexpr bool is_final_v = __is_final(T);
+
+        template<typename T>
+        struct is_final
+          : meta::bool_<is_final_v<T>>
+        {};
 #else
         using std::is_final;
+#if META_CXX_TRAIT_VARIABLE_TEMPLATES
+        using std::is_final_v;
+#else
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_final_v = is_final<T>::value;
+#endif
 #endif
 #else
+        template<typename T>
+        RANGES_INLINE_VAR constexpr bool is_final_v = false;
+
         template<typename T>
         using is_final = std::false_type;
 #endif
@@ -404,6 +499,10 @@ namespace ranges
     struct not_equal_to;
     struct equal_to;
     struct less;
+#if __cplusplus > 201703L && __has_include(<compare>) && \
+    defined(__cpp_concepts) && defined(__cpp_impl_three_way_comparison)
+    struct compare_three_way;
+#endif // __cplusplus
     struct identity;
     template<typename Pred>
     struct logical_negate;
@@ -428,7 +527,16 @@ namespace ranges
     RANGES_INLINE_VAR constexpr bool disable_sized_sentinel = false;
 
     template<typename R>
-    RANGES_INLINE_VAR constexpr bool enable_safe_range = false;
+    RANGES_INLINE_VAR constexpr bool enable_borrowed_range = false;
+
+    namespace detail
+    {
+        template<typename R>
+        RANGES_DEPRECATED("Please use ranges::enable_borrowed_range instead.")
+        RANGES_INLINE_VAR constexpr bool enable_safe_range = enable_borrowed_range<R>;
+    } // namespace detail
+
+    using detail::enable_safe_range;
 
     template<typename Cur>
     struct basic_mixin;
@@ -506,6 +614,15 @@ namespace ranges
     namespace views
     {
         struct all_fn;
+    }
+
+
+    template<typename Rng, typename Fun>
+    struct chunk_by_view;
+
+    namespace views
+    {
+        struct chunk_by_fn;
     }
 
     template<typename Rng>
@@ -814,15 +931,11 @@ namespace ranges
     namespace concepts = ::concepts;
     using namespace ::concepts::defs;
     using ::concepts::and_v;
-    namespace defer
-    {
-        using namespace ::concepts::defs::defer;
-    }
 } // namespace ranges
 /// \endcond
 
 RANGES_DIAGNOSTIC_POP
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

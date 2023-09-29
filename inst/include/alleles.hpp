@@ -177,9 +177,9 @@ inline constexpr Nuc complement(const Nuc &l){
   }
 }
 
-inline constexpr Nuc Nuc::complement(const Nuc &other){
-  return(complement(other));
-}
+// inline constexpr Nuc Nuc::complement(const Nuc &other){
+//   return(complement(other));
+// }
 
 constexpr char Nuc2char(Nuc l){
   switch(l.let){
@@ -769,12 +769,14 @@ class Region{
   static constexpr Region make_Region(const uint64_t x) noexcept{
     return Region(x);
   }
-  static Region make_Region(const double x){
-    return Region(bit_cast<uint64_t>(x));
+  static Region make_Region(const double x) = delete;
+  static constexpr Region empty_region() noexcept {
+    const uint64_t br0 = 0ul;
+    return Region{br0};
   }
   constexpr Region(uint64_t x) noexcept :br(x){}
   Region() noexcept {}
-  Region(double x) noexcept :br(bit_cast<uint64_t,double>(x)){}
+  Region(double x):br(bit_cast<uint64_t>(x)){}
   Region(int x) = delete;
   Region(float x) = delete;
   Region(long double x) = delete;
@@ -789,7 +791,7 @@ class Region{
   }
   static constexpr Region make_Region(const SNP& a,const SNP& b) noexcept{
     if( a.chrom()!=b.chrom())
-      return make_Region(0ul);
+      return empty_region();
     const auto pai=a.pos();
     const auto pab=b.pos();
     auto [pa,pb] = std::minmax(pai,pab);
@@ -840,11 +842,11 @@ class Region{
   constexpr Region operator|(const Region &other) const noexcept{
 
     if(get_chrom<unsigned char>(this->br)!=other.chrom()){
-      return Region(0ul);
+      return empty_region();
     }
     auto [sa,sb] = std::minmax(*this,other);
     if( sa.end() < sb.start()){
-      return Region(0ul);
+      return empty_region();
     }
     return Region(make_ldmap_region(sa.chrom(),sa.start(),sb.end()));
   }
@@ -1004,7 +1006,7 @@ class RegionSet{
   Region convex_hull;
   std::vector<Region> regions;
 public:
-  RegionSet() noexcept: convex_hull(0ul),regions(){};
+  RegionSet() noexcept: convex_hull(Region::empty_region()),regions(){};
   RegionSet(Region reg) noexcept: convex_hull(reg),regions{reg}{};
   std::optional<Region> insert(const Region reg){
     if(!convex_hull.overlap(reg))
@@ -1054,7 +1056,8 @@ public:
 
 static_assert(!Region::make_Region(1,1,1892607).overlap(Region::make_Region(1,1892607,3582736)));
 
-static_assert(Region::make_Region(SNP::make_SNP<true>(1,50),SNP::make_SNP<true>(1,55)).start_SNP()==SNP::make_SNP<true>(1,50));
+static_assert(Region::make_Region(SNP::make_SNP<true>(1,50),
+                                  SNP::make_SNP<true>(1,55)).start_SNP()==SNP::make_SNP<true>(1,50));
 
 static_assert(make_ldmap_region(24, 536870911, 3456) <
               make_ldmap_region(25, 120, 3457));

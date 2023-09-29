@@ -144,6 +144,7 @@ namespace ranges
 #define RANGES_CXX_CONSTEXPR_11 200704L
 #define RANGES_CXX_CONSTEXPR_14 201304L
 #define RANGES_CXX_CONSTEXPR_17 201603L
+#define RANGES_CXX_CONSTEXPR_20 201907L
 #define RANGES_CXX_CONSTEXPR_LAMBDAS 201603L
 #define RANGES_CXX_RANGE_BASED_FOR_11 200907L
 #define RANGES_CXX_RANGE_BASED_FOR_14 RANGES_CXX_RANGE_BASED_FOR_11
@@ -201,6 +202,7 @@ namespace ranges
 #define RANGES_DIAGNOSTIC_IGNORE_CXX17_COMPAT
 #define RANGES_DIAGNOSTIC_IGNORE_CXX2A_COMPAT
 #define RANGES_DIAGNOSTIC_IGNORE_FLOAT_EQUAL
+#define RANGES_DIAGNOSTIC_IGNORE_FLOAT_CONVERSION
 #define RANGES_DIAGNOSTIC_IGNORE_MISSING_BRACES
 #define RANGES_DIAGNOSTIC_IGNORE_UNDEFINED_FUNC_TEMPLATE
 #define RANGES_DIAGNOSTIC_IGNORE_INCONSISTENT_OVERRIDE
@@ -215,6 +217,8 @@ namespace ranges
 #define RANGES_DIAGNOSTIC_IGNORE_MULTIPLE_ASSIGNMENT_OPERATORS \
     RANGES_DIAGNOSTIC_IGNORE(4522)
 #define RANGES_DIAGNOSTIC_IGNORE_VOID_PTR_DEREFERENCE
+#define RANGES_DIAGNOSTIC_KEYWORD_MACRO
+#define RANGES_DIAGNOSTIC_SUGGEST_OVERRIDE
 
 #define RANGES_CXX_VER _MSVC_LANG
 
@@ -222,7 +226,16 @@ namespace ranges
 #error range-v3 requires Visual Studio 2019 with the /std:c++17 (or /std:c++latest) and /permissive- options.
 #endif
 
+#if _MSC_VER < 1927
+#define RANGES_WORKAROUND_MSVC_895622 // Error when phase 1 name binding finds only
+                                      // deleted function
+
+#if _MSC_VER < 1925
+#define RANGES_WORKAROUND_MSVC_779708 // ADL for operands of function type [No workaround]
+
 #if _MSC_VER < 1923
+#define RANGES_WORKAROUND_MSVC_573728 // rvalues of array types bind to lvalue references
+                                      // [no workaround]
 #define RANGES_WORKAROUND_MSVC_934330 // Deduction guide not correctly preferred to copy
                                       // deduction candidate [No workaround]
 
@@ -243,6 +256,8 @@ namespace ranges
 #endif                                // _MSC_VER < 1921
 #endif                                // _MSC_VER < 1922
 #endif                                // _MSC_VER < 1923
+#endif                                // _MSC_VER < 1925
+#endif                                // _MSC_VER < 1926
 
 #if 1 // Fixed in 1920, but more bugs hiding behind workaround
 #define RANGES_WORKAROUND_MSVC_701385 // Yet another alias expansion error
@@ -250,26 +265,26 @@ namespace ranges
 
 #define RANGES_WORKAROUND_MSVC_249830 // constexpr and arguments that aren't subject to
                                       // lvalue-to-rvalue conversion
-#define RANGES_WORKAROUND_MSVC_573728 // rvalues of array types bind to lvalue references
-                                      // [no workaround]
 #define RANGES_WORKAROUND_MSVC_677925 // Bogus C2676 "binary '++': '_Ty' does not define
                                       // this operator"
 #define RANGES_WORKAROUND_MSVC_683388 // decltype(*i) is incorrectly an rvalue reference
                                       // for pointer-to-array i
 #define RANGES_WORKAROUND_MSVC_688606 // SFINAE failing to account for access control
                                       // during specialization matching
-#define RANGES_WORKAROUND_MSVC_779708 // ADL for operands of function type [No workaround]
 #define RANGES_WORKAROUND_MSVC_786312 // Yet another mixed-pack-expansion failure
 #define RANGES_WORKAROUND_MSVC_792338 // Failure to match specialization enabled via call
                                       // to constexpr function
 #define RANGES_WORKAROUND_MSVC_835948 // Silent bad codegen destroying sized_generator [No
                                       // workaround]
-#define RANGES_WORKAROUND_MSVC_895622 // Error when phase 1 name binding finds only
-                                      // deleted function
 #define RANGES_WORKAROUND_MSVC_934264 // Explicitly-defaulted inherited default
                                       // constructor is not correctly implicitly constexpr
 #if _MSVC_LANG <= 201703L
 #define RANGES_WORKAROUND_MSVC_OLD_LAMBDA
+#endif
+
+#if _MSVC_LANG <= 201703L
+#define RANGES_WORKAROUND_MSVC_UNUSABLE_SPAN // MSVC provides a <span> header that is
+                                             // guarded against use with std <= 17
 #endif
 
 #elif defined(__GNUC__) || defined(__clang__)
@@ -292,6 +307,7 @@ namespace ranges
 #define RANGES_DIAGNOSTIC_IGNORE_SIGN_CONVERSION \
     RANGES_DIAGNOSTIC_IGNORE("-Wsign-conversion")
 #define RANGES_DIAGNOSTIC_IGNORE_FLOAT_EQUAL RANGES_DIAGNOSTIC_IGNORE("-Wfloat-equal")
+#define RANGES_DIAGNOSTIC_IGNORE_FLOAT_CONVERSION RANGES_DIAGNOSTIC_IGNORE("-Wfloat-conversion")
 #define RANGES_DIAGNOSTIC_IGNORE_MISSING_BRACES \
     RANGES_DIAGNOSTIC_IGNORE("-Wmissing-braces")
 #define RANGES_DIAGNOSTIC_IGNORE_GLOBAL_CONSTRUCTORS \
@@ -322,6 +338,8 @@ namespace ranges
 #define RANGES_DIAGNOSTIC_IGNORE_MULTIPLE_ASSIGNMENT_OPERATORS
 #define RANGES_DIAGNOSTIC_IGNORE_VOID_PTR_DEREFERENCE \
     RANGES_DIAGNOSTIC_IGNORE("-Wvoid-ptr-dereference")
+#define RANGES_DIAGNOSTIC_KEYWORD_MACRO RANGES_DIAGNOSTIC_IGNORE("-Wkeyword-macro")
+#define RANGES_DIAGNOSTIC_SUGGEST_OVERRIDE RANGES_DIAGNOSTIC_IGNORE("-Wsuggest-override")
 
 #define RANGES_WORKAROUND_CWG_1554
 #ifdef __clang__
@@ -329,18 +347,14 @@ namespace ranges
 #define RANGES_WORKAROUND_CLANG_23135 // constexpr leads to premature instantiation on
                                       // clang-3.x
 #endif
+#if (__clang_major__ >= 7 && __clang_major__ <= 9) || defined(__apple_build_version__)
 #define RANGES_WORKAROUND_CLANG_43400 // template friend is redefinition of itself
-#else                                 // __GNUC__
-#if __GNUC__ < 6
-#define RANGES_WORKAROUND_GCC_UNFILED0 /* Workaround old GCC name lookup bug */
 #endif
+#else                                 // __GNUC__
 #if __GNUC__ == 7 || __GNUC__ == 8
 #define RANGES_WORKAROUND_GCC_91525 /* Workaround strange GCC ICE */
 #endif
 #if __GNUC__ >= 9
-#ifdef __cpp_concepts
-#define RANGES_WORKAROUND_GCC_89953 // ICE in nothrow_spec_p, at cp/except.c:1244
-#endif
 #if __GNUC__ == 9 && __GNUC_MINOR__ < 3 && __cplusplus == RANGES_CXX_STD_17
 #define RANGES_WORKAROUND_GCC_91923 // Failure-to-SFINAE with class type NTTP in C++17
 #endif
@@ -374,6 +388,8 @@ namespace ranges
 #define RANGES_DIAGNOSTIC_IGNORE_TRUNCATION
 #define RANGES_DIAGNOSTIC_IGNORE_MULTIPLE_ASSIGNMENT_OPERATORS
 #define RANGES_DIAGNOSTIC_IGNORE_VOID_PTR_DEREFERENCE
+#define RANGES_DIAGNOSTIC_KEYWORD_MACRO
+#define RANGES_DIAGNOSTIC_SUGGEST_OVERRIDE
 #endif
 
 // Configuration via feature-test macros, with fallback to __cplusplus
@@ -514,20 +530,20 @@ namespace ranges
 // #endif
 
 #ifndef RANGES_CXX_COROUTINES
-#ifdef __cpp_coroutines
+#if defined(__cpp_coroutines) && defined(__has_include)
+#if __has_include(<coroutine>)
 #define RANGES_CXX_COROUTINES __cpp_coroutines
-#else
+#define RANGES_COROUTINES_HEADER <coroutine>
+#define RANGES_COROUTINES_NS std
+#elif __has_include(<experimental/coroutine>)
+#define RANGES_CXX_COROUTINES __cpp_coroutines
+#define RANGES_COROUTINES_HEADER <experimental/coroutine>
+#define RANGES_COROUTINES_NS std::experimental
+#endif
+#endif
+#ifndef RANGES_CXX_COROUTINES
 #define RANGES_CXX_COROUTINES RANGES_CXX_FEATURE(COROUTINES)
 #endif
-#endif
-
-// RANGES_CXX14_CONSTEXPR macro (see also BOOST_CXX14_CONSTEXPR)
-// Note: constexpr implies inline, to retain the same visibility
-// C++14 constexpr functions are inline in C++11
-#if RANGES_CXX_CONSTEXPR >= RANGES_CXX_CONSTEXPR_14
-#define RANGES_CXX14_CONSTEXPR constexpr
-#else
-#define RANGES_CXX14_CONSTEXPR inline
 #endif
 
 #ifdef NDEBUG
@@ -677,9 +693,7 @@ namespace ranges
 #define RANGES_IS_SAME(...) std::is_same<__VA_ARGS__>::value
 #endif
 
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=93667
-#if defined(__has_cpp_attribute) && __has_cpp_attribute(no_unique_address) && \
-    !(defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 10)
+#if defined(__has_cpp_attribute) && __has_cpp_attribute(no_unique_address)
 #define RANGES_NO_UNIQUE_ADDRESS [[no_unique_address]]
 #else
 #define RANGES_NO_UNIQUE_ADDRESS
@@ -705,8 +719,9 @@ namespace ranges
 #endif
 #endif // RANGES_CONSTEXPR_IF
 
-#if !defined(RANGES_BROKEN_CPO_LOOKUP) && !defined(RANGES_DOXYGEN_INVOKED) && \
-    (defined(RANGES_WORKAROUND_GCC_UNFILED0) || defined(RANGES_WORKAROUND_MSVC_895622))
+#if !defined(RANGES_BROKEN_CPO_LOOKUP) && \
+    !defined(RANGES_DOXYGEN_INVOKED) && \
+    defined(RANGES_WORKAROUND_MSVC_895622)
 #define RANGES_BROKEN_CPO_LOOKUP 1
 #endif
 #ifndef RANGES_BROKEN_CPO_LOOKUP

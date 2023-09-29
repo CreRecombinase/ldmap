@@ -31,37 +31,37 @@
 #include <range/v3/utility/static_const.hpp>
 #include <range/v3/view/subrange.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
     /// \cond
     namespace detail
     {
-        template<typename I, typename S>
-        auto next_to_if(I i, S s, std::true_type) -> CPP_ret(I)( //
-            requires input_iterator<I> && sentinel_for<S, I>)
+        template(typename I, typename S)(
+            requires input_iterator<I> AND sentinel_for<S, I>)
+        constexpr I next_to_if(I i, S s, std::true_type)
         {
             return ranges::next(i, s);
         }
 
-        template<typename I, typename S>
-        auto next_to_if(I, S s, std::false_type) -> CPP_ret(S)( //
-            requires input_iterator<I> && sentinel_for<S, I>)
+        template(typename I, typename S)(
+            requires input_iterator<I> AND sentinel_for<S, I>)
+        constexpr S next_to_if(I, S s, std::false_type)
         {
             return s;
         }
 
-        template<bool B, typename I, typename S>
-        auto next_to_if(I i, S s) -> CPP_ret(meta::if_c<B, I, S>)( //
-            requires input_iterator<I> && sentinel_for<S, I>)
+        template(bool B, typename I, typename S)(
+            requires input_iterator<I> AND sentinel_for<S, I>)
+        constexpr meta::if_c<B, I, S> next_to_if(I i, S s)
         {
             return detail::next_to_if(std::move(i), std::move(s), meta::bool_<B>{});
         }
 
         template<typename I1, typename S1, typename I2, typename S2, typename R,
                  typename P>
-        subrange<I1> find_end_impl(I1 begin1, S1 end1, I2 begin2, S2 end2, R pred, P proj,
+        constexpr subrange<I1> find_end_impl(I1 begin1, S1 end1, I2 begin2, S2 end2, R pred, P proj,
                                    std::forward_iterator_tag, std::forward_iterator_tag)
         {
             bool found = false;
@@ -104,7 +104,7 @@ namespace ranges
         }
 
         template<typename I1, typename I2, typename R, typename P>
-        subrange<I1> find_end_impl(I1 begin1, I1 end1, I2 begin2, I2 end2, R pred, P proj,
+        constexpr subrange<I1> find_end_impl(I1 begin1, I1 end1, I2 begin2, I2 end2, R pred, P proj,
                                    std::bidirectional_iterator_tag,
                                    std::bidirectional_iterator_tag)
         {
@@ -141,7 +141,7 @@ namespace ranges
         }
 
         template<typename I1, typename I2, typename R, typename P>
-        subrange<I1> find_end_impl(I1 begin1, I1 end1, I2 begin2, I2 end2, R pred, P proj,
+        constexpr subrange<I1> find_end_impl(I1 begin1, I1 end1, I2 begin2, I2 end2, R pred, P proj,
                                    std::random_access_iterator_tag,
                                    std::random_access_iterator_tag)
         {
@@ -181,18 +181,17 @@ namespace ranges
     RANGES_FUNC_BEGIN(find_end)
 
         /// \brief function template \c find_end
-        template<typename I1,
+        template(typename I1,
                  typename S1,
                  typename I2,
                  typename S2,
                  typename R = equal_to,
-                 typename P = identity>
-        auto RANGES_FUNC(find_end)(
-            I1 begin1, S1 end1, I2 begin2, S2 end2, R pred = R{}, P proj = P{}) //
-            ->CPP_ret(subrange<I1>)(                                            //
-                requires forward_iterator<I1> && sentinel_for<S1, I1> &&
-                forward_iterator<I2> && sentinel_for<S2, I2> &&
+                 typename P = identity)(
+            requires forward_iterator<I1> AND sentinel_for<S1, I1> AND
+                forward_iterator<I2> AND sentinel_for<S2, I2> AND
                 indirect_relation<R, projected<I1, P>, I2>)
+        constexpr subrange<I1> RANGES_FUNC(find_end)(
+            I1 begin1, S1 end1, I2 begin2, S2 end2, R pred = R{}, P proj = P{}) //
         {
             constexpr bool Bidi =
                 bidirectional_iterator<I1> && bidirectional_iterator<I2>;
@@ -207,15 +206,14 @@ namespace ranges
         }
 
         /// \overload
-        template<typename Rng1,
+        template(typename Rng1,
                  typename Rng2,
                  typename R = equal_to,
-                 typename P = identity>
-        auto RANGES_FUNC(find_end)(
-            Rng1 && rng1, Rng2 && rng2, R pred = R{}, P proj = P{}) //
-            ->CPP_ret(safe_subrange_t<Rng1>)(                       //
-                requires forward_range<Rng1> && forward_range<Rng2> &&
+                 typename P = identity)(
+            requires forward_range<Rng1> AND forward_range<Rng2> AND
                 indirect_relation<R, projected<iterator_t<Rng1>, P>, iterator_t<Rng2>>)
+        constexpr borrowed_subrange_t<Rng1> RANGES_FUNC(find_end)(
+            Rng1 && rng1, Rng2 && rng2, R pred = R{}, P proj = P{}) //
         {
             return (*this)(begin(rng1),
                            end(rng1),
@@ -234,6 +232,6 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

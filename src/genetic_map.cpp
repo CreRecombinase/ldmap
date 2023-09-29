@@ -190,7 +190,7 @@ std::pair<T, T> find_pair(T zipped_b,T zipped_e, const SNP pos){
   static_assert(SNP::make_SNP<true>(1,10).distance(SNP::make_SNP<true>(1,15))==(-5));
   //  static_assert(SNP::make_SNP<true>(1,10).distance(SNP::make_SNP<true>(1,20))==(-5));
   //  static_assert(SNP::make_SNP<true>(1,15).relative_distance(SNP::make_SNP<true>(1,10),SNP::make_SNP<true>(1,15)));
-  auto zipped_range = ranges::subrange(zipped_b,zipped_e);
+  auto zipped_range = ranges::make_subrange(zipped_b,zipped_e);
   if(ranges::size(zipped_range)<2){
     Rcpp::stop("zipped_range must be at least size 2 to interpolate");
   }

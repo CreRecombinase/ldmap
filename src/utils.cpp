@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 // [[Rcpp::depends(RcppParallel)]]
+#include "result_of.hpp"
 #include <RcppParallel.h>
 #include <libpopcnt.h>
 // [[Rcpp::depends(RcppProgress)]]

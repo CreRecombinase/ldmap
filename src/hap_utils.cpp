@@ -42,7 +42,7 @@ Rcpp::NumericVector parse_ldmap_ht(SEXP data,const int stride=2){
   const char* xe = xb+str_len;
   const size_t N=(str_len+1)/2;
 
-  auto chunk_x  = subrange(xb,xe) |
+  auto chunk_x  = make_subrange(xb,xe) |
     views::stride(stride) | views::transform([](char c) -> std::uint64_t{
       return c-48;
     }) |
@@ -92,7 +92,7 @@ Rcpp::NumericVector new_ldmap_ht(Rcpp::IntegerVector x = Rcpp::IntegerVector::cr
   const int* beg_p = x.begin();
   const int* end_p = x.end();
 
-  auto chunk_r  = subrange(beg_p,end_p) | views::chunk(64) | views::transform([](auto chnk) -> double{
+  auto chunk_r  = make_subrange(beg_p,end_p) | views::chunk(64) | views::transform([](auto chnk) -> double{
     const double retval = pack_range(chnk);
     return retval;
   });

@@ -18,7 +18,7 @@
 
 #include <range/v3/view/interface.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -47,7 +47,7 @@ namespace ranges
             return nullptr;
         }
         RANGES_DEPRECATED(
-            "Replace views::empty<T>() with views::empty<>. "
+            "Replace views::empty<T>() with views::empty<T>. "
             "It is now a variable template.")
         empty_view operator()() const
         {
@@ -56,7 +56,7 @@ namespace ranges
     };
 
     template<typename T>
-    RANGES_INLINE_VAR constexpr bool enable_safe_range<empty_view<T>> = true;
+    RANGES_INLINE_VAR constexpr bool enable_borrowed_range<empty_view<T>> = true;
 
     namespace views
     {
@@ -70,7 +70,7 @@ namespace ranges
         {
             using ranges::views::empty;
         }
-        CPP_template(typename T)(              //
+        template(typename T)(
             requires std::is_object<T>::value) //
             using empty_view = ranges::empty_view<T>;
     } // namespace cpp20
@@ -78,7 +78,7 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 #include <range/v3/detail/satisfy_boost_range.hpp>
 RANGES_SATISFY_BOOST_RANGE(::ranges::empty_view)
 

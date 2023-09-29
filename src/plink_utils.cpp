@@ -553,10 +553,10 @@ static_assert(pack_bytes(1, 1, 1, 1) == 0b01010101);
 
 template<bool NA_RM=false>
 struct CT {
-  constexpr CT() : arr(),n_missing(),re_encode(),popcnt2_arr(),dosage_arr() {
+  constexpr CT() : popcnt2_arr(),dosage_arr(),arr(),n_missing(),re_encode() {
     std::array<int,4> dosage{0,0,1,2};
     std::array<Rbyte,4> recode{0,0,1,2};
-    std::array<char,4> neg_encode{-1,0,0,1};
+    //    std::array<char,4> neg_encode{-1,0,0,1};
     for(Rbyte i=0; i<4; i++){
       for(Rbyte j=0; j<4; j++){
         for(Rbyte k=0; k<4; k++){

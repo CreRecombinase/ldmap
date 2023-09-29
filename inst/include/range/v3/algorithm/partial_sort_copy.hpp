@@ -29,7 +29,7 @@
 #include <range/v3/range/traits.hpp>
 #include <range/v3/utility/static_const.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -38,32 +38,31 @@ namespace ranges
     RANGES_FUNC_BEGIN(partial_sort_copy)
 
         /// \brief function template \c partial_sort_copy
-        template<typename I,
+        template(typename I,
                  typename SI,
                  typename O,
                  typename SO,
                  typename C = less,
                  typename PI = identity,
-                 typename PO = identity>
-        auto RANGES_FUNC(partial_sort_copy)(I first,
-                                            SI last,
-                                            O out_begin,
-                                            SO out_end,
-                                            C pred = C{},
-                                            PI in_proj = PI{},
-                                            PO out_proj = PO{}) //
-            ->CPP_ret(O)(                                       //
-                requires input_iterator<I> && sentinel_for<SI, I> &&
-                random_access_iterator<O> && sentinel_for<SO, O> &&
-                indirectly_copyable<I, O> && sortable<O, C, PO> &&
+                 typename PO = identity)(
+            requires input_iterator<I> AND sentinel_for<SI, I> AND
+                random_access_iterator<O> AND sentinel_for<SO, O> AND
+                indirectly_copyable<I, O> AND sortable<O, C, PO> AND
                 indirect_strict_weak_order<C, projected<I, PI>, projected<O, PO>>)
+        constexpr O RANGES_FUNC(partial_sort_copy)(I first,
+                                                   SI last,
+                                                   O out_begin,
+                                                   SO out_end,
+                                                   C pred = C{},
+                                                   PI in_proj = PI{},
+                                                   PO out_proj = PO{}) //
         {
             O r = out_begin;
             if(r != out_end)
             {
                 for(; first != last && r != out_end; ++first, ++r)
                     *r = *first;
-                make_heap(out_begin, r, std::ref(pred), std::ref(out_proj));
+                make_heap(out_begin, r, ranges::ref(pred), ranges::ref(out_proj));
                 auto len = r - out_begin;
                 for(; first != last; ++first)
                 {
@@ -74,33 +73,32 @@ namespace ranges
                         detail::sift_down_n(out_begin,
                                             len,
                                             out_begin,
-                                            std::ref(pred),
-                                            std::ref(out_proj));
+                                            ranges::ref(pred),
+                                            ranges::ref(out_proj));
                     }
                 }
-                sort_heap(out_begin, r, std::ref(pred), std::ref(out_proj));
+                sort_heap(out_begin, r, ranges::ref(pred), ranges::ref(out_proj));
             }
             return r;
         }
 
         /// \overload
-        template<typename InRng,
+        template(typename InRng,
                  typename OutRng,
                  typename C = less,
                  typename PI = identity,
-                 typename PO = identity>
-        auto RANGES_FUNC(partial_sort_copy)(InRng && in_rng,
-                                            OutRng && out_rng,
-                                            C pred = C{},
-                                            PI in_proj = PI{},
-                                            PO out_proj = PO{}) //
-            ->CPP_ret(safe_iterator_t<OutRng>)(                 //
-                requires input_range<InRng> && random_access_range<OutRng> &&
-                indirectly_copyable<iterator_t<InRng>, iterator_t<OutRng>> &&
-                sortable<iterator_t<OutRng>, C, PO> &&
+                 typename PO = identity)(
+            requires input_range<InRng> AND random_access_range<OutRng> AND
+                indirectly_copyable<iterator_t<InRng>, iterator_t<OutRng>> AND
+                sortable<iterator_t<OutRng>, C, PO> AND
                 indirect_strict_weak_order<C,
                                            projected<iterator_t<InRng>, PI>,
                                            projected<iterator_t<OutRng>, PO>>)
+        constexpr borrowed_iterator_t<OutRng> RANGES_FUNC(partial_sort_copy)(InRng && in_rng,
+                                                                             OutRng && out_rng,
+                                                                             C pred = C{},
+                                                                             PI in_proj = PI{},
+                                                                             PO out_proj = PO{}) //
         {
             return (*this)(begin(in_rng),
                            end(in_rng),
@@ -120,6 +118,6 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

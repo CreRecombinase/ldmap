@@ -25,7 +25,7 @@
 #include <range/v3/utility/static_const.hpp>
 #include <range/v3/utility/swap.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -36,7 +36,7 @@ namespace ranges
     namespace detail
     {
         template<typename I>
-        void reverse_impl(I first, I last, std::bidirectional_iterator_tag)
+        constexpr void reverse_impl(I first, I last, std::bidirectional_iterator_tag)
         {
             while(first != last)
             {
@@ -48,7 +48,7 @@ namespace ranges
         }
 
         template<typename I>
-        void reverse_impl(I first, I last, std::random_access_iterator_tag)
+        constexpr void reverse_impl(I first, I last, std::random_access_iterator_tag)
         {
             if(first != last)
                 for(; first < --last; ++first)
@@ -60,10 +60,9 @@ namespace ranges
     RANGES_FUNC_BEGIN(reverse)
 
         /// \brief function template \c reverse
-        template<typename I, typename S>
-        auto RANGES_FUNC(reverse)(I first, S end_) //
-            ->CPP_ret(I)(                          //
-                requires bidirectional_iterator<I> && sentinel_for<S, I> && permutable<I>)
+        template(typename I, typename S)(
+            requires bidirectional_iterator<I> AND sentinel_for<S, I> AND permutable<I>)
+        constexpr I RANGES_FUNC(reverse)(I first, S end_)
         {
             I last = ranges::next(first, end_);
             detail::reverse_impl(first, last, iterator_tag_of<I>{});
@@ -71,10 +70,9 @@ namespace ranges
         }
 
         /// \overload
-        template<typename Rng, typename I = iterator_t<Rng>>
-        auto RANGES_FUNC(reverse)(Rng && rng) //
-            ->CPP_ret(safe_iterator_t<Rng>)(  //
-                requires bidirectional_range<Rng> && permutable<I>)
+        template(typename Rng, typename I = iterator_t<Rng>)(
+            requires bidirectional_range<Rng> AND permutable<I>)
+        constexpr borrowed_iterator_t<Rng> RANGES_FUNC(reverse)(Rng && rng) //
         {
             return (*this)(begin(rng), end(rng));
         }
@@ -88,6 +86,6 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif

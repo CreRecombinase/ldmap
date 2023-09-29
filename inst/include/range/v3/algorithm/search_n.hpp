@@ -38,7 +38,7 @@
 #include <range/v3/utility/static_const.hpp>
 #include <range/v3/view/subrange.hpp>
 
-#include <range/v3/detail/disable_warnings.hpp>
+#include <range/v3/detail/prologue.hpp>
 
 namespace ranges
 {
@@ -49,8 +49,13 @@ namespace ranges
     namespace detail
     {
         template<typename I, typename S, typename D, typename V, typename C, typename P>
-        subrange<I> search_n_sized_impl(I const begin_, S last, D const d_, D cnt,
-                                        V const & val, C & pred, P & proj)
+        constexpr subrange<I> search_n_sized_impl(I const begin_, 
+                                                  S last, 
+                                                  D const d_, 
+                                                  D cnt,
+                                                  V const & val, 
+                                                  C & pred, 
+                                                  P & proj)
         {
             D d = d_; // always the distance from first to end
             auto first = uncounted(begin_);
@@ -94,8 +99,12 @@ namespace ranges
         }
 
         template<typename I, typename S, typename D, typename V, typename C, typename P>
-        subrange<I> search_n_impl(I first, S last, D cnt, V const & val, C & pred,
-                                  P & proj)
+        constexpr subrange<I> search_n_impl(I first, 
+                                            S last, 
+                                            D cnt, 
+                                            V const & val, 
+                                            C & pred,
+                                            P & proj)
         {
             while(true)
             {
@@ -135,21 +144,19 @@ namespace ranges
     RANGES_FUNC_BEGIN(search_n)
 
         /// \brief function template \c search_n
-        template<typename I,
+        template(typename I,
                  typename S,
                  typename V,
                  typename C = equal_to,
-                 typename P = identity>
-        auto RANGES_FUNC(search_n)(I first,
-                                   S last,
-                                   iter_difference_t<I>
-                                       cnt,
-                                   V const & val,
-                                   C pred = C{},
-                                   P proj = P{}) //
-            ->CPP_ret(subrange<I>)(              //
-                requires forward_iterator<I> && sentinel_for<S, I> &&
+                 typename P = identity)(
+            requires forward_iterator<I> AND sentinel_for<S, I> AND
                 indirectly_comparable<I, V const *, C, P>)
+        constexpr subrange<I> RANGES_FUNC(search_n)(I first,
+                                                    S last,
+                                                    iter_difference_t<I> cnt,
+                                                    V const & val,
+                                                    C pred = C{},
+                                                    P proj = P{}) //
         {
             if(cnt <= 0)
                 return {first, first};
@@ -167,16 +174,14 @@ namespace ranges
         }
 
         /// \overload
-        template<typename Rng, typename V, typename C = equal_to, typename P = identity>
-        auto RANGES_FUNC(search_n)(Rng && rng,
-                                   iter_difference_t<iterator_t<Rng>>
-                                       cnt,
-                                   V const & val,
-                                   C pred = C{},
-                                   P proj = P{}) //
-            ->CPP_ret(safe_subrange_t<Rng>)(     //
-                requires forward_range<Rng> &&
+        template(typename Rng, typename V, typename C = equal_to, typename P = identity)(
+            requires forward_range<Rng> AND
                 indirectly_comparable<iterator_t<Rng>, V const *, C, P>)
+        constexpr borrowed_subrange_t<Rng> RANGES_FUNC(search_n)(Rng && rng,
+                                                                 iter_difference_t<iterator_t<Rng>> cnt,
+                                                                 V const & val,
+                                                                 C pred = C{},
+                                                                 P proj = P{}) //
         {
             if(cnt <= 0)
                 return subrange<iterator_t<Rng>>{begin(rng), begin(rng)};
@@ -196,6 +201,6 @@ namespace ranges
     /// @}
 } // namespace ranges
 
-#include <range/v3/detail/reenable_warnings.hpp>
+#include <range/v3/detail/epilogue.hpp>
 
 #endif
